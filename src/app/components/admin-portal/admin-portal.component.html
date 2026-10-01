@@ -34,20 +34,75 @@
 
       @if (tab() === 'usuarios' && sub() === 'lista') {
         <h2 class="section-title">Todos los usuarios</h2>
+        @if (okAdmin()) { <p class="status-row">{{ okAdmin() }}</p> }
         <table>
           <thead>
             <tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th><th></th></tr>
           </thead>
           <tbody>
-            @for (u of usuarios(); track u.id) {
+            @for (u of usuarios(); track idUsuario(u)) {
               <tr>
                 <td>{{ u.nombre }}</td>
                 <td>{{ u.email }}</td>
                 <td>{{ u.rol }}</td>
                 <td>{{ u.activo ? 'Activo' : 'Inactivo' }}</td>
                 <td>
-                  @if (u.activo && u.rol !== 'ADMIN') {
-                    <button type="button" class="btn-sm no" (click)="desactivar(idUsuario(u))">Desactivar</button>
+                  @if (u.rol !== 'ADMIN') {
+                    <button type="button" class="btn-sm" (click)="editar(u)">Editar</button>
+                    @if (u.activo) {
+                      <button type="button" class="btn-sm no" (click)="cambiarEstado(idUsuario(u), false)">Desactivar</button>
+                    } @else {
+                      <button type="button" class="btn-sm" (click)="cambiarEstado(idUsuario(u), true)">Activar</button>
+                    }
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      }
+
+      @if (tab() === 'usuarios' && sub() === 'editar') {
+        <div class="card section form-grid">
+          <h2>Editar usuario</h2>
+          <input class="input" placeholder="Nombre" [(ngModel)]="form.nombre" />
+          <input class="input" placeholder="Email" [value]="form.email" disabled />
+          <input class="input" placeholder="Teléfono" [(ngModel)]="form.telefono" />
+          @if (form.rol === 'PACIENTE') {
+            <input class="input" placeholder="Documento" [(ngModel)]="form.documento" />
+          }
+          @if (form.rol === 'MEDICO') {
+            <input class="input" placeholder="Especialidad" [(ngModel)]="form.especialidad" />
+            <input class="input" placeholder="Consultorio" [(ngModel)]="form.consultorio" />
+          }
+          <input class="input" type="password" placeholder="Nueva contraseña (opcional)" [(ngModel)]="form.password" />
+          <button type="button" class="btn btn-purple" (click)="guardarEdicion()">Guardar cambios</button>
+          @if (error()) { <p class="error-msg">{{ error() }}</p> }
+        </div>
+      }
+
+      @if (tab() === 'usuarios' && sub() === 'claves') {
+        <h2 class="section-title">Accesos y claves</h2>
+        <p class="hint">Las contraseñas se guardan cifradas (BCrypt). Nadie puede verlas, ni el admin. Aquí restableces una nueva y se la entregas al usuario.</p>
+        @if (okAdmin()) { <p class="status-row">{{ okAdmin() }}</p> }
+        @if (error()) { <p class="error-msg">{{ error() }}</p> }
+        <label>Nueva clave para el usuario seleccionado</label>
+        <input class="input" type="password" [(ngModel)]="nuevaClave" placeholder="Mínimo 6 caracteres" />
+        <table>
+          <thead>
+            <tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th><th>Clave</th><th></th></tr>
+          </thead>
+          <tbody>
+            @for (u of usuarios(); track idUsuario(u)) {
+              <tr>
+                <td>{{ u.nombre }}</td>
+                <td>{{ u.email }}</td>
+                <td>{{ u.rol }}</td>
+                <td>{{ u.activo ? 'Activo' : 'Inactivo' }}</td>
+                <td>Cifrada · no visible</td>
+                <td>
+                  @if (u.rol !== 'ADMIN') {
+                    <button type="button" class="btn-sm" (click)="restablecerClave(u)">Restablecer</button>
                   }
                 </td>
               </tr>
@@ -88,8 +143,11 @@
                 <td>{{ u.especialidad ?? '—' }}</td>
                 <td>{{ u.activo ? 'Activo' : 'Inactivo' }}</td>
                 <td>
+                  <button type="button" class="btn-sm" (click)="editar(u)">Editar</button>
                   @if (u.activo) {
-                    <button type="button" class="btn-sm no" (click)="desactivar(idUsuario(u))">Desactivar</button>
+                    <button type="button" class="btn-sm no" (click)="cambiarEstado(idUsuario(u), false)">Desactivar</button>
+                  } @else {
+                    <button type="button" class="btn-sm" (click)="cambiarEstado(idUsuario(u), true)">Activar</button>
                   }
                 </td>
               </tr>

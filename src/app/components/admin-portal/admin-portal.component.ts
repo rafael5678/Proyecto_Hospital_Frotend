@@ -13,7 +13,7 @@ import { AiPreciosRequest, AiPreciosResponse } from '../../models/ai.model';
 import { AiMetricas } from '../../models/ai-metricas.model';
 
 type AdminTab = 'inicio' | 'usuarios' | 'medicos' | 'citas' | 'reportes' | 'iasuperv' | 'preciosauditoria';
-type AdminSub = '' | 'lista' | 'crear' | 'supervision' | 'resumen' | 'mensual';
+type AdminSub = '' | 'lista' | 'crear' | 'editar' | 'claves' | 'supervision' | 'resumen' | 'mensual';
 
 @Component({
   selector: 'app-admin-portal',
@@ -39,7 +39,8 @@ export class AdminPortalComponent implements OnInit {
       icon: '👥',
       children: [
         { id: 'u-lista', label: 'Listar usuarios', tab: 'usuarios', sub: 'lista' },
-        { id: 'u-crear', label: 'Registrar paciente', tab: 'usuarios', sub: 'crear' }
+        { id: 'u-crear', label: 'Registrar paciente', tab: 'usuarios', sub: 'crear' },
+        { id: 'u-claves', label: 'Accesos y claves', tab: 'usuarios', sub: 'claves' }
       ]
     },
     {
@@ -98,6 +99,9 @@ export class AdminPortalComponent implements OnInit {
     numeroLicencia: '', consultorio: '', anosExperiencia: undefined, biografia: ''
   };
   error = signal('');
+  okAdmin = signal('');
+  editandoId = signal<number | null>(null);
+  nuevaClave = '';
 
   aiStatus = signal<{ apiKeyActiva: boolean; version: string } | null>(null);
   aiMetricas = signal<AiMetricas | null>(null);
@@ -157,6 +161,8 @@ export class AdminPortalComponent implements OnInit {
       inicio: 'Panel de inicio',
       'usuarios-lista': 'Usuarios — listado',
       'usuarios-crear': 'Pacientes — registrar',
+      'usuarios-editar': 'Usuarios — editar',
+      'usuarios-claves': 'Usuarios — accesos y claves',
       'medicos-lista': 'Médicos — listado',
       'medicos-crear': 'Médicos — registrar',
       'citas-supervision': 'Citas — supervisión',
@@ -258,7 +264,56 @@ export class AdminPortalComponent implements OnInit {
   }
 
   desactivar(id: number) {
-    this.adminService.desactivarUsuario(id).subscribe({ next: () => this.cargarUsuarios() });
+    this.cambiarEstado(id, false);
+  }
+
+  cambiarEstado(id: number, activo: boolean) {
+    this.adminService.cambiarEstado(id, activo).subscribe({
+      next: () => { this.cargarUsuarios(); this.cargarMedicos(); this.okAdmin.set(activo ? 'Cuenta activada' : 'Cuenta desactivada'); },
+      error: (e) => this.error.set(e.error?.error ?? 'No se pudo cambiar el estado')
+    });
+  }
+
+  editar(u: Usuario) {
+    this.editandoId.set(this.idUsuario(u));
+    this.form = {
+      nombre: u.nombre, email: u.email, password: '', rol: u.rol,
+      telefono: u.telefono || '', documento: u.documento || '', especialidad: u.especialidad || '',
+      fechaNacimiento: '', genero: '', ciudad: '', alergias: '',
+      numeroLicencia: '', consultorio: u.consultorio || '', anosExperiencia: u.anosExperiencia, biografia: u.biografia || ''
+    };
+    this.tab.set('usuarios');
+    this.sub.set('editar');
+    this.error.set('');
+  }
+
+  guardarEdicion() {
+    const id = this.editandoId();
+    if (!id) return;
+    this.adminService.actualizarUsuario(id, { ...this.form, password: this.form.password || undefined }).subscribe({
+      next: () => {
+        this.okAdmin.set('Usuario actualizado');
+        this.resetForm();
+        this.editandoId.set(null);
+        this.cargarUsuarios();
+        this.cargarMedicos();
+        this.sub.set('lista');
+      },
+      error: (e) => this.error.set(e.error?.error ?? 'No se pudo actualizar')
+    });
+  }
+
+  restablecerClave(u: Usuario) {
+    if (!this.nuevaClave.trim() || this.nuevaClave.trim().length < 6) {
+      this.error.set('La nueva clave debe tener al menos 6 caracteres.');
+      return;
+    }
+    this.adminService.actualizarUsuario(this.idUsuario(u), {
+      nombre: u.nombre, email: u.email, rol: u.rol, password: this.nuevaClave.trim()
+    }).subscribe({
+      next: () => { this.okAdmin.set(`Clave restablecida para ${u.email}. Entrégasela al usuario; no se vuelve a mostrar.`); this.nuevaClave = ''; this.cargarUsuarios(); },
+      error: (e) => this.error.set(e.error?.error ?? 'No se pudo restablecer')
+    });
   }
 
   idUsuario(u: Usuario): number {

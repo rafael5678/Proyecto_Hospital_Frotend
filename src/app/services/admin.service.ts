@@ -28,6 +28,10 @@ export class AdminService {
     return this.http.delete(`${this.api}/usuarios/${id}`);
   }
 
+  cambiarEstado(id: number, activo: boolean) {
+    return this.http.patch<Usuario>(`${this.api}/usuarios/${id}/estado`, {}, { params: { activo } });
+  }
+
   listarMedicos() {
     return this.http.get<Usuario[]>(`${this.api}/medicos`);
   }
