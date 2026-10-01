@@ -10,7 +10,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const out = join(__dirname, '..', 'src', 'environments', 'environment.prod.ts');
 
 const apiUrl = (process.env.API_URL || '').trim().replace(/\/$/, '');
-const fallback = 'https://farmacia-hospital-api.onrender.com/api';
+const fallback = 'https://proyecto-hospital-backend.onrender.com/api';
 
 if (!apiUrl && process.env.VERCEL === '1') {
   console.warn(
