@@ -1,0 +1,57 @@
+<div class="registro-page">
+  <div class="login-header">
+    <div class="icon-circle">&#9825;</div>
+    <h1>Registro de Paciente</h1>
+    <p>Sistema Hospy — Complete su información médica</p>
+  </div>
+  <div class="card login-card wide">
+    <h2>Crear cuenta</h2>
+    <form (ngSubmit)="onSubmit()" class="form-grid">
+      <div class="section-title">Datos de acceso</div>
+      <div><label>Nombre completo *</label><input class="input" [(ngModel)]="nombre" name="nombre" required /></div>
+      <div><label>Email *</label><input class="input" type="email" [(ngModel)]="email" name="email" required /></div>
+      <div><label>Contraseña *</label><input class="input" type="password" [(ngModel)]="password" name="password" minlength="6" required /></div>
+      <div><label>Confirmar contraseña *</label><input class="input" type="password" [(ngModel)]="confirmPassword" name="confirmPassword" required /></div>
+      <div><label>Teléfono</label><input class="input" [(ngModel)]="telefono" name="telefono" /></div>
+
+      <div class="section-title">Identificación</div>
+      <div><label>Documento *</label><input class="input" [(ngModel)]="documento" name="documento" required /></div>
+      <div><label>Fecha de nacimiento</label><input class="input" type="date" [(ngModel)]="fechaNacimiento" name="fechaNacimiento" /></div>
+      <div><label>Género</label>
+        <select class="input" [(ngModel)]="genero" name="genero">
+          <option value="">Seleccionar</option>
+          <option value="Masculino">Masculino</option>
+          <option value="Femenino">Femenino</option>
+          <option value="Otro">Otro</option>
+        </select>
+      </div>
+      <div><label>Tipo de sangre</label>
+        <select class="input" [(ngModel)]="tipoSangre" name="tipoSangre">
+          <option value="">Seleccionar</option>
+          <option value="O+">O+</option><option value="O-">O-</option>
+          <option value="A+">A+</option><option value="A-">A-</option>
+          <option value="B+">B+</option><option value="B-">B-</option>
+          <option value="AB+">AB+</option><option value="AB-">AB-</option>
+        </select>
+      </div>
+
+      <div class="section-title">Ubicación y salud</div>
+      <div><label>Dirección</label><input class="input" [(ngModel)]="direccion" name="direccion" /></div>
+      <div><label>Ciudad</label><input class="input" [(ngModel)]="ciudad" name="ciudad" /></div>
+      <div class="full"><label>Alergias conocidas</label><input class="input" [(ngModel)]="alergias" name="alergias" placeholder="Penicilina, polen..." /></div>
+
+      <div class="section-title">Contacto de emergencia</div>
+      <div><label>Nombre contacto</label><input class="input" [(ngModel)]="contactoEmergencia" name="contactoEmergencia" /></div>
+      <div><label>Teléfono emergencia</label><input class="input" [(ngModel)]="telefonoEmergencia" name="telefonoEmergencia" /></div>
+      <div class="full"><label>Observaciones médicas</label><textarea class="input" rows="2" [(ngModel)]="observaciones" name="observaciones"></textarea></div>
+
+      @if (wakingServer()) { <p class="info-msg full">⏳ Conectando con el servidor (Render Free)... espere un momento</p> }
+      @if (error()) { <p class="error-msg full">{{ error() }}</p> }
+      <button class="btn btn-primary full" type="submit" [disabled]="loading() || wakingServer()">
+        {{ loading() ? 'Registrando...' : 'Registrarse' }}
+      </button>
+    </form>
+    <a class="back-link" routerLink="/paciente/login">¿Ya tienes cuenta? Inicia sesión</a>
+    <a class="back-link" routerLink="/">← Volver al selector</a>
+  </div>
+</div>

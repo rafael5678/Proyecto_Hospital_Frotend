@@ -1,0 +1,311 @@
+<div class="portal-layout with-sidebar paciente">
+  <app-portal-sidebar
+    theme="paciente"
+    [items]="menuItems"
+    [activeTab]="tab()"
+    [activeSub]="sub()"
+    [expandedIds]="expandedMenus()"
+    (navigate)="onNavigate($event)"
+    (toggleGroup)="onToggleGroup($event)"
+  />
+
+  <div class="portal-main">
+    <header class="portal-header paciente-header">
+      <div class="header-main">
+        <h1>{{ pageTitle() }}</h1>
+        <span class="session-user">{{ auth.user()?.nombre }}</span>
+      </div>
+      <button type="button" class="btn logout" (click)="auth.logout()">Cerrar sesión</button>
+    </header>
+
+    <main class="portal-content paciente-content">
+      @if (ok()) { <div class="alert ok">{{ ok() }}</div> }
+      @if (error()) { <div class="alert err">{{ error() }}</div> }
+
+      @if (tab() === 'inicio' && dashboard(); as d) {
+        <div class="stats">
+          <div class="stat-card"><span>Total citas</span><strong>{{ d.totalCitas }}</strong></div>
+          <div class="stat-card"><span>Pendientes</span><strong>{{ d.citasPendientes }}</strong></div>
+          <div class="stat-card"><span>Aceptadas</span><strong>{{ d.citasAceptadas }}</strong></div>
+          <div class="stat-card"><span>Próximas</span><strong>{{ d.proximasCitas }}</strong></div>
+        </div>
+        <h3 class="section-title">Próximas citas</h3>
+        @if (proximas().length === 0) {
+          <p class="empty">No tienes citas próximas.</p>
+        } @else {
+          <table>
+            <thead><tr><th>Médico</th><th>Fecha</th><th>Estado</th></tr></thead>
+            <tbody>
+              @for (c of proximas(); track c.id) {
+                <tr>
+                  <td>{{ c.medicoNombre }}</td>
+                  <td>{{ c.fechaHora | date:'medium' }}</td>
+                  <td><span [class]="badgeClass(c.estado)">{{ c.estado }}</span></td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      }
+
+      @if (tab() === 'agendar') {
+        <div class="card section booking-card">
+          <h2 class="section-title">Agendar cita médica</h2>
+          <p class="hint">Obligatorio: síntomas, autorización, médico y fecha. Opcional: duración, antecedentes, piel y nota. Sin lesión de piel puedes agendar igual.</p>
+          <label>Síntomas y motivo de consulta *</label>
+          <textarea class="input" rows="4" [(ngModel)]="sintomas" placeholder="Describe qué sientes, desde cuándo y cómo ha cambiado..."></textarea>
+          <div class="form-row">
+            <div>
+              <label>Duración (opcional)</label>
+              <input class="input" [(ngModel)]="duracionSintomas" placeholder="Ej. desde hace 2 días" />
+            </div>
+            <div>
+              <label>Antecedentes, alergias o enfermedades (opcional)</label>
+              <input class="input" [(ngModel)]="antecedentesSintomas" placeholder="Ej. asma, alergia a penicilina" />
+            </div>
+          </div>
+          <label class="check-row"><input type="checkbox" [(ngModel)]="tieneLesionPiel" (ngModelChange)="onPielToggle()" /> Tengo un problema de piel o una lesión (opcional)</label>
+          @if (tieneLesionPiel) {
+            <label>Describe la lesión o cambio en la piel *</label>
+            <textarea class="input" rows="3" [(ngModel)]="dermReq.descripcion" placeholder="Ubicación, aspecto, evolución, dolor o sangrado..."></textarea>
+          }
+          <label class="check-row"><input type="checkbox" [(ngModel)]="consentimientoTriage" /> Autorizo enviar mis síntomas al servicio de IA *</label>
+          <button type="button" class="btn btn-green" (click)="triageAnalizar()" [disabled]="triageLoading() || !sintomas.trim() || !consentimientoTriage">
+            {{ triageLoading() ? 'Analizando...' : 'Analizar síntomas' }}
+          </button>
+          @if (triageRsp(); as triage) {
+            <div class="triage-result" role="status">
+              <strong>Orientación: {{ triage.severidad }} · Nivel {{ triage.nivelEsi }}/5</strong>
+              <p>{{ triage.resumen }}</p>
+              <p>Especialidad sugerida: {{ triage.especialidadRecomendada }} · Prioridad orientativa: {{ triage.prioridad }}/10</p>
+              @if (triage.modoDemo) { <p class="hint">Resultado de demostración: la IA clínica real no está configurada. No uses este resultado para decidir si esperar.</p> }
+              <p class="hint">Si tienes dificultad intensa para respirar, dolor fuerte en el pecho, pérdida del conocimiento u otra emergencia, contacta urgencias ahora.</p>
+            </div>
+          }
+          @if (tieneLesionPiel && dermRsp(); as derm) {
+            <div class="triage-result" role="status">
+              <strong>Orientación de piel: {{ derm.nivelRiesgo }} ({{ derm.scoreRiesgo }})</strong>
+              <p>{{ derm.advertencia }}</p>
+              @if (derm.modoDemo) { <p class="hint">Análisis de demostración basado en texto; no se ha procesado una imagen clínica.</p> }
+            </div>
+          }
+          @if (tieneLesionPiel) {
+            <button type="button" class="btn btn-green" (click)="dermAnalizar()" [disabled]="dermLoading() || !dermReq.descripcion.trim() || !consentimientoTriage">
+              {{ dermLoading() ? 'Analizando piel...' : 'Analizar lesión de piel' }}
+            </button>
+          }
+          <label>Médico *</label>
+          <select class="input" [(ngModel)]="medicoId" (ngModelChange)="onMedicoChange()">
+            <option [ngValue]="null">Selecciona un médico</option>
+            @for (m of medicosFiltrados(); track m.id) {
+              <option [ngValue]="m.id">{{ m.nombre }} — {{ m.especialidad }}{{ triageRsp()?.especialidadRecomendada === m.especialidad ? ' (sugerido por IA)' : '' }}</option>
+            }
+          </select>
+          @if (horarios().length) {
+            <p class="hint">Horarios del médico:</p>
+            <ul>
+              @for (h of horarios(); track h.id) {
+                <li>Día {{ h.diaSemana }}: {{ h.horaInicio }} - {{ h.horaFin }}</li>
+              }
+            </ul>
+          }
+          <label>Fecha y hora preferidas *</label>
+          <input class="input" type="datetime-local" [(ngModel)]="fechaHora" />
+          <label>Nota adicional para el médico (opcional)</label>
+          <input class="input" [(ngModel)]="motivo" placeholder="Información adicional" />
+          <button type="button" class="btn btn-green" (click)="agendar()" [disabled]="!puedeAgendar()">{{ loading() ? 'Agendando...' : 'Agendar cita' }}</button>
+        </div>
+      }
+
+      @if (tab() === 'historial') {
+        <h2 class="section-title">Historial de citas</h2>
+        @if (citas().length === 0) {
+          <p class="empty">Sin citas registradas.</p>
+        } @else {
+          <table>
+            <thead><tr><th>Médico</th><th>Especialidad</th><th>Fecha</th><th>Estado</th><th></th></tr></thead>
+            <tbody>
+              @for (c of citas(); track c.id) {
+                <tr>
+                  <td>{{ c.medicoNombre }}</td>
+                  <td>{{ c.medicoEspecialidad }}</td>
+                  <td>{{ c.fechaHora | date:'medium' }}</td>
+                  <td><span [class]="badgeClass(c.estado)">{{ c.estado }}</span></td>
+                  <td>
+                    @if (c.estado === 'PENDIENTE' || c.estado === 'ACEPTADA') {
+                      <button type="button" class="btn-sm cancel" (click)="cancelar(c.id)">Cancelar</button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      }
+
+      @if (tab() === 'proximas') {
+        <h2 class="section-title">Próximas citas</h2>
+        @if (proximas().length === 0) {
+          <p class="empty">No hay citas próximas.</p>
+        } @else {
+          <table>
+            <thead><tr><th>Médico</th><th>Fecha</th><th>Estado</th><th></th></tr></thead>
+            <tbody>
+              @for (c of proximas(); track c.id) {
+                <tr>
+                  <td>{{ c.medicoNombre }}</td>
+                  <td>{{ c.fechaHora | date:'medium' }}</td>
+                  <td><span [class]="badgeClass(c.estado)">{{ c.estado }}</span></td>
+                  <td>
+                    @if (c.estado === 'PENDIENTE' || c.estado === 'ACEPTADA') {
+                      <button type="button" class="btn-sm cancel" (click)="cancelar(c.id)">Cancelar</button>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      }
+
+      @if (tab() === 'medicos') {
+        <h2 class="section-title">Directorio de médicos</h2>
+        <input class="input filter" placeholder="Filtrar por especialidad..." [(ngModel)]="filtroEspecialidad" />
+        <div class="medico-cards">
+          @for (m of medicosFiltrados(); track m.id) {
+            <div class="medico-card" (click)="verMedico(m)">
+              <h3>{{ m.nombre }}</h3>
+              <p class="esp">{{ m.especialidad }}</p>
+              @if (m.consultorio) { <p>📍 {{ m.consultorio }}</p> }
+              @if (m.anosExperiencia) { <p>{{ m.anosExperiencia }} años de experiencia</p> }
+              <button type="button" class="btn-sm">Ver horarios</button>
+            </div>
+          }
+        </div>
+        @if (medicoDetalle(); as md) {
+          <div class="card section">
+            <h3>{{ md.nombre }}</h3>
+            <p><strong>Especialidad:</strong> {{ md.especialidad }}</p>
+            @if (md.biografia) { <p>{{ md.biografia }}</p> }
+            <p><strong>Horarios:</strong></p>
+            <ul>
+              @for (h of horarios(); track h.id) {
+                <li>Día {{ h.diaSemana }}: {{ h.horaInicio }} - {{ h.horaFin }}</li>
+              }
+            </ul>
+            <button type="button" class="btn btn-green" (click)="irAgendarConMedico(md)">Agendar con este médico</button>
+          </div>
+        }
+      }
+
+      @if (tab() === 'perfil' && perfil(); as p) {
+        <div class="card section form-grid">
+          <h2 class="section-title">Mi perfil</h2>
+          <div><label>Nombre</label><input class="input" [(ngModel)]="p.nombre" /></div>
+          <div><label>Email</label><input class="input" [value]="p.email" disabled /></div>
+          <div><label>Teléfono</label><input class="input" [(ngModel)]="p.telefono" /></div>
+          <div><label>Documento</label><input class="input" [(ngModel)]="p.documento" /></div>
+          <div><label>Fecha nacimiento</label><input class="input" type="date" [(ngModel)]="p.fechaNacimiento" /></div>
+          <div><label>Género</label><input class="input" [(ngModel)]="p.genero" /></div>
+          <div><label>Tipo sangre</label><input class="input" [(ngModel)]="p.tipoSangre" /></div>
+          <div><label>Dirección</label><input class="input" [(ngModel)]="p.direccion" /></div>
+          <div><label>Ciudad</label><input class="input" [(ngModel)]="p.ciudad" /></div>
+          <div class="full"><label>Alergias</label><input class="input" [(ngModel)]="p.alergias" /></div>
+          <div><label>Contacto emergencia</label><input class="input" [(ngModel)]="p.contactoEmergencia" /></div>
+          <div><label>Tel. emergencia</label><input class="input" [(ngModel)]="p.telefonoEmergencia" /></div>
+          <div class="full"><label>Observaciones</label><textarea class="input" [(ngModel)]="p.observaciones"></textarea></div>
+          <button type="button" class="btn btn-green full" (click)="guardarPerfil()" [disabled]="guardandoPerfil()">
+            Guardar cambios
+          </button>
+        </div>
+      }
+
+      @if (tab() === 'interacciones') {
+        <div class="card section form-grid ai-panel">
+          <h2 class="section-title">💊 Revisión orientativa de medicamentos</h2>
+          <p class="info-msg">Un modelo de lenguaje puede señalar preguntas para tu médico o farmacéutico; no consulta un catálogo farmacológico validado ni confirma que la lista esté libre de interacciones. No cambies tu tratamiento con esta respuesta.</p>
+          <div class="full"><label>Medicamentos que consumes (separados por coma) *</label><textarea class="input" rows="3" [(ngModel)]="interMed" placeholder="Atorvastatina 20mg, Warfarina 5mg, Omeprazol..."></textarea></div>
+          <div class="full"><label>Dieta habitual / alimentos que consumes frecuentemente</label><textarea class="input" rows="3" [(ngModel)]="interDieta" placeholder="Jugo de toronja, espinaca, brócoli, lácteos, alcohol..."></textarea></div>
+          <div class="full"><label>Suplementos o vitaminas</label><textarea class="input" rows="2" [(ngModel)]="interSuplem" placeholder="Vitamina K, Omega 3, Magnesio..."></textarea></div>
+          <div class="full">
+            <button type="button" class="btn btn-green full" (click)="interAnalizar()" [disabled]="interLoading()">
+              {{ interLoading() ? 'Revisando...' : 'Revisar con IA' }}
+            </button>
+          </div>
+
+          @if (interRsp(); as g) {
+            <div class="ai-result">
+              <div class="severity-row">
+                <span class="severity-chip" [class]="severidadColor(g.nivelRiesgoGlobal)">RIESGO GLOBAL: {{ g.nivelRiesgoGlobal }}</span>
+                <span class="chip-outline">{{ g.alertas.length }} alerta(s)</span>
+                @if (g.modoDemo) { <span class="chip-outline demo">MODO DEMO</span> }
+              </div>
+              <p><strong>Resumen:</strong> {{ g.resumen }}</p>
+              <h3>Alertas:</h3>
+              @for (a of g.alertas; track a.elementos + a.severidad) {
+                <div class="alerta-card" [class]="severidadColor(a.severidad)">
+                  <div class="alerta-head"><strong>{{ a.elementos }}</strong> · <em>{{ a.tipo }}</em> · <span class="sev">{{ a.severidad }}</span></div>
+                  <p><strong>Mecanismo:</strong> {{ a.mecanismo }}</p>
+                  <p><strong>Consecuencia:</strong> {{ a.consecuencia }}</p>
+                  <p><strong>Qué hacer:</strong> {{ a.accion }}</p>
+                </div>
+              }
+              <h3>Recomendaciones dietéticas:</h3>
+              <ul> @for (r of g.recomendacionesDieteticas; track r) { <li>{{ r }}</li> } </ul>
+            </div>
+          }
+        </div>
+      }
+
+      @if (tab() === 'precios') {
+        <div class="card section form-grid ai-panel">
+          <h2 class="section-title">💊 Estimación orientativa de precios</h2>
+          <p class="info-msg">La aplicación no consulta precios de farmacias ni series históricas. Las comparativas y estimaciones pueden ser demostrativas; verifica precios directamente con el establecimiento.</p>
+          <div><label>Medicamento *</label><input class="input" [(ngModel)]="preciosReq.medicamento" placeholder="Ej: Acetaminofén 500mg x 20 tabletas" /></div>
+          <div><label>Presentación</label><input class="input" [(ngModel)]="preciosReq.presentacion" placeholder="Tabletas, cápsulas, ampollas..." /></div>
+          <div><label>Precio que te cobraron (COP)</label><input class="input" type="number" [(ngModel)]="preciosPrecioTxt" placeholder="45000" /></div>
+          <div><label>Ciudad</label><input class="input" [(ngModel)]="preciosReq.ciudad" placeholder="Pasto, Bogotá, Cali..." /></div>
+          <div class="full">
+            <button type="button" class="btn btn-green full" (click)="preciosAnalizar()" [disabled]="preciosLoading()">
+              {{ preciosLoading() ? 'Estimando...' : 'Generar estimación' }}
+            </button>
+          </div>
+
+          @if (preciosRsp(); as p) {
+            <div class="ai-result">
+              <div class="severity-row">
+                <span class="severity-chip" [class]="severidadColor(p.evaluacionSobreprecio)">{{ p.evaluacionSobreprecio.replace('_',' ') }}</span>
+                @if (p.porcentajeDesviacion !== 0) { <span class="chip-outline">Desviación vs promedio: {{ p.porcentajeDesviacion > 0 ? '+' : '' }}{{ p.porcentajeDesviacion.toFixed(1) }}%</span> }
+                @if (p.modoDemo) { <span class="chip-outline demo">MODO DEMO</span> }
+              </div>
+              <div class="price-row">
+                <div><strong>Mínimo esperado</strong><br/>COP {{ p.precioEsperadoMin.toLocaleString() }}</div>
+                <div><strong>Promedio mercado</strong><br/>COP {{ p.precioPromedio.toLocaleString() }}</div>
+                <div><strong>Máximo esperado</strong><br/>COP {{ p.precioEsperadoMax.toLocaleString() }}</div>
+              </div>
+              <h3>Comparativa farmacias (demo):</h3>
+              <table>
+                <thead><tr><th>Farmacia</th><th>Precio (COP)</th><th>Disponibilidad</th><th></th></tr></thead>
+                <tbody>
+                  @for (f of p.comparativa; track f.nombre) {
+                    <tr>
+                      <td>{{ f.nombre }}</td>
+                      <td>{{ f.precio.toLocaleString() }}</td>
+                      <td>{{ f.disponibilidad }}</td>
+                      <td><a [href]="f.url" target="_blank" rel="noopener" class="btn-sm">Ir</a></td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+              @if (p.alertas?.length) {
+                <h3>Alertas del modelo:</h3>
+                <ul> @for (a of p.alertas; track a) { <li>{{ a }}</li> } </ul>
+              }
+              <div class="reco"><strong>Recomendación:</strong><br/>{{ p.recomendacion }}</div>
+            </div>
+          }
+        </div>
+      }
+    </main>
+  </div>
+</div>

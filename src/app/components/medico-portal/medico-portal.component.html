@@ -1,0 +1,340 @@
+<div class="portal-layout with-sidebar medico">
+  <app-portal-sidebar theme="medico" [items]="menuItems()" [activeTab]="tab()" [activeSub]="sub()"
+    [expandedIds]="expandedMenus()" (navigate)="onNavigate($event)" (toggleGroup)="onToggleGroup($event)" />
+
+  <div class="portal-main">
+    <header class="portal-header medico-header">
+      <div class="header-main">
+        <h1>{{ pageTitle() }}</h1>
+        @if (perfil(); as pr) {
+        <span class="sub">{{ pr.especialidad }} @if (pr.consultorio) { · {{ pr.consultorio }} }</span>
+        }
+        <app-session-timeout rol="MEDICO" theme="medico" />
+      </div>
+      <button type="button" class="btn logout" (click)="auth.logout()">Cerrar sesión</button>
+    </header>
+
+    <main class="portal-content">
+      @if (tab() === 'inicio' && dashboard(); as d) {
+      <div class="stats">
+        <div class="stat-card"><span>Total citas</span><strong>{{ d.totalCitas }}</strong></div>
+        <div class="stat-card warn"><span>Pendientes</span><strong>{{ d.citasPendientes }}</strong></div>
+        <div class="stat-card"><span>Aceptadas</span><strong>{{ d.citasAceptadas }}</strong></div>
+        <div class="stat-card"><span>Citas hoy</span><strong>{{ d.citasHoy }}</strong></div>
+        <div class="stat-card"><span>Horarios activos</span><strong>{{ d.horariosActivos }}</strong></div>
+      </div>
+      }
+
+      @if (tab() === 'citas') {
+      <div class="toolbar">
+        <h2 class="section-title">Citas asignadas</h2>
+      </div>
+      @if (citasFiltradas().length === 0) {
+      <p class="empty">No hay citas en esta categoría.</p>
+      } @else {
+      <table>
+        <thead>
+          <tr>
+            <th>Paciente</th>
+            <th>Fecha</th>
+            <th>Motivo</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of citasFiltradas(); track c.id) {
+          <tr>
+            <td>{{ c.pacienteNombre }}</td>
+            <td>{{ c.fechaHora | date:'medium' }}</td>
+            <td>{{ c.motivo || '—' }}
+              @if (c.triageResumen) { <small>{{ c.triageSeveridad }} · Prioridad {{ c.triagePrioridad }}/10: {{
+                c.triageResumen }}</small> }
+              @if (c.dermatologiaScoreRiesgo != null) { <small>Orientación de piel: riesgo {{ c.dermatologiaScoreRiesgo
+                }}</small> }
+            </td>
+            <td><span [class]="badgeClass(c.estado)">{{ c.estado }}</span></td>
+            <td class="actions">
+              @if (c.estado === 'PENDIENTE') {
+              <button type="button" class="btn-sm ok" (click)="aceptar(c.id)">Aceptar</button>
+              <button type="button" class="btn-sm no" (click)="rechazar(c.id)">Rechazar</button>
+              }
+              <button type="button" class="btn-sm info" (click)="verPaciente(c.id)">Ver ficha</button>
+            </td>
+          </tr>
+          }
+        </tbody>
+      </table>
+      }
+      }
+
+      @if (tab() === 'horarios' && sub() === 'lista') {
+      <h2 class="section-title">Mis horarios de atención</h2>
+      <ul class="horarios-list">
+        @for (h of horarios(); track h.id) {
+        <li>
+          Día {{ h.diaSemana }}: {{ h.horaInicio }} - {{ h.horaFin }}
+          <button type="button" class="btn-sm no" (click)="eliminarHorario(h.id)">Eliminar</button>
+        </li>
+        }
+      </ul>
+      @if (horarios().length === 0) {
+      <p class="empty">No hay horarios registrados.</p>
+      }
+      }
+
+      @if (tab() === 'horarios' && sub() === 'agregar') {
+      <div class="card section">
+        <h2 class="section-title">Agregar horario</h2>
+        <div class="form-row">
+          <div><label>Día (1=Lun)</label><input class="input" type="number" min="1" max="7" [(ngModel)]="diaSemana" />
+          </div>
+          <div><label>Inicio</label><input class="input" type="time" [(ngModel)]="horaInicio" /></div>
+          <div><label>Fin</label><input class="input" type="time" [(ngModel)]="horaFin" /></div>
+          <button type="button" class="btn btn-blue" (click)="agregarHorario()">Agregar horario</button>
+        </div>
+      </div>
+      }
+
+      @if (tab() === 'paciente' && pacienteSeleccionado(); as p) {
+      <div class="card section ficha">
+        <h2 class="section-title">Ficha del paciente</h2>
+        <div class="ficha-grid">
+          <p><strong>Nombre:</strong> {{ p.nombre }}</p>
+          <p><strong>Email:</strong> {{ p.email }}</p>
+          <p><strong>Documento:</strong> {{ p.documento || 'N/A' }}</p>
+          <p><strong>Teléfono:</strong> {{ p.telefono || 'N/A' }}</p>
+          <p><strong>Género:</strong> {{ p.genero || 'N/A' }}</p>
+          <p><strong>Tipo sangre:</strong> {{ p.tipoSangre || 'N/A' }}</p>
+          <p><strong>Ciudad:</strong> {{ p.ciudad || 'N/A' }}</p>
+          <p><strong>Alergias:</strong> {{ p.alergias || 'Ninguna registrada' }}</p>
+          <p><strong>Contacto emergencia:</strong> {{ p.contactoEmergencia || 'N/A' }} ({{ p.telefonoEmergencia || ''
+            }})</p>
+          @if (p.observaciones) {
+          <p class="full"><strong>Observaciones:</strong> {{ p.observaciones }}</p>
+          }
+        </div>
+        @if (citaEnRevision(); as cita) {
+        <h3>Motivo y orientación previa a consulta</h3>
+        <p><strong>Motivo:</strong> {{ cita.motivo || 'No informado' }}</p>
+        <p><strong>Triage:</strong> {{ cita.triageSeveridad || 'No registrado' }} · ESI {{ cita.triageNivelEsi ?? '—' }}
+          · prioridad {{ cita.triagePrioridad ?? '—' }}/10</p>
+        @if (cita.triageSintomas) { <p><strong>Síntomas referidos:</strong> {{ cita.triageSintomas }}</p> }
+        @if (cita.triageDuracion) { <p><strong>Duración:</strong> {{ cita.triageDuracion }}</p> }
+        @if (cita.triageAntecedentes) { <p><strong>Antecedentes/alergias:</strong> {{ cita.triageAntecedentes }}</p> }
+        @if (cita.triageResumen) { <p>{{ cita.triageResumen }}</p> }
+        @if (cita.dermatologiaReportaIa) { <p><strong>Orientación de piel generada:</strong> {{
+          cita.dermatologiaReportaIa }}</p> }
+        }
+        <h3>Consultas previas</h3>
+        @if (historialPaciente().length) {
+        <table>
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Médico</th>
+              <th>Motivo</th>
+              <th>Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (anterior of historialPaciente(); track anterior.id) {
+            <tr>
+              <td>{{ anterior.fechaHora | date:'mediumDate' }}</td>
+              <td>{{ anterior.medicoNombre }} · {{ anterior.medicoEspecialidad }}</td>
+              <td>{{ anterior.motivo || '—' }} @if (anterior.triageResumen) { <small>{{ anterior.triageResumen
+                  }}</small> }</td>
+              <td>{{ anterior.estado }}</td>
+            </tr>
+            }
+          </tbody>
+        </table>
+        } @else { <p class="empty">No hay consultas previas registradas.</p> }
+        <div class="actions-bar" style="margin-top: 1.5rem;">
+          <button type="button" class="btn btn-blue" (click)="tab.set('soap'); sub.set('')">🧾 Ir a escriba
+            SOAP</button>
+        </div>
+      </div>
+      }
+
+      @if (tab() === 'soap') {
+      <section class="card section ai-panel">
+        <header class="section-head">
+          <h2 class="section-title">🧾 Escriba médico · Nota SOAP automatizada</h2>
+          <span class="chip-outline demo">Audio enviado para transcripción; borrador sujeto a revisión médica</span>
+        </header>
+
+        <div class="actions-bar">
+          <label class="check-row"><input type="checkbox" [(ngModel)]="consentimientoAudio" /> Confirmo que el paciente
+            autorizó grabar y enviar el audio clínico al proveedor configurado para transcripción.</label>
+          @if (!grabandoConsulta()) {
+          <button type="button" class="btn btn-blue" (click)="iniciarGrabacion()"
+            [disabled]="transcribiendoAudio()">Iniciar grabación</button>
+          } @else {
+          <button type="button" class="btn-sm no" (click)="detenerGrabacion()">Detener grabación</button>
+          }
+          @if (transcribiendoAudio()) { <span>Transcribiendo con Whisper…</span> }
+          @if (vozError()) { <span class="warn-big">{{ vozError() }}</span> }
+        </div>
+        @if (transcripcionEnVivo()) { <p class="hint" aria-live="polite"><strong>Transcripción provisional:</strong> {{
+          transcripcionEnVivo() }}</p> }
+
+        <div class="form-grid">
+          <div>
+            <label>Nombre del paciente</label>
+            <input class="input" type="text" [(ngModel)]="soapReq.nombrePaciente" placeholder="Ej: Carlos Méndez" />
+          </div>
+          <div>
+            <label>Motivo inicial</label>
+            <input class="input" type="text" [(ngModel)]="soapReq.motivoInicial"
+              placeholder="Ej: Dolor torácico 2 días" />
+          </div>
+          <div class="full">
+            <label>Transcripción de la consulta (voz o texto libre)</label>
+            <textarea class="input" rows="8" [(ngModel)]="soapReq.transcripcion"
+              placeholder="Paciente refiere dolor opresivo en el hemitórax izquierdo desde hace 48 horas, irradiado a mandíbula, asociado a diaforesis y disnea al esfuerzo. Antecedentes de HTA por 10 años en tratamiento con losartán 50mg/día. Examen físico: TA 158/96, FC 98, saturación 96% en aire ambiente. Ruidos cardiacos rítmicos, no soplos. Pulmones con murmullo conservado. ECG realizado en consulta: sin alteraciones agudas."></textarea>
+          </div>
+        </div>
+
+        <label class="check-row"><input type="checkbox" [(ngModel)]="consentimientoSoapAi" /> Confirmo la autorización
+          del paciente para enviar esta transcripción al servicio de IA.</label>
+
+        <div class="actions-bar">
+          <button type="button" class="btn btn-blue" [disabled]="soapLoading() || !consentimientoSoapAi"
+            (click)="soapGenerar()">
+            {{ soapLoading() ? 'Generando SOAP…' : '🤖 Generar nota SOAP' }}
+          </button>
+          @if (soapRsp()?.modoDemo) { <span class="severity-chip bg-orange">MODO DEMO</span> }
+          @if (error()) { <span class="warn-big">{{ error() }}</span> }
+        </div>
+
+        @if (soapRsp(); as r) {
+        <div class="ai-result">
+          <div class="severity-row">
+            <span class="severity-chip bg-blue">Especialidad: {{ r.especialidadSugerida }}</span>
+            @if (r.diagnosticoPresuntivo) {
+            <span class="severity-chip bg-orange">Dx presuntivo: {{ r.diagnosticoPresuntivo }}</span>
+            }
+          </div>
+
+          <div class="form-grid" style="margin-top: 1rem;">
+            <div class="card inner" style="border-left: 4px solid var(--green);">
+              <h4 style="color: var(--green); margin-top: 0;">S · Subjetivo</h4>
+              <p style="margin: 0; white-space: pre-wrap;">{{ r.subjetivo }}</p>
+            </div>
+            <div class="card inner" style="border-left: 4px solid var(--blue);">
+              <h4 style="color: var(--blue); margin-top: 0;">O · Objetivo</h4>
+              <p style="margin: 0; white-space: pre-wrap;">{{ r.objetivo }}</p>
+            </div>
+            <div class="card inner" style="border-left: 4px solid var(--orange);">
+              <h4 style="color: var(--orange); margin-top: 0;">A · Apreciación</h4>
+              <p style="margin: 0; white-space: pre-wrap;">{{ r.apreciacion }}</p>
+            </div>
+            <div class="card inner" style="border-left: 4px solid #7c3aed;">
+              <h4 style="color: #7c3aed; margin-top: 0;">P · Plan</h4>
+              <p style="margin: 0; white-space: pre-wrap;">{{ r.plan }}</p>
+            </div>
+          </div>
+
+          @if (r.procedimientos?.length) {
+          <h4 style="margin-top: 1rem;">📌 Procedimientos / exámenes sugeridos</h4>
+          <ul style="margin: 0; padding-left: 1.25rem;">
+            @for (p of r.procedimientos; track p) { <li>{{ p }}</li> }
+          </ul>
+          }
+        </div>
+        }
+      </section>
+      }
+
+      @if (tab() === 'precios') {
+      <section class="card section ai-panel">
+        <header class="section-head">
+          <h2 class="section-title">💊 Estimación orientativa de precios</h2>
+          <span class="chip-outline demo">No consulta precios de mercado en tiempo real</span>
+        </header>
+
+        <div class="form-grid">
+          <div>
+            <label>Medicamento</label>
+            <input class="input" type="text" [(ngModel)]="preciosReq.medicamento" placeholder="Ej: Atorvastatina" />
+          </div>
+          <div>
+            <label>Presentación</label>
+            <input class="input" type="text" [(ngModel)]="preciosReq.presentacion" placeholder="Ej: 20mg · caja x30" />
+          </div>
+          <div>
+            <label>Precio reportado por el paciente (COP)</label>
+            <input class="input" type="number" [(ngModel)]="preciosPrecioTxt" placeholder="Ej: 45000" />
+          </div>
+          <div>
+            <label>Ciudad</label>
+            <input class="input" type="text" [(ngModel)]="preciosReq.ciudad" placeholder="Bogotá, Medellín…" />
+          </div>
+        </div>
+
+        <div class="actions-bar">
+          <button type="button" class="btn btn-blue" [disabled]="preciosLoading()" (click)="preciosAnalizar()">
+            {{ preciosLoading() ? 'Analizando mercado…' : '🔍 Triangular precio' }}
+          </button>
+          @if (preciosRsp()?.modoDemo) { <span class="severity-chip bg-orange">MODO DEMO</span> }
+          @if (error()) { <span class="warn-big">{{ error() }}</span> }
+        </div>
+
+        @if (preciosRsp(); as r) {
+        <div class="ai-result">
+          <div class="severity-row">
+            <span class="severity-chip" [class]="severidadColor(r.nivelSobreprecio)">
+              Nivel: {{ r.nivelSobreprecio }}
+            </span>
+            <span class="severity-chip bg-blue">Desviación: {{ r.porcentajeDesviacion }}%</span>
+            @if (r.sospechaDesabastecimiento) {
+            <span class="severity-chip bg-red">⚠ Riesgo desabastecimiento</span>
+            }
+          </div>
+
+          <div class="card inner" style="margin-top: 1rem;">
+            <p style="margin: 0 0 0.5rem 0;"><strong>Evaluación:</strong> {{ r.evaluacion }}</p>
+            @if (r.recomendacion) {
+            <p style="margin: 0;"><strong>Recomendación:</strong> {{ r.recomendacion }}</p>
+            }
+          </div>
+
+          <div class="price-row">
+            <div><span>Mínimo mercado</span><strong>${{ r.precioMinimo | number }}</strong></div>
+            <div><span>Promedio</span><strong>${{ r.precioPromedio | number }}</strong></div>
+            <div><span>Máximo</span><strong>${{ r.precioMaximo | number }}</strong></div>
+          </div>
+
+          <h4 style="margin-top: 1rem;">🏥 Comparativa por farmacia</h4>
+          <table>
+            <thead>
+              <tr>
+                <th>Farmacia</th>
+                <th>Precio</th>
+                <th>Desviación</th>
+                <th>Ubicación</th>
+                <th>Estado</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (f of r.comparativa; track f.farmacia) {
+              <tr>
+                <td>{{ f.farmacia }}</td>
+                <td>${{ f.precio | number }}</td>
+                <td>{{ f.porcentajeDiferencia }}%</td>
+                <td>{{ f.ciudad }}</td>
+                <td><span class="severity-chip" [class]="f.sobreprecio ? 'bg-red' : 'bg-green'">
+                    {{ f.sobreprecio ? 'SOBREPRECIO' : 'ACEPTABLE' }}
+                  </span></td>
+              </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        }
+      </section>
+      }
+    </main>
+  </div>
+</div>

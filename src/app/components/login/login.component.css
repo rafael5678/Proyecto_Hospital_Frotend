@@ -1,0 +1,82 @@
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+}
+
+.login-page.admin { background: linear-gradient(135deg, #6a82fb, #9c27b0); }
+.login-page.medico { background: linear-gradient(135deg, #3b82f6, #1d4ed8); }
+.login-page.paciente { background: #10a37f; }
+
+.login-header { text-align: center; color: white; margin-bottom: 1.5rem; }
+.icon-circle {
+  width: 72px; height: 72px;
+  background: white;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 2rem;
+  margin: 0 auto 1rem;
+}
+.login-header h1 { font-size: 1.75rem; }
+.login-header p { opacity: 0.9; }
+
+.login-card { width: 100%; max-width: 400px; }
+.login-card h2 { margin-bottom: 1.5rem; font-size: 1.25rem; }
+
+form label {
+  display: block;
+  font-size: 0.875rem;
+  color: #64748b;
+  margin-bottom: 0.35rem;
+  margin-top: 0.75rem;
+}
+form label:first-of-type { margin-top: 0; }
+
+.btn-primary {
+  width: 100%;
+  margin-top: 1.25rem;
+  color: white;
+}
+.admin .btn-primary { background: #7c3aed; }
+.medico .btn-primary { background: #2563eb; }
+.paciente .btn-primary { background: #10a37f; }
+
+.hint-msg {
+  color: #1e40af;
+  background: #dbeafe;
+  padding: 0.6rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  margin-top: 0.75rem;
+  line-height: 1.4;
+}
+
+.success-msg {
+  color: #047857;
+  background: #d1fae5;
+  padding: 0.6rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  margin-top: 0.75rem;
+}
+
+.register-link {
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+}
+.register-link a { color: #10a37f; font-weight: 600; }
+.admin .register-link a, .medico .register-link a { color: #7c3aed; }
+
+.back-link {
+  display: block;
+  text-align: center;
+  margin-top: 1rem;
+  font-size: 0.875rem;
+  color: #7c3aed;
+}
+.medico .back-link { color: #2563eb; }
+.paciente .back-link { color: #64748b; }

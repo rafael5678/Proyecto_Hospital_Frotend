@@ -1,0 +1,54 @@
+<aside
+  class="sidebar"
+  [class.theme-medico]="theme() === 'medico'"
+  [class.theme-paciente]="theme() === 'paciente'"
+>
+  <div class="sidebar-brand">
+    <span class="brand-icon">{{ theme() === 'admin' ? '⚕' : theme() === 'medico' ? '🩺' : '💚' }}</span>
+    <span class="brand-text">{{
+      theme() === 'admin' ? 'Hospy Admin' : theme() === 'medico' ? 'Hospy Médico' : 'Hospy Paciente'
+    }}</span>
+  </div>
+  <nav class="sidebar-nav">
+    @for (item of items(); track item.id) {
+      @if (item.children?.length) {
+        <div class="nav-group" [class.expanded]="isExpanded(item.id)" [class.has-active]="hasActiveChild(item)">
+          <button
+            type="button"
+            class="nav-group-btn"
+            (click)="onClick(item, true)"
+            [attr.aria-expanded]="isExpanded(item.id)"
+          >
+            <span class="nav-icon">{{ item.icon }}</span>
+            <span class="nav-label">{{ item.label }}</span>
+            <span class="chevron">{{ isExpanded(item.id) ? '▾' : '▸' }}</span>
+          </button>
+          @if (isExpanded(item.id)) {
+            <div class="nav-children">
+              @for (child of item.children; track child.id) {
+                <button
+                  type="button"
+                  class="nav-child-btn"
+                  [class.active]="isActive(child)"
+                  (click)="onClick(child, false)"
+                >
+                  {{ child.label }}
+                </button>
+              }
+            </div>
+          }
+        </div>
+      } @else {
+        <button
+          type="button"
+          class="nav-item-btn"
+          [class.active]="isActive(item)"
+          (click)="onClick(item, false)"
+        >
+          <span class="nav-icon">{{ item.icon }}</span>
+          <span class="nav-label">{{ item.label }}</span>
+        </button>
+      }
+    }
+  </nav>
+</aside>

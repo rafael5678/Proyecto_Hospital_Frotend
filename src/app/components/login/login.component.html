@@ -1,0 +1,36 @@
+<div class="login-page" [class]="portal">
+  <div class="login-header">
+    <div class="icon-circle">{{ portal === 'admin' ? '&#128737;' : portal === 'medico' ? '&#128196;' : '&#9825;' }}</div>
+    <h1>{{ title }}</h1>
+    <p>Sistema Hospy</p>
+  </div>
+
+  <div class="card login-card">
+    <h2>Iniciar Sesión</h2>
+    <form (ngSubmit)="onSubmit()">
+      <label>{{ portal === 'admin' ? 'Usuario' : 'Email' }}</label>
+      <input class="input" type="text" [(ngModel)]="email" name="email"
+        [placeholder]="portal === 'admin' ? 'correo institucional' : 'tucorreo@ejemplo.com'" required />
+
+      <label>Contraseña</label>
+      <input class="input" type="password" [(ngModel)]="password" name="password" required />
+
+      @if (environment.production && (wakingServer() || loading())) {
+        <p class="hint-msg">Primera vez puede tardar ~1 min (servidor despertando)…</p>
+      }
+      @if (success()) { <p class="success-msg">{{ success() }}</p> }
+      @if (error()) { <p class="error-msg">{{ error() }}</p> }
+
+      <button class="btn btn-primary" type="submit" [disabled]="loading()">
+        {{ loading() ? 'Ingresando...' : 'Iniciar Sesión' }}
+      </button>
+    </form>
+
+    @if (portal === 'paciente') {
+      <p class="register-link">
+        ¿No tienes cuenta? <a routerLink="/paciente/registro">Regístrate aquí</a>
+      </p>
+    }
+    <a class="back-link" routerLink="/">← Volver al selector de portales</a>
+  </div>
+</div>

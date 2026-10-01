@@ -1,0 +1,57 @@
+.portal-layout.with-sidebar {
+  display: flex;
+  min-height: 100vh;
+}
+
+.portal-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: #f0f9ff;
+}
+
+.medico-header {
+  border-bottom: 3px solid #0369a1;
+  background: white;
+}
+
+.medico-header h1 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.section-title {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+}
+
+.portal-header { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+.portal-header .header-main { flex: 1; min-width: 12rem; }
+.portal-header h1 { margin: 0; }
+.session-guard { display: block; font-size: 0.75rem; color: #64748b; margin-top: 0.15rem; }
+.sub { color: #64748b; font-size: 0.9rem; width: 100%; }
+.stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+.stat-card { background: white; padding: 1rem; border-radius: 12px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+.stat-card strong { color: #2563eb; font-size: 1.4rem; }
+.stat-card.warn strong { color: #d97706; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.ficha-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem 1rem; }
+.ficha-grid .full { grid-column: 1 / -1; }
+@media (max-width: 768px) {
+  .portal-layout.with-sidebar {
+    flex-direction: column;
+  }
+}
+.actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
+.btn-sm { padding: 0.35rem 0.6rem; font-size: 0.75rem; border: none; border-radius: 6px; cursor: pointer; }
+.btn-sm.ok { background: #d1fae5; color: #065f46; }
+.btn-sm.no { background: #fee2e2; color: #991b1b; }
+.btn-sm.info { background: #dbeafe; color: #1d4ed8; }
+.btn-blue { background: #2563eb; color: white; }
+.form-row { display: flex; gap: 1rem; flex-wrap: wrap; align-items: flex-end; margin-bottom: 1rem; }
+.form-row > div { flex: 1; min-width: 120px; }
+.form-row label { font-size: 0.8rem; color: #64748b; }
+.horarios-list { list-style: none; }
+.horarios-list li { padding: 0.5rem 0; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
+.empty { color: #64748b; text-align: center; padding: 2rem; }

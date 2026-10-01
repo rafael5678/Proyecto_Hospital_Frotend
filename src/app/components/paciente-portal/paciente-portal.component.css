@@ -1,0 +1,291 @@
+:host {
+  display: block;
+  width: 100%;
+}
+
+.portal-layout.with-sidebar {
+  display: flex !important;
+  flex-direction: row !important;
+  min-height: 100vh;
+}
+
+.portal-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  background: #f0fdf4;
+}
+
+.paciente-content {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: clamp(1rem, 2.5vw, 2.25rem);
+}
+
+.booking-card {
+  width: 100%;
+  max-width: 980px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.booking-card .section-title {
+  margin-bottom: 0;
+}
+
+.booking-card > label:not(.check-row) {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.booking-card .hint {
+  line-height: 1.55;
+}
+
+.booking-card .form-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 0;
+}
+
+.booking-card .form-row > div {
+  min-width: 0;
+}
+
+.booking-card .form-row label {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.booking-card .input {
+  min-width: 0;
+}
+
+.booking-card textarea.input {
+  min-height: 100px;
+  resize: vertical;
+  line-height: 1.5;
+}
+
+.booking-card .check-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  width: 100%;
+  padding: 0.8rem 0.9rem;
+  border: 1px solid #d6e8e1;
+  border-radius: 8px;
+  background: #f7fcf9;
+  color: #334155;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  cursor: pointer;
+}
+
+.booking-card .check-row input {
+  width: 1.1rem;
+  height: 1.1rem;
+  flex: 0 0 auto;
+  margin: 0.1rem 0 0;
+  accent-color: #078765;
+}
+
+.triage-result {
+  padding: 1rem 1.1rem;
+  border: 1px solid #cce9dc;
+  border-left: 4px solid #078765;
+  border-radius: 8px;
+  background: #f6fcf8;
+  line-height: 1.55;
+}
+
+.triage-result p {
+  margin-top: 0.5rem;
+}
+
+.booking-card .btn-green {
+  align-self: flex-start;
+  min-height: 44px;
+  margin-top: 0.2rem;
+}
+
+.paciente-header {
+  border-bottom: 3px solid #10a37f;
+  background: white;
+}
+
+.paciente-header h1 {
+  margin: 0;
+  font-size: 1.15rem;
+}
+
+.session-user {
+  display: block;
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.logout {
+  background: #fee2e2;
+  color: #991b1b;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.section-title {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card {
+  background: white;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  text-align: center;
+}
+
+.stat-card span {
+  display: block;
+  font-size: 0.8rem;
+  color: #64748b;
+}
+
+.stat-card strong {
+  font-size: 1.5rem;
+  color: #10a37f;
+}
+
+.alert {
+  padding: 0.75rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.alert.ok {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.alert.err {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.medico-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.medico-card {
+  background: white;
+  padding: 1rem;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.medico-card:hover {
+  box-shadow: 0 4px 16px rgba(16, 163, 127, 0.2);
+}
+
+.medico-card .esp {
+  color: #10a37f;
+  font-weight: 600;
+}
+
+.filter {
+  max-width: 320px;
+  margin-bottom: 1rem;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+
+.form-grid .full {
+  grid-column: 1 / -1;
+}
+
+.btn-green {
+  background: #10a37f;
+  color: white;
+  border: none;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  margin-top: 0.75rem;
+}
+
+.hint {
+  font-size: 0.85rem;
+  color: #64748b;
+}
+
+.empty {
+  color: #64748b;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.btn-sm {
+  padding: 0.35rem 0.6rem;
+  font-size: 0.75rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-sm.cancel {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+@media (max-width: 768px) {
+  .portal-layout.with-sidebar {
+    flex-direction: column !important;
+  }
+
+  .paciente-content {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .booking-card {
+    padding: 1.15rem;
+  }
+
+  .booking-card .form-row {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .booking-card .btn-green {
+    width: 100%;
+  }
+}
