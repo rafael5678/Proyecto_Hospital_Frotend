@@ -23,7 +23,7 @@ export interface AiTriageResponse {
 }
 
 export interface AiDermatologiaRequest {
-  descripcion: string;
+  descripcion?: string;
   imagenBase64?: string;
   tiempoEvolucion?: string;
   sintomasAsociados?: string;

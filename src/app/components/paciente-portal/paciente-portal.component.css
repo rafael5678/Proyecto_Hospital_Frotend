@@ -114,6 +114,32 @@
   margin-top: 0.5rem;
 }
 
+.triage-result ul {
+  margin: 0.45rem 0 0 1.1rem;
+}
+
+.skin-preview {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  padding: 0.75rem;
+  border: 1px solid #d6e8e1;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.skin-preview img {
+  width: 120px;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.medico-asignado {
+  color: #0f766e;
+  font-weight: 600;
+}
+
 .booking-card .btn-green {
   align-self: flex-start;
   min-height: 44px;

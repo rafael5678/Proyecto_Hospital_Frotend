@@ -51,7 +51,7 @@
       @if (tab() === 'agendar') {
         <div class="card section booking-card">
           <h2 class="section-title">Agendar cita médica</h2>
-          <p class="hint">Obligatorio: síntomas, autorización, médico y fecha. Opcional: duración, antecedentes, piel y nota. Sin lesión de piel puedes agendar igual.</p>
+          <p class="hint">Obligatorio: síntomas, autorización, médico y fecha. Si marcas un problema de piel puedes describirlo o subir una foto. El análisis asigna al médico de la especialidad (o avisa si no hay uno).</p>
           <label>Síntomas y motivo de consulta *</label>
           <textarea class="input" rows="4" [(ngModel)]="sintomas" placeholder="Describe qué sientes, desde cuándo y cómo ha cambiado..."></textarea>
           <div class="form-row">
@@ -66,8 +66,19 @@
           </div>
           <label class="check-row"><input type="checkbox" [(ngModel)]="tieneLesionPiel" (ngModelChange)="onPielToggle()" /> Tengo un problema de piel o una lesión (opcional)</label>
           @if (tieneLesionPiel) {
-            <label>Describe la lesión o cambio en la piel *</label>
+            <label>Describe la lesión o cambio en la piel (opcional si subes foto)</label>
             <textarea class="input" rows="3" [(ngModel)]="dermReq.descripcion" placeholder="Ubicación, aspecto, evolución, dolor o sangrado..."></textarea>
+            <label>Foto de evidencia</label>
+            <input class="input" type="file" accept="image/*" (change)="onFotoPiel($event)" />
+            @if (dermFotoPreview(); as foto) {
+              <div class="skin-preview">
+                <img [src]="foto" alt="Vista previa de la lesión" />
+                <div>
+                  <p class="hint">{{ dermFotoNombre || 'Foto lista para analizar' }}</p>
+                  <button type="button" class="btn-sm cancel" (click)="quitarFotoPiel()">Quitar foto</button>
+                </div>
+              </div>
+            }
           }
           <label class="check-row"><input type="checkbox" [(ngModel)]="consentimientoTriage" /> Autorizo enviar mis síntomas al servicio de IA *</label>
           <button type="button" class="btn btn-green" (click)="triageAnalizar()" [disabled]="triageLoading() || !sintomas.trim() || !consentimientoTriage">
@@ -86,21 +97,38 @@
             <div class="triage-result" role="status">
               <strong>Orientación de piel: {{ derm.nivelRiesgo }} ({{ derm.scoreRiesgo }})</strong>
               <p>{{ derm.advertencia }}</p>
+              <p>{{ derm.recomendaciones }}</p>
+              @if (derm.diagnosticosDiferenciales.length) {
+                <p>Posibles orientaciones: {{ derm.diagnosticosDiferenciales.join(' · ') }}</p>
+              }
+              @if (derm.caracteristicasObservadas.length) {
+                <ul>
+                  @for (c of derm.caracteristicasObservadas; track c) {
+                    <li>{{ c }}</li>
+                  }
+                </ul>
+              }
               @if (derm.modoDemo) { <p class="hint">Análisis de demostración basado en texto; no se ha procesado una imagen clínica.</p> }
             </div>
           }
           @if (tieneLesionPiel) {
-            <button type="button" class="btn btn-green" (click)="dermAnalizar()" [disabled]="dermLoading() || !dermReq.descripcion.trim() || !consentimientoTriage">
+            <button type="button" class="btn btn-green" (click)="dermAnalizar()" [disabled]="dermLoading() || !puedeAnalizarPiel() || !consentimientoTriage">
               {{ dermLoading() ? 'Analizando piel...' : 'Analizar lesión de piel' }}
             </button>
           }
           <label>Médico *</label>
+          @if (avisoMedico()) {
+            <p class="hint medico-asignado">{{ avisoMedico() }}</p>
+          }
           <select class="input" [(ngModel)]="medicoId" (ngModelChange)="onMedicoChange()">
             <option [ngValue]="null">Selecciona un médico</option>
             @for (m of medicosFiltrados(); track m.id) {
-              <option [ngValue]="m.id">{{ m.nombre }} — {{ m.especialidad }}{{ triageRsp()?.especialidadRecomendada === m.especialidad ? ' (sugerido por IA)' : '' }}</option>
+              <option [ngValue]="m.id">{{ m.nombre }} — {{ m.especialidad }}{{ especialidadObjetivo() === m.especialidad ? ' (asignado por IA)' : '' }}</option>
             }
           </select>
+          @if (medicoAsignado(); as med) {
+            <p class="hint">Cita con <strong>{{ med.nombre }}</strong> ({{ med.especialidad }}).</p>
+          }
           @if (horarios().length) {
             <p class="hint">Horarios del médico:</p>
             <ul>

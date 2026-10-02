@@ -93,6 +93,9 @@ export class PacientePortalComponent implements OnInit {
   tieneLesionPiel = false;
   consentimientoTriage = false;
   filtroEspecialidad = '';
+  dermFotoNombre = '';
+  dermFotoPreview = signal<string | null>(null);
+  avisoMedico = signal('');
   error = signal('');
   ok = signal('');
   loading = signal(false);
@@ -203,15 +206,91 @@ export class PacientePortalComponent implements OnInit {
   puedeAgendar(): boolean {
     if (this.loading() || this.triageLoading() || this.dermLoading()) return false;
     if (!this.sintomas.trim() || !this.consentimientoTriage || !this.medicoId || !this.fechaHora) return false;
-    if (this.tieneLesionPiel && !this.dermReq.descripcion.trim()) return false;
+    if (this.tieneLesionPiel && !this.puedeAnalizarPiel()) return false;
     return true;
+  }
+
+  puedeAnalizarPiel(): boolean {
+    return !!(this.dermReq.descripcion?.trim() || this.dermReq.imagenBase64);
   }
 
   onPielToggle() {
     if (!this.tieneLesionPiel) {
       this.dermReq.descripcion = '';
+      this.quitarFotoPiel();
       this.dermRsp.set(null);
     }
+  }
+
+  onFotoPiel(ev: Event) {
+    const file = (ev.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      this.error.set('Sube una foto en JPG o PNG.');
+      return;
+    }
+    if (file.size > 8_000_000) {
+      this.error.set('La foto debe pesar menos de 8 MB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const max = 384;
+        const scale = Math.min(1, max / Math.max(img.width, img.height));
+        const w = Math.max(1, Math.round(img.width * scale));
+        const h = Math.max(1, Math.round(img.height * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        ctx.drawImage(img, 0, 0, w, h);
+        this.dermReq.imagenBase64 = canvas.toDataURL('image/jpeg', 0.82);
+        this.dermFotoPreview.set(this.dermReq.imagenBase64);
+        this.dermFotoNombre = file.name;
+        this.dermRsp.set(null);
+        this.error.set('');
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(file);
+  }
+
+  quitarFotoPiel() {
+    this.dermReq.imagenBase64 = undefined;
+    this.dermFotoPreview.set(null);
+    this.dermFotoNombre = '';
+  }
+
+  especialidadObjetivo(): string {
+    if (this.tieneLesionPiel && this.dermRsp()) return 'Dermatología';
+    return this.triageRsp()?.especialidadRecomendada || this.filtroEspecialidad || '';
+  }
+
+  medicoAsignado(): Usuario | null {
+    return this.medicos().find(m => m.id === this.medicoId) ?? null;
+  }
+
+  asignarMedicoSegunAnalisis() {
+    const esp = this.especialidadObjetivo();
+    if (!esp) return;
+    const lista = this.medicos();
+    const n = (s?: string) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    const target = n(esp);
+    const match = lista.find(m => n(m.especialidad) === target)
+      || lista.find(m => {
+        const e = n(m.especialidad);
+        return e.includes(target) || target.includes(e);
+      });
+    if (match) {
+      this.medicoId = match.id;
+      this.avisoMedico.set(`Médico asignado según el análisis: ${match.nombre} — ${match.especialidad}.`);
+      this.onMedicoChange();
+      return;
+    }
+    this.avisoMedico.set(`No hay un médico de ${esp} en el directorio. Elige otro o se asignará más adelante.`);
   }
 
   private fechaParaApi(): string {
@@ -278,6 +357,8 @@ export class PacientePortalComponent implements OnInit {
           this.triageRsp.set(null);
           this.dermRsp.set(null);
           this.tieneLesionPiel = false;
+          this.quitarFotoPiel();
+          this.avisoMedico.set('');
           this.cargarInicio();
           this.cargarHistorial();
           this.tab.set('historial');
@@ -291,9 +372,13 @@ export class PacientePortalComponent implements OnInit {
     };
 
     const despuesTriage = () => {
-      if (this.tieneLesionPiel && this.dermReq.descripcion.trim() && !this.dermRsp()) {
+      if (this.tieneLesionPiel && this.puedeAnalizarPiel() && !this.dermRsp()) {
         this.ai.dermatologia({ ...this.dermReq }).subscribe({
-          next: r => { this.dermRsp.set(r); enviar(); },
+          next: r => {
+            this.dermRsp.set(r);
+            this.asignarMedicoSegunAnalisis();
+            enviar();
+          },
           error: () => enviar()
         });
         return;
@@ -385,21 +470,26 @@ export class PacientePortalComponent implements OnInit {
         this.triageRsp.set(r);
         this.triageLoading.set(false);
         this.filtroEspecialidad = r.especialidadRecomendada || '';
-        if (this.tieneLesionPiel && this.dermReq.descripcion.trim()) this.dermAnalizar();
+        this.asignarMedicoSegunAnalisis();
+        if (this.tieneLesionPiel && this.puedeAnalizarPiel()) this.dermAnalizar();
       }
     });
   }
 
   dermAnalizar() {
-    if (!this.dermReq.descripcion.trim()) {
-      this.error.set('Describe la lesión o síntoma cutáneo para el análisis.');
+    if (!this.puedeAnalizarPiel()) {
+      this.error.set('Describe la lesión o sube una foto de evidencia.');
       return;
     }
     this.dermLoading.set(true);
     this.error.set('');
     this.dermRsp.set(null);
     this.ai.dermatologia({ ...this.dermReq }).subscribe({
-      next: (r) => { this.dermRsp.set(r); this.dermLoading.set(false); }
+      next: (r) => {
+        this.dermRsp.set(r);
+        this.dermLoading.set(false);
+        this.asignarMedicoSegunAnalisis();
+      }
     });
   }
 

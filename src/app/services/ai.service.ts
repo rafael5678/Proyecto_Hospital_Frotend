@@ -99,17 +99,24 @@ export class AiService {
     const d = (req.descripcion || '').toLowerCase();
     let nivelRiesgo = 'BAJO', scoreRiesgo = 0.18;
     let diagnosticosDiferenciales = ['Dermatitis', 'Picadura'];
-    if (/asimetr|sangra|ulcera|cambia de color/.test(d)) {
+    if (/celulitis|culebrilla|herpes zoster|herpes zóster/.test(d)) {
+      nivelRiesgo = 'ALTO'; scoreRiesgo = 0.8;
+      diagnosticosDiferenciales = ['Infección cutánea a valorar', 'Dermatología preferente'];
+    } else if (/asimetr|sangra|ulcera|cambia de color/.test(d)) {
       nivelRiesgo = 'ALTO'; scoreRiesgo = 0.78;
       diagnosticosDiferenciales = ['Lesión pigmentada a valorar', 'Consulta dermatológica urgente'];
-    } else if (/roncha|urticaria|pica/.test(d)) {
+    } else if (/roncha|urticaria|pica|varicela|tiña/.test(d)) {
       nivelRiesgo = 'MEDIO'; scoreRiesgo = 0.42;
       diagnosticosDiferenciales = ['Urticaria', 'Dermatitis atópica'];
     }
     return {
       nivelRiesgo, scoreRiesgo, diagnosticosDiferenciales,
-      caracteristicasObservadas: ['Análisis de texto local (sin imagen)'],
-      recomendaciones: 'Clasificación local tipo HAM10000. Correlacionar con examen físico.',
+      caracteristicasObservadas: [
+        req.imagenBase64
+          ? 'El servidor de IA no respondió; la foto no se pudo clasificar en este intento.'
+          : 'Análisis de texto local (sin imagen)'
+      ],
+      recomendaciones: 'Clasificación local de respaldo. Correlacionar con examen físico en Dermatología.',
       advertencia: 'No sustituye consulta con dermatólogo.',
       modoDemo: false
     };
