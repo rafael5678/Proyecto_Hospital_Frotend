@@ -398,3 +398,5 @@ export class MedicoPortalComponent implements OnInit, OnDestroy {
 }
 
 // Controlador de Portal Médico: Controla la visualización de la lista de pacientes y registro de diagnósticos.
+
+// Logica de Portal Medico: Marcado de citas atendidas y refresco automatico.
