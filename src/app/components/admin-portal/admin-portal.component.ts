@@ -386,3 +386,5 @@ export class AdminPortalComponent implements OnInit {
 }
 
 // Controlador de Portal Admin: Provee interfaz de supervisión de cuentas, reseteo de claves y métricas globales.
+
+// Logica de Portal Admin: Filtros en tiempo real para busqueda de usuarios por texto.
