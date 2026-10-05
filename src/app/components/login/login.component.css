@@ -81,3 +81,5 @@ form label:first-of-type { margin-top: 0; }
 }
 .medico .back-link { color: #2563eb; }
 .paciente .back-link { color: #64748b; }
+
+/* Estilos de Login: Tarjeta centrada con padding adaptable para visualización en pantallas móviles y escritorio */
