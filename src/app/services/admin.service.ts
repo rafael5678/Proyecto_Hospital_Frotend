@@ -60,3 +60,5 @@ export class AdminService {
     return this.http.get<AiMetricas>(`${this.api}/ai-metricas`);
   }
 }
+
+// Documentación interna: AdminService ejecuta operaciones privilegiadas sobre las cuentas del sistema.
