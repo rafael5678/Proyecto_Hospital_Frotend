@@ -107,3 +107,5 @@ export class LoginComponent implements OnInit {
 }
 
 // Controlador de Login: Valida credenciales reactivas y redirige al portal correspondiente según el rol.
+
+// Logica de Login: Notificaciones visuales en caso de credenciales invalidas.
