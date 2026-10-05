@@ -91,3 +91,5 @@ export class AuthService {
     }
   }
 }
+
+// Documentación interna: AuthService administra el estado de autenticación y el almacenamiento en sesión.
