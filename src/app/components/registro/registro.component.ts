@@ -79,3 +79,5 @@ export class RegistroComponent implements OnInit {
     });
   }
 }
+
+// Controlador de Registro: Gestiona el alta de nuevos pacientes con validación de campos obligatorios.
