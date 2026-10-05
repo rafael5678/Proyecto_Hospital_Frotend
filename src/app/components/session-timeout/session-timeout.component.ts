@@ -61,3 +61,5 @@ export class SessionTimeoutComponent implements OnInit, OnDestroy {
     this.inactivity.stop();
   }
 }
+
+// Componente Modal de Sesión: Informa al usuario sobre inactividad y ofrece continuar o cerrar sesión.
