@@ -1,10 +1,11 @@
 .login-page {
   min-height: 100vh;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 2rem 1rem;
+  padding: clamp(1.25rem, 4vw, 2.5rem) clamp(1rem, 4vw, 2rem);
 }
 
 .login-page.admin { background: linear-gradient(135deg, #6a82fb, #9c27b0); }
@@ -23,8 +24,8 @@
 .login-header h1 { font-size: 1.75rem; }
 .login-header p { opacity: 0.9; }
 
-.login-card { width: 100%; max-width: 400px; }
-.login-card h2 { margin-bottom: 1.5rem; font-size: 1.25rem; }
+.login-card { width: 100%; max-width: min(28rem, 100%); }
+.login-card h2 { margin-bottom: 1.5rem; font-size: clamp(1.2rem, 2vw, 1.4rem); }
 
 form label {
   display: block;
