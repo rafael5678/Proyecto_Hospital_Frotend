@@ -126,3 +126,5 @@ export interface AiTranscripcionResponse {
   modoDemo: boolean;
   mensaje: string;
 }
+
+// Definición de modelo AI: Estructuras para la solicitud y respuesta de clasificación clínica y dermatológica.
