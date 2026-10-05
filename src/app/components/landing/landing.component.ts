@@ -9,3 +9,5 @@ import { RouterLink } from '@angular/router';
   styleUrl: './landing.component.css'
 })
 export class LandingComponent {}
+
+// Controlador de Landing: Vista principal accesible para todo público con acceso a los tres portales.
