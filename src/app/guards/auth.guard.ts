@@ -9,3 +9,5 @@ export const authGuard: CanActivateFn = () => {
   router.navigate(['/']);
   return false;
 };
+
+// Guard de Ruta: Comprueba la existencia de sesión activa antes de autorizar la carga del componente.
