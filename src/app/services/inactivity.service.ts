@@ -75,3 +75,5 @@ export class InactivityService {
     }
   }
 }
+
+// Documentación interna: InactivityService supervisa la interacción del usuario y dispara el logout a los 10 min.
