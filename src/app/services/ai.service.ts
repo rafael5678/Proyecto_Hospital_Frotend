@@ -179,3 +179,5 @@ export class AiService {
     };
   }
 }
+
+// Documentación interna: AiService gestiona la comunicación con los endpoints de evaluación clínica y triage.
