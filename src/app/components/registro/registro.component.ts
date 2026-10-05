@@ -81,3 +81,5 @@ export class RegistroComponent implements OnInit {
 }
 
 // Controlador de Registro: Gestiona el alta de nuevos pacientes con validación de campos obligatorios.
+
+// Logica de Registro: Validacion reactiva de formato de correo institucional.
