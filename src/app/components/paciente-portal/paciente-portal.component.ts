@@ -555,3 +555,5 @@ export class PacientePortalComponent implements OnInit {
 }
 
 // Controlador de Portal Paciente: Administra el flujo de agendamiento de citas y consulta de historial personal.
+
+// Logica de Portal Paciente: Restriccion para impedir seleccion de fechas pasadas.
