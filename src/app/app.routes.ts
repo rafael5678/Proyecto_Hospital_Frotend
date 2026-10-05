@@ -31,3 +31,5 @@ export const routes: Routes = [
   },
   { path: '**', redirectTo: '' }
 ];
+
+// Mapeo central de rutas de la aplicación con carga diferida (lazy loading) para alto rendimiento.
