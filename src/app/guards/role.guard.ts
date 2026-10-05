@@ -9,3 +9,5 @@ export const roleGuard = (rol: string): CanActivateFn => () => {
   router.navigate(['/']);
   return false;
 };
+
+// Guard de Rol: Verifica que el rol del usuario coincida con los permisos requeridos para la vista.
