@@ -553,3 +553,5 @@ export class PacientePortalComponent implements OnInit {
     return 'badge badge-' + estado.toLowerCase();
   }
 }
+
+// Controlador de Portal Paciente: Administra el flujo de agendamiento de citas y consulta de historial personal.
