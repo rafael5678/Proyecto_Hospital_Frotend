@@ -51,3 +51,5 @@ export class PacienteService {
 }
 
 // Documentación interna: PacienteService canaliza las llamadas a la API para agendar citas y consultar perfiles.
+
+// Documentación interna: Manejo de payload para cita medica y adjunto de imagen.
