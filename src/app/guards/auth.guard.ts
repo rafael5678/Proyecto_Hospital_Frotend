@@ -11,3 +11,5 @@ export const authGuard: CanActivateFn = () => {
 };
 
 // Guard de Ruta: Comprueba la existencia de sesión activa antes de autorizar la carga del componente.
+
+// Guard de Autenticacion: Redireccion segura conservando URL de retorno.
