@@ -31,3 +31,5 @@ export interface UsuarioRequest {
   biografia?: string;
   activo?: boolean;
 }
+
+// Definición de modelo Usuario: Especifica el identificador, correo, nombre y rol asignado en el sistema.
