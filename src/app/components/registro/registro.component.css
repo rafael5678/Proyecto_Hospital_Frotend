@@ -1,35 +1,83 @@
 .registro-page {
   min-height: 100vh;
-  background: #10a37f;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(37, 99, 235, 0.2), transparent 32%),
+    linear-gradient(160deg, #07111f 0%, #12263f 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 2rem 1rem;
+  padding: clamp(1.25rem, 4vw, 2.5rem) 1rem;
 }
-.login-header { text-align: center; color: white; margin-bottom: 1.5rem; }
+
+.login-header {
+  text-align: center;
+  color: white;
+  margin-bottom: 1.5rem;
+}
+
 .icon-circle {
-  width: 72px; height: 72px; background: white; border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 2rem; margin: 0 auto 1rem;
+  width: 72px;
+  height: 72px;
+  background: linear-gradient(135deg, #60a5fa, #2563eb);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  margin: 0 auto 1rem;
 }
-.wide { width: 100%; max-width: 720px; }
+
+.wide {
+  width: 100%;
+  max-width: 760px;
+}
+
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 0.75rem 1rem;
 }
+
 .form-grid .full { grid-column: 1 / -1; }
+
 .section-title {
   grid-column: 1 / -1;
   font-weight: 700;
-  color: #10a37f;
+  color: #1d4ed8;
   margin-top: 0.5rem;
   font-size: 0.9rem;
   border-bottom: 1px solid #e2e8f0;
   padding-bottom: 0.25rem;
 }
-form label { display: block; font-size: 0.8rem; color: #64748b; margin-bottom: 0.2rem; }
-.btn-primary { background: #10a37f; color: white; border: none; padding: 0.85rem; border-radius: 10px; font-weight: 600; cursor: pointer; }
-.back-link { display: block; text-align: center; margin-top: 0.75rem; font-size: 0.875rem; color: #64748b; }
+
+form label {
+  display: block;
+  font-size: 0.8rem;
+  color: #64748b;
+  margin-bottom: 0.2rem;
+}
+
+.btn-primary {
+  background: linear-gradient(90deg, #2563eb, #1d4ed8);
+  color: white;
+  border: none;
+  padding: 0.85rem;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.back-link {
+  display: block;
+  text-align: center;
+  margin-top: 0.75rem;
+  font-size: 0.875rem;
+  color: #2563eb;
+}
+
 textarea.input { resize: vertical; min-height: 60px; }
-@media (max-width: 600px) { .form-grid { grid-template-columns: 1fr; } }
+
+@media (max-width: 600px) {
+  .form-grid { grid-template-columns: 1fr; }
+}

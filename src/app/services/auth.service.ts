@@ -22,7 +22,8 @@ export class AuthService {
   }
 
   login(data: LoginRequest) {
-    return this.http.post<AuthResponse>(`${this.api}/login`, data).pipe(
+    const payload: LoginRequest = { email: data.email, password: data.password };
+    return this.http.post<AuthResponse>(`${this.api}/login`, payload).pipe(
       tap(res => this.saveSession(res))
     );
   }
@@ -34,12 +35,11 @@ export class AuthService {
     this.router.navigate(['/']);
   }
 
-  logoutPorInactividad(rol: 'ADMIN' | 'MEDICO') {
+  logoutPorInactividad(_role: 'ADMIN' | 'MEDICO') {
     this.stopInactivityMonitor();
     localStorage.removeItem(SESSION_KEY);
     this.user.set(null);
-    const loginPath = rol === 'ADMIN' ? '/admin/login' : '/medico/login';
-    this.router.navigate([loginPath], { queryParams: { sesionExpirada: '1' } });
+    this.router.navigate(['/'], { queryParams: { sessionExpired: '1' } });
   }
 
   get token(): string | null {
@@ -91,7 +91,3 @@ export class AuthService {
     }
   }
 }
-
-// Documentación interna: AuthService administra el estado de autenticación y el almacenamiento en sesión.
-
-// Documentación interna: Gestion de sesion persistente en sessionStorage y observables de rol.

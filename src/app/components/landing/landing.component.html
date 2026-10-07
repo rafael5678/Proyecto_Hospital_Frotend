@@ -1,39 +1,143 @@
-<div class="landing">
-  <div class="hero">
-    <div class="logo">&#9825;</div>
-    <h1>Plataforma Hospy</h1>
-    <p>Selecciona tu rol en la institución para acceder a tu entorno seguro.</p>
-  </div>
+<div class="home-shell">
+  <section class="hero-panel">
+    <div class="hero-copy">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">♡</span>
+        <div>
+          <strong>Ecosistema Hospitalario Inteligente</strong>
+          <small>Agendamiento predictivo y farmacia triangulada</small>
+        </div>
+      </div>
 
-  <div class="portals">
-  <a routerLink="/admin/login" class="portal-card purple">
-    <div class="icon purple-bg">&#128737;</div>
-    <div class="info">
-      <h2>Administrador / Gerencia</h2>
-      <p>Acceso al panel de control e informes estadísticos</p>
-      <span class="tag purple-tag">&#128274; Autenticación Requerida</span>
-    </div>
-    <span class="arrow">&#8250;</span>
-  </a>
+      <h1>Tecnología que conecta pacientes, médicos y administradores</h1>
+      <p class="lead">Una sola plataforma para una salud más segura, rápida y accesible.</p>
 
-  <a routerLink="/medico/login" class="portal-card blue">
-    <div class="icon blue-bg">&#128196;</div>
-    <div class="info">
-      <h2>Cuerpo Médico Especialista</h2>
-      <p>Consultorio virtual, historias clínicas y agendas</p>
-      <span class="tag blue-tag">&#128274; Autenticación Requerida</span>
+      <ul class="feature-list">
+        <li>
+          <span class="feature-icon">▣</span>
+          <div>
+            <strong>Agendamiento inteligente</strong>
+            <small>La IA prioriza y asigna una mejor atención.</small>
+          </div>
+        </li>
+        <li>
+          <span class="feature-icon">◎</span>
+          <div>
+            <strong>Diagnóstico más preciso</strong>
+            <small>Visión artificial y análisis de imágenes.</small>
+          </div>
+        </li>
+        <li>
+          <span class="feature-icon">☰</span>
+          <div>
+            <strong>Historia clínica automática</strong>
+            <small>NLP y transcripción de voz.</small>
+          </div>
+        </li>
+        <li>
+          <span class="feature-icon">⊕</span>
+          <div>
+            <strong>Mayor seguridad en medicamentos</strong>
+            <small>Grafo de conocimiento y detección de interacciones.</small>
+          </div>
+        </li>
+        <li>
+          <span class="feature-icon">◈</span>
+          <div>
+            <strong>Precios justos y sin sobreprecio</strong>
+            <small>Triangulación en tiempo real.</small>
+          </div>
+        </li>
+      </ul>
     </div>
-    <span class="arrow">&#8250;</span>
-  </a>
 
-  <a routerLink="/paciente/login" class="portal-card green">
-    <div class="icon green-bg">&#9825;</div>
-    <div class="info">
-      <h2>Portal de Pacientes</h2>
-      <p>Historial clínico y agendamientos totalmente en línea</p>
-      <span class="tag green-tag">&#8594; Ingreso mediante credenciales</span>
+    <figure class="hero-visual">
+      <img
+        src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=1200&q=80"
+        alt="Profesional de la salud usando tecnología clínica"
+      />
+      <figcaption>Una sola plataforma, todas las especialidades.</figcaption>
+    </figure>
+  </section>
+
+  <section class="auth-panel">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <span class="brand-mark light" aria-hidden="true">♡</span>
+        <div>
+          <strong>Ecosistema Hospitalario Inteligente</strong>
+          <small>Agendamiento predictivo y farmacia triangulada</small>
+        </div>
+      </div>
+
+      <h2>Bienvenido</h2>
+      <p class="auth-subtitle">Inicia sesión para acceder al sistema. El portal se abre según tu cuenta.</p>
+
+      <form (ngSubmit)="onSubmit()">
+        <label for="email">Usuario o correo electrónico</label>
+        <div class="field">
+          <span class="field-icon" aria-hidden="true">@</span>
+          <input
+            id="email"
+            class="input"
+            type="text"
+            name="email"
+            [(ngModel)]="email"
+            placeholder="tucorreo@ejemplo.com"
+            autocomplete="username"
+            required
+          />
+        </div>
+
+        <label for="password">Contraseña</label>
+        <div class="field">
+          <span class="field-icon" aria-hidden="true">•</span>
+          <input
+            id="password"
+            class="input"
+            [type]="showPassword ? 'text' : 'password'"
+            name="password"
+            [(ngModel)]="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            required
+          />
+          <button type="button" class="ghost-btn" (click)="togglePasswordVisibility()">
+            {{ showPassword ? 'Ocultar' : 'Ver' }}
+          </button>
+        </div>
+
+        <div class="form-meta">
+          <label class="remember">
+            <input type="checkbox" name="rememberMe" [(ngModel)]="rememberMe" />
+            Recordar sesión
+          </label>
+          <span class="hint-link">¿Olvidaste tu contraseña? Escribe al administrador.</span>
+        </div>
+
+        @if (environment.production && (wakingServer() || loading())) {
+          <p class="hint-msg">La primera vez puede tardar un minuto (servidor despertando)…</p>
+        }
+        @if (successMessage()) { <p class="success-msg">{{ successMessage() }}</p> }
+        @if (errorMessage()) { <p class="error-msg">{{ errorMessage() }}</p> }
+
+        <button class="btn btn-primary submit-btn" type="submit" [disabled]="loading()">
+          {{ loading() ? 'Ingresando...' : 'Iniciar sesión' }} →
+        </button>
+      </form>
+
+      <p class="register-line">
+        ¿Eres paciente y no tienes cuenta?
+        <a routerLink="/registro">Regístrate aquí</a>
+      </p>
+      <p class="staff-note">Médicos y administradores los crea únicamente la gerencia.</p>
+
+      <div class="role-row" aria-hidden="true">
+        <span class="role-chip patient">Paciente</span>
+        <span class="role-chip doctor">Médico</span>
+        <span class="role-chip admin">Administrador</span>
+      </div>
+      <p class="secure-note">Tu información está protegida y cifrada.</p>
     </div>
-    <span class="arrow">&#8250;</span>
-  </a>
-  </div>
+  </section>
 </div>
