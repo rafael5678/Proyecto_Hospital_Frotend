@@ -8,6 +8,14 @@ import { environment } from '../../../environments/environment';
 
 const REMEMBERED_EMAIL_KEY = 'hospy_remembered_email';
 
+interface OrbitCard {
+  id: string;
+  title: string;
+  icon: string;
+  angle: string;
+  detail: string;
+}
+
 @Component({
   selector: 'app-landing',
   standalone: true,
@@ -28,6 +36,43 @@ export class LandingComponent implements OnInit {
   successMessage = signal('');
   loading = signal(false);
   wakingServer = signal(false);
+  orbitPaused = signal(false);
+  readonly orbitCards: OrbitCard[] = [
+    {
+      id: 'agenda',
+      title: 'Agendamiento',
+      icon: '▣',
+      angle: '18deg',
+      detail: 'Prioriza síntomas y asigna la cita a la especialidad correcta.'
+    },
+    {
+      id: 'ia',
+      title: 'IA clínica',
+      icon: '◎',
+      angle: '108deg',
+      detail: 'Analiza síntomas e imágenes para orientar el diagnóstico.'
+    },
+    {
+      id: 'historia',
+      title: 'Historia',
+      icon: '☰',
+      angle: '198deg',
+      detail: 'Construye la historia clínica con voz y notas automáticas.'
+    },
+    {
+      id: 'farmacia',
+      title: 'Farmacia',
+      icon: '⊕',
+      angle: '288deg',
+      detail: 'Revisa interacciones y compara precios de medicamentos.'
+    }
+  ];
+  selectedCard = signal(this.orbitCards[0]);
+
+  focusCard(card: OrbitCard) {
+    this.selectedCard.set(card);
+    this.orbitPaused.set(true);
+  }
 
   ngOnInit() {
     if (this.auth.isLoggedIn()) {

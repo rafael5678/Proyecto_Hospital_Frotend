@@ -9,7 +9,7 @@
         </div>
       </div>
 
-      <h1>Tecnología que conecta pacientes, médicos y administradores</h1>
+      <h1>Tecnología que conecta con los <span class="accent">corazones</span>.</h1>
       <p class="lead">Una sola plataforma para una salud más segura, rápida y accesible.</p>
 
       <ul class="feature-list">
@@ -52,11 +52,44 @@
     </div>
 
     <figure class="hero-visual">
-      <img
-        src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=1200&q=80"
-        alt="Profesional de la salud usando tecnología clínica"
-      />
-      <figcaption>Una sola plataforma, todas las especialidades.</figcaption>
+      <img class="doctor-cut" src="assets/login-doctora.jpg" alt="" />
+      <div
+        class="orbit-stage"
+        [class.paused]="orbitPaused()"
+        (mouseleave)="orbitPaused.set(false)"
+      >
+        <div class="orbit-ring ring-a"></div>
+        <div class="orbit-ring ring-b"></div>
+        <div class="heart" aria-hidden="true">
+          <svg viewBox="0 0 120 108">
+            <path
+              d="M60 96 C24 68 8 46 30 24 C44 12 56 20 60 32 C64 20 76 12 90 24 C112 46 96 68 60 96 Z"
+            />
+            <polyline
+              class="ecg"
+              points="18,58 34,58 40,46 48,72 56,36 64,64 72,54 102,54"
+            />
+          </svg>
+        </div>
+        <div class="orbit-spin">
+          @for (card of orbitCards; track card.id) {
+            <div class="sat" [style.--a]="card.angle">
+              <button
+                type="button"
+                class="orbit-card"
+                [class.active]="selectedCard().id === card.id"
+                (mouseenter)="focusCard(card)"
+                (focus)="focusCard(card)"
+                (click)="focusCard(card)"
+              >
+                <span>{{ card.icon }}</span>
+                <strong>{{ card.title }}</strong>
+              </button>
+            </div>
+          }
+        </div>
+      </div>
+      <figcaption>{{ selectedCard().detail }}</figcaption>
     </figure>
   </section>
 
