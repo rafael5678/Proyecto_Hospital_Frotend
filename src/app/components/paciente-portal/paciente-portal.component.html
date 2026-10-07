@@ -13,9 +13,14 @@
     <header class="portal-header paciente-header">
       <div class="header-main">
         <h1>{{ pageTitle() }}</h1>
-        <span class="session-user">{{ auth.user()?.nombre }}</span>
       </div>
-      <button type="button" class="btn logout" (click)="auth.logout()">Cerrar sesión</button>
+      <div class="header-user">
+        <span class="user-chip">
+          <span class="user-avatar">{{ iniciales(auth.user()?.nombre) }}</span>
+          {{ auth.user()?.nombre }}
+        </span>
+        <button type="button" class="btn logout" (click)="auth.logout()">Cerrar sesión</button>
+      </div>
     </header>
 
     <main class="portal-content paciente-content">
@@ -23,29 +28,100 @@
       @if (error()) { <div class="alert err">{{ error() }}</div> }
 
       @if (tab() === 'inicio' && dashboard(); as d) {
-        <div class="stats">
-          <div class="stat-card"><span>Total citas</span><strong>{{ d.totalCitas }}</strong></div>
-          <div class="stat-card"><span>Pendientes</span><strong>{{ d.citasPendientes }}</strong></div>
-          <div class="stat-card"><span>Aceptadas</span><strong>{{ d.citasAceptadas }}</strong></div>
-          <div class="stat-card"><span>Próximas</span><strong>{{ d.proximasCitas }}</strong></div>
+        <section class="dash-welcome">
+          <span class="welcome-avatar">{{ iniciales(auth.user()?.nombre) }}</span>
+          <div>
+            <h2>Hola, {{ primerNombre() }}</h2>
+            <p>Tu bienestar es nuestra prioridad.</p>
+          </div>
+        </section>
+
+        <article class="next-card">
+          <div class="next-copy">
+            <p class="eyebrow">Próxima cita</p>
+            @if (proximaCita(); as c) {
+              <h3>{{ formatFechaCita(c.fechaHora) }}</h3>
+              <p>{{ c.medicoEspecialidad || 'Consulta médica' }}</p>
+              <p class="doctor-name">{{ c.medicoNombre }}</p>
+              <p class="next-state">Estado: {{ c.estado }}</p>
+              <button type="button" class="btn-pill" (click)="irA('proximas', 'proximas')">Ver detalles</button>
+            } @else {
+              <h3>Aún no tienes una cita próxima</h3>
+              <p>Cuando agendes, aquí verás la fecha, el médico y la especialidad reales.</p>
+              <button type="button" class="btn-pill" (click)="irA('agendar', 'agendar')">Agendar cita</button>
+            }
+          </div>
+          <img
+            src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=900&q=80"
+            alt="Profesional de la salud"
+          />
+        </article>
+
+        <div class="quick-grid">
+          <button type="button" class="quick-card" (click)="irA('agendar', 'agendar')">
+            <span>♡</span>
+            <strong>Agendar cita</strong>
+            <small>Encuentra la especialidad que necesitas</small>
+          </button>
+          <button type="button" class="quick-card" (click)="irA('historial', 'historial')">
+            <span>▤</span>
+            <strong>Ver historial</strong>
+            <small>Tus exámenes y consultas</small>
+          </button>
+          <button type="button" class="quick-card" (click)="irA('interacciones', 'inter')">
+            <span>✚</span>
+            <strong>Medicamentos</strong>
+            <small>Revisión de interacciones</small>
+          </button>
+          <button type="button" class="quick-card" (click)="irA('precios', 'precios')">
+            <span>◎</span>
+            <strong>Precios</strong>
+            <small>Estimación orientativa de farmacias</small>
+          </button>
         </div>
-        <h3 class="section-title">Próximas citas</h3>
-        @if (proximas().length === 0) {
-          <p class="empty">No tienes citas próximas.</p>
-        } @else {
-          <table>
-            <thead><tr><th>Médico</th><th>Fecha</th><th>Estado</th></tr></thead>
-            <tbody>
-              @for (c of proximas(); track c.id) {
-                <tr>
-                  <td>{{ c.medicoNombre }}</td>
-                  <td>{{ c.fechaHora | date:'medium' }}</td>
-                  <td><span [class]="badgeClass(c.estado)">{{ c.estado }}</span></td>
-                </tr>
-              }
-            </tbody>
-          </table>
-        }
+
+        <section class="health-card">
+          <h3>Tu salud en un vistazo</h3>
+          <div class="health-grid">
+            <div>
+              <small>Citas pendientes</small>
+              <strong>{{ d.citasPendientes }}</strong>
+              <em>Por confirmar</em>
+            </div>
+            <div>
+              <small>Citas aceptadas</small>
+              <strong>{{ d.citasAceptadas }}</strong>
+              <em>Confirmadas</em>
+            </div>
+            <div>
+              <small>Próximas citas</small>
+              <strong>{{ d.proximasCitas }}</strong>
+              <em>Agendadas</em>
+            </div>
+          </div>
+        </section>
+
+        <div class="bottom-grid">
+          <section class="notify-card">
+            <h3>Últimas notificaciones</h3>
+            @for (n of notificacionesPaciente(); track n.titulo) {
+              <article>
+                <strong>{{ n.titulo }}</strong>
+                <small>{{ n.detalle }}</small>
+              </article>
+            }
+          </section>
+          <aside class="habit-card">
+            <img
+              src="https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&w=900&q=80"
+              alt="Cuidado de la salud"
+            />
+            <div>
+              <p>Cuida tu salud con pequeños hábitos</p>
+              <button type="button" class="btn-pill light" (click)="irA('perfil', 'editar')">Ver mi perfil</button>
+            </div>
+          </aside>
+        </div>
       }
 
       @if (tab() === 'agendar') {

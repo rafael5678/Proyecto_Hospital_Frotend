@@ -395,8 +395,98 @@ export class MedicoPortalComponent implements OnInit, OnDestroy {
     }
   }
 
+  irA(tab: MedicoTab, sub: MedicoSub = '') {
+    this.onNavigate({ id: tab, label: '', tab, sub });
+  }
+
+  iniciales(nombre?: string): string {
+    const parts = (nombre || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return 'M';
+    return parts.slice(0, 2).map(p => p[0]?.toUpperCase() ?? '').join('');
+  }
+
+  apellido(): string {
+    const parts = (this.auth.user()?.nombre || this.perfil()?.nombre || '').trim().split(/\s+/);
+    return parts.length > 1 ? parts[parts.length - 1] : (parts[0] || 'doctor');
+  }
+
+  saludo(): string {
+    const hora = new Date().getHours();
+    const momento = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
+    return `${momento}, ${this.apellido()}`;
+  }
+
+  citasActivas(): Cita[] {
+    return this.citas().filter(c => !['CANCELADA', 'RECHAZADA'].includes(c.estado));
+  }
+
+  especialidadHoy(): string {
+    const hoy = this.citasDeHoy();
+    const primera = hoy[0]?.medicoEspecialidad || this.perfil()?.especialidad;
+    if (!primera) return 'Sin especialidad registrada';
+    return hoy.length ? `${hoy.length} en ${primera}` : primera;
+  }
+
+  citasDeHoy(): Cita[] {
+    const hoy = new Date().toDateString();
+    return this.citasActivas().filter(c => new Date(c.fechaHora).toDateString() === hoy);
+  }
+
+  triagePrioritario(): Cita[] {
+    return this.citasActivas()
+      .filter(c => c.triageSeveridad || c.triagePrioridad)
+      .sort((a, b) => (b.triagePrioridad ?? 0) - (a.triagePrioridad ?? 0))
+      .slice(0, 4);
+  }
+
+  etiquetaPrioridad(c: Cita): string {
+    const sev = (c.triageSeveridad || '').toUpperCase();
+    if (sev.includes('ROJO') || (c.triagePrioridad ?? 0) >= 8) return 'Urgente';
+    if (sev.includes('NARANJA') || (c.triagePrioridad ?? 0) >= 6) return 'Alta';
+    if (sev.includes('AMARILLO') || (c.triagePrioridad ?? 0) >= 4) return 'Media';
+    return 'Baja';
+  }
+
+  prioridadChip(c: Cita): string {
+    const etiqueta = this.etiquetaPrioridad(c).toLowerCase();
+    return `prio ${etiqueta}`;
+  }
+
+  horaCorta(iso: string): string {
+    const fecha = new Date(iso);
+    if (Number.isNaN(fecha.getTime())) return '';
+    return fecha.toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' });
+  }
+
+  iaEnAccion(): { label: string; detalle: string }[] {
+    const citas = this.citas();
+    const piel = citas.filter(c => c.dermatologiaScoreRiesgo != null).length;
+    const triage = citas.filter(c => !!c.triageSeveridad).length;
+    const soapListo = this.soapRsp() ? 1 : 0;
+    return [
+      { label: 'Análisis de imágenes', detalle: piel ? `${piel} evaluación(es) de piel en tus citas` : 'Aún no hay evaluaciones de piel' },
+      { label: 'Triage recibido', detalle: triage ? `${triage} cita(s) con orientación previa` : 'Sin triage registrado' },
+      { label: 'Nota SOAP', detalle: soapListo ? 'Hay un borrador SOAP generado en esta sesión' : 'Sin nota SOAP generada todavía' }
+    ];
+  }
+
+  pacientesRecientes(): { nombre: string; iniciales: string; estado: string; hora: string }[] {
+    const vistos = new Set<string>();
+    return this.citasActivas()
+      .slice()
+      .sort((a, b) => new Date(a.fechaHora).getTime() - new Date(b.fechaHora).getTime())
+      .filter(c => {
+        if (vistos.has(c.pacienteNombre)) return false;
+        vistos.add(c.pacienteNombre);
+        return true;
+      })
+      .slice(0, 4)
+      .map(c => ({
+        nombre: c.pacienteNombre,
+        iniciales: this.iniciales(c.pacienteNombre),
+        estado: c.estado,
+        hora: this.horaCorta(c.fechaHora)
+      }));
+  }
+
 }
-
-// Controlador de Portal Médico: Controla la visualización de la lista de pacientes y registro de diagnósticos.
-
-// Logica de Portal Medico: Marcado de citas atendidas y refresco automatico.

@@ -128,6 +128,7 @@ export class PacientePortalComponent implements OnInit {
     this.cargarInicio();
     this.cargarMedicos();
     this.cargarHistorial();
+    this.cargarPerfilYAntecedentes();
   }
 
   onNavigate(item: SidebarItem) {
@@ -552,8 +553,66 @@ export class PacientePortalComponent implements OnInit {
   badgeClass(estado: string): string {
     return 'badge badge-' + estado.toLowerCase();
   }
+
+  primerNombre(): string {
+    const nombre = this.auth.user()?.nombre || this.perfil()?.nombre || 'paciente';
+    return nombre.trim().split(/\s+/)[0];
+  }
+
+  iniciales(nombre?: string): string {
+    const parts = (nombre || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return 'P';
+    return parts.slice(0, 2).map(p => p[0]?.toUpperCase() ?? '').join('');
+  }
+
+  proximaCita(): Cita | null {
+    return this.proximas()[0] ?? null;
+  }
+
+  irA(tab: PacienteTab, sub: PacienteSub = '') {
+    this.onNavigate({ id: tab, label: '', tab, sub });
+  }
+
+  formatFechaCita(iso: string): string {
+    const fecha = new Date(iso);
+    if (Number.isNaN(fecha.getTime())) return iso;
+    const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
+    const hora = fecha.getHours();
+    const minutos = fecha.getMinutes().toString().padStart(2, '0');
+    const sufijo = hora >= 12 ? 'p.m.' : 'a.m.';
+    const hora12 = ((hora + 11) % 12) + 1;
+    return `${fecha.getDate()} de ${meses[fecha.getMonth()]} de ${fecha.getFullYear()} · ${hora12}:${minutos} ${sufijo}`;
+  }
+
+  notificacionesPaciente(): { titulo: string; detalle: string }[] {
+    const items: { titulo: string; detalle: string }[] = [];
+    const proxima = this.proximaCita();
+    const dash = this.dashboard();
+    const perfil = this.perfil();
+    if (proxima) {
+      items.push({
+        titulo: `Próxima cita con ${proxima.medicoNombre}`,
+        detalle: `${this.formatFechaCita(proxima.fechaHora)} · ${proxima.medicoEspecialidad || 'Consulta'}`
+      });
+    }
+    if (dash?.citasPendientes) {
+      items.push({
+        titulo: `${dash.citasPendientes} cita(s) pendiente(s)`,
+        detalle: 'El médico aún no confirma la solicitud.'
+      });
+    }
+    if (perfil?.alergias) {
+      items.push({
+        titulo: 'Alergias registradas',
+        detalle: perfil.alergias
+      });
+    }
+    if (!items.length) {
+      items.push({
+        titulo: 'Sin novedades clínicas',
+        detalle: 'Cuando tengas citas o datos en tu perfil, aparecerán aquí.'
+      });
+    }
+    return items.slice(0, 3);
+  }
 }
-
-// Controlador de Portal Paciente: Administra el flujo de agendamiento de citas y consulta de historial personal.
-
-// Logica de Portal Paciente: Restriccion para impedir seleccion de fechas pasadas.

@@ -13,23 +13,124 @@
     <header class="portal-header admin-header">
       <div class="header-main">
         <h1>{{ pageTitle() }}</h1>
-        <span class="session-user">{{ auth.user()?.nombre }}</span>
+        <span class="session-user">{{ fechaHoy() }}</span>
         <app-session-timeout rol="ADMIN" theme="admin" />
       </div>
-      <button type="button" class="btn btn-logout" (click)="auth.logout()">Cerrar sesión</button>
+      <div class="header-user">
+        <span class="user-chip">
+          <span class="user-avatar">{{ iniciales(auth.user()?.nombre) }}</span>
+          {{ auth.user()?.nombre }}
+        </span>
+        <button type="button" class="btn btn-logout" (click)="auth.logout()">Cerrar sesión</button>
+      </div>
     </header>
 
     <main class="portal-content">
       @if (tab() === 'inicio' && reporte(); as r) {
-        <div class="stats-grid">
-          <div class="stat"><span>Total citas</span><strong>{{ r.totalCitas }}</strong></div>
-          <div class="stat"><span>Pendientes</span><strong>{{ r.citasPendientes }}</strong></div>
-          <div class="stat"><span>Aceptadas</span><strong>{{ r.citasAceptadas }}</strong></div>
-          <div class="stat"><span>Canceladas</span><strong>{{ r.citasCanceladas }}</strong></div>
-          <div class="stat"><span>Pacientes</span><strong>{{ r.totalPacientes }}</strong></div>
-          <div class="stat"><span>Médicos</span><strong>{{ r.totalMedicos }}</strong></div>
+        <section class="dash-head">
+          <div>
+            <h2>Panel de Control</h2>
+            <p>Vista general del sistema con cifras reales de usuarios, citas e IA.</p>
+          </div>
+          <span class="today-chip">{{ fechaHoy() }}</span>
+        </section>
+
+        <div class="stats-grid dash-stats">
+          <div class="stat">
+            <span>Total pacientes</span>
+            <strong>{{ r.totalPacientes }}</strong>
+            <small>{{ r.totalCitas }} citas registradas</small>
+          </div>
+          <div class="stat">
+            <span>Citas hoy</span>
+            <strong>{{ citasHoy() }}</strong>
+            <small>{{ r.citasPendientes }} pendientes</small>
+          </div>
+          <div class="stat">
+            <span>Médicos</span>
+            <strong>{{ r.totalMedicos }}</strong>
+            <small>{{ r.citasAceptadas }} citas aceptadas</small>
+          </div>
+          <div class="stat">
+            <span>Alertas activas</span>
+            <strong>{{ citasUrgentes() }}</strong>
+            <small>Prioridad alta para revisión</small>
+          </div>
         </div>
-        <p class="hint">Use el menú lateral para gestionar usuarios, médicos, citas y reportes.</p>
+
+        <div class="dash-split">
+          <section class="panel-card">
+            <h3>Tendencia de citas</h3>
+            @if (puntosMensuales().length) {
+              <svg class="line-chart" viewBox="0 0 360 160" role="img" aria-label="Citas por mes">
+                <polyline [attr.points]="lineaMensual()" fill="none" stroke="#7c3aed" stroke-width="3" />
+                @for (p of puntosMensuales(); track p.label) {
+                  <circle [attr.cx]="p.x" [attr.cy]="p.y" r="4" fill="#7c3aed"></circle>
+                }
+              </svg>
+              <div class="chart-labels">
+                @for (p of puntosMensuales(); track p.label) {
+                  <small>{{ p.label }}</small>
+                }
+              </div>
+            } @else {
+              <p class="hint">Todavía no hay desglose mensual para graficar.</p>
+            }
+          </section>
+
+          <section class="panel-card">
+            <h3>Alertas del sistema</h3>
+            @for (a of alertasSistema(); track a.titulo) {
+              <article class="alert-row">
+                <strong>{{ a.titulo }}</strong>
+                <small>{{ a.detalle }}</small>
+              </article>
+            }
+          </section>
+        </div>
+
+        <div class="dash-split">
+          <section class="panel-card donut-card">
+            <h3>Distribución por especialidad</h3>
+            <div class="donut-wrap">
+              <svg viewBox="0 0 120 120" class="donut">
+                @for (s of donutEspecialidades(); track s.label) {
+                  <circle
+                    cx="60"
+                    cy="60"
+                    r="38"
+                    fill="none"
+                    transform="rotate(-90 60 60)"
+                    [attr.stroke]="s.color"
+                    stroke-width="14"
+                    [attr.stroke-dasharray]="s.dash + ' ' + s.gap"
+                    [attr.stroke-dashoffset]="s.offset"
+                  />
+                }
+                <text x="60" y="58" text-anchor="middle" class="donut-total">{{ r.totalCitas }}</text>
+                <text x="60" y="74" text-anchor="middle" class="donut-sub">citas</text>
+              </svg>
+              <ul>
+                @for (s of donutEspecialidades(); track s.label) {
+                  <li><i [style.background]="s.color"></i>{{ s.label }} · {{ s.porcentaje }}%</li>
+                }
+              </ul>
+            </div>
+          </section>
+
+          <section class="panel-card">
+            <h3>Rendimiento del sistema</h3>
+            <div class="perf-grid">
+              @for (p of rendimiento(); track p.label) {
+                <article>
+                  <strong>{{ p.valor }}</strong>
+                  <span>{{ p.label }}</span>
+                  <small>{{ p.detalle }}</small>
+                </article>
+              }
+            </div>
+          </section>
+        </div>
       }
 
       @if (tab() === 'usuarios' && sub() === 'lista') {

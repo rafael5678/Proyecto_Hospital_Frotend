@@ -4,10 +4,21 @@
   [class.theme-paciente]="theme() === 'paciente'"
 >
   <div class="sidebar-brand">
-    <span class="brand-icon">{{ theme() === 'admin' ? '⚕' : theme() === 'medico' ? '🩺' : '💚' }}</span>
-    <span class="brand-text">{{
-      theme() === 'admin' ? 'Hospy Admin' : theme() === 'medico' ? 'Hospy Médico' : 'Hospy Paciente'
-    }}</span>
+    <span class="brand-icon" aria-hidden="true">
+      {{ theme() === 'admin' ? '⚕' : theme() === 'medico' ? '🩺' : '♡' }}
+    </span>
+    <div>
+      <strong>{{
+        theme() === 'admin' ? 'Administrador' : theme() === 'medico' ? 'Médico' : 'Paciente'
+      }}</strong>
+      <small>{{
+        theme() === 'admin'
+          ? 'Gestión, análisis y control total'
+          : theme() === 'medico'
+            ? 'Decisiones informadas, mejores resultados'
+            : 'Tu salud, en tus manos'
+      }}</small>
+    </div>
   </div>
   <nav class="sidebar-nav">
     @for (item of items(); track item.id) {

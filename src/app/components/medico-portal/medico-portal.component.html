@@ -11,18 +11,97 @@
         }
         <app-session-timeout rol="MEDICO" theme="medico" />
       </div>
-      <button type="button" class="btn logout" (click)="auth.logout()">Cerrar sesión</button>
+      <div class="header-user">
+        <span class="user-chip">
+          <span class="user-avatar">{{ iniciales(auth.user()?.nombre) }}</span>
+          {{ auth.user()?.nombre }}
+        </span>
+        <button type="button" class="btn logout" (click)="auth.logout()">Cerrar sesión</button>
+      </div>
     </header>
 
     <main class="portal-content">
       @if (tab() === 'inicio' && dashboard(); as d) {
+      <section class="hero-row">
+        <div>
+          <h2>{{ saludo() }}</h2>
+          <p>Aquí tienes un resumen de tu jornada con datos reales de tus citas.</p>
+        </div>
+        <img
+          class="hero-deco"
+          src="https://images.unsplash.com/photo-1584982751601-97dcc096659c?auto=format&fit=crop&w=480&q=80"
+          alt="Instrumental médico"
+        />
+      </section>
+
       <div class="stats">
-        <div class="stat-card"><span>Total citas</span><strong>{{ d.totalCitas }}</strong></div>
-        <div class="stat-card warn"><span>Pendientes</span><strong>{{ d.citasPendientes }}</strong></div>
-        <div class="stat-card"><span>Aceptadas</span><strong>{{ d.citasAceptadas }}</strong></div>
-        <div class="stat-card"><span>Citas hoy</span><strong>{{ d.citasHoy }}</strong></div>
-        <div class="stat-card"><span>Horarios activos</span><strong>{{ d.horariosActivos }}</strong></div>
+        <div class="stat-card">
+          <span>Pacientes hoy</span>
+          <strong>{{ d.citasHoy }}</strong>
+          <small>{{ especialidadHoy() }}</small>
+        </div>
+        <div class="stat-card warn">
+          <span>En espera</span>
+          <strong>{{ d.citasPendientes }}</strong>
+          <small>Pendientes de aceptar</small>
+        </div>
+        <div class="stat-card">
+          <span>Atenciones</span>
+          <strong>{{ d.citasAceptadas }}</strong>
+          <small>{{ d.horariosActivos }} horarios activos</small>
+        </div>
       </div>
+
+      <div class="dash-split">
+        <section class="panel-card">
+          <header>
+            <h3>Triage y prioridad</h3>
+            <button type="button" class="linkish" (click)="irA('citas', 'todas')">Ver todos</button>
+          </header>
+          @for (c of triagePrioritario(); track c.id) {
+          <article class="triage-row">
+            <span [class]="prioridadChip(c)">{{ etiquetaPrioridad(c) }}</span>
+            <div>
+              <strong>{{ c.pacienteNombre }}</strong>
+              <small>{{ c.triageResumen || c.motivo || 'Sin motivo registrado' }}</small>
+            </div>
+            <em>{{ horaCorta(c.fechaHora) }} · {{ c.medicoEspecialidad || 'Consulta' }}</em>
+          </article>
+          } @empty {
+          <p class="empty">No hay triages registrados en tus citas activas.</p>
+          }
+        </section>
+
+        <section class="panel-card">
+          <header>
+            <h3>IA en acción</h3>
+          </header>
+          @for (item of iaEnAccion(); track item.label) {
+          <article class="ia-row">
+            <strong>{{ item.label }}</strong>
+            <small>{{ item.detalle }}</small>
+          </article>
+          }
+        </section>
+      </div>
+
+      <section class="panel-card patients-card">
+        <header>
+          <h3>Tus pacientes</h3>
+          <button type="button" class="linkish" (click)="irA('citas', 'todas')">Ver todos</button>
+        </header>
+        <div class="patient-strip">
+          @for (p of pacientesRecientes(); track p.nombre + p.hora) {
+          <article>
+            <span>{{ p.iniciales }}</span>
+            <strong>{{ p.nombre }}</strong>
+            <small>{{ p.estado }} · {{ p.hora }}</small>
+          </article>
+          } @empty {
+          <p class="empty">Todavía no tienes pacientes asignados en citas.</p>
+          }
+        </div>
+      </section>
       }
 
       @if (tab() === 'citas') {

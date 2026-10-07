@@ -27,8 +27,8 @@ export class AdminPortalComponent implements OnInit {
   private adminService = inject(AdminService);
   private ai = inject(AiService);
 
-  tab = signal<AdminTab>('usuarios');
-  sub = signal<AdminSub>('lista');
+  tab = signal<AdminTab>('inicio');
+  sub = signal<AdminSub>('');
   expandedMenus = signal<string[]>(['usuarios', 'medicos', 'citas', 'reportes']);
 
   readonly menuItems: SidebarItem[] = [
@@ -383,8 +383,112 @@ export class AdminPortalComponent implements OnInit {
     return 'bar-blue';
   }
 
+  iniciales(nombre?: string): string {
+    const parts = (nombre || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return 'A';
+    return parts.slice(0, 2).map(p => p[0]?.toUpperCase() ?? '').join('');
+  }
+
+  fechaHoy(): string {
+    return new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }) + ' · Hoy';
+  }
+
+  citasHoy(): number {
+    const hoy = new Date().toDateString();
+    return this.citas().filter(c => new Date(c.fechaHora).toDateString() === hoy).length;
+  }
+
+  puntosMensuales(): { label: string; x: number; y: number; total: number }[] {
+    const meses = this.reporte()?.desgloseMensual ?? [];
+    if (!meses.length) return [];
+    const max = Math.max(...meses.map(m => m.totalCitas), 1);
+    return meses.map((m, i) => ({
+      label: (m.nombreMes || '').slice(0, 3),
+      total: m.totalCitas,
+      x: meses.length === 1 ? 180 : 20 + (i * (320 / (meses.length - 1))),
+      y: 140 - (m.totalCitas / max) * 110
+    }));
+  }
+
+  lineaMensual(): string {
+    return this.puntosMensuales().map(p => `${p.x},${p.y}`).join(' ');
+  }
+
+  donutEspecialidades(): { label: string; color: string; dash: number; gap: number; offset: number; porcentaje: number }[] {
+    const colores = ['#3b82f6', '#22c55e', '#8b5cf6', '#f59e0b', '#06b6d4', '#ef4444'];
+    const conteo = new Map<string, number>();
+    for (const cita of this.citas()) {
+      const key = cita.medicoEspecialidad || 'Sin especialidad';
+      conteo.set(key, (conteo.get(key) ?? 0) + 1);
+    }
+    const items = [...conteo.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6);
+    const total = items.reduce((s, [, n]) => s + n, 0) || 1;
+    const circ = 2 * Math.PI * 38;
+    let acc = 0;
+    return items.map(([label, n], i) => {
+      const pct = n / total;
+      const dash = pct * circ;
+      const item = {
+        label,
+        color: colores[i % colores.length],
+        dash,
+        gap: circ - dash,
+        offset: -(acc * circ),
+        porcentaje: Math.round(pct * 100)
+      };
+      acc += pct;
+      return item;
+    });
+  }
+
+  alertasSistema(): { titulo: string; detalle: string }[] {
+    const items: { titulo: string; detalle: string }[] = [];
+    const m = this.aiMetricas();
+    if (this.citasUrgentes()) {
+      items.push({
+        titulo: `${this.citasUrgentes()} cita(s) de prioridad alta`,
+        detalle: 'Requieren revisión en supervisión de citas.'
+      });
+    }
+    if (this.reporte()?.citasPendientes) {
+      items.push({
+        titulo: `${this.reporte()?.citasPendientes} citas pendientes`,
+        detalle: 'Aún no han sido aceptadas por el médico.'
+      });
+    }
+    if (m && !m.apiKeyActiva) {
+      items.push({
+        titulo: 'IA en modo demostración',
+        detalle: `${m.versionIa} · sin API key activa.`
+      });
+    }
+    if (m?.citasConEvaluacionPiel) {
+      items.push({
+        titulo: `${m.citasConEvaluacionPiel} evaluaciones de piel`,
+        detalle: 'Registradas en citas reales.'
+      });
+    }
+    if (!items.length) {
+      items.push({
+        titulo: 'Sin alertas activas',
+        detalle: 'El sistema no tiene pendientes críticos en este momento.'
+      });
+    }
+    return items.slice(0, 4);
+  }
+
+  rendimiento(): { label: string; valor: string; detalle: string }[] {
+    const r = this.reporte();
+    const m = this.aiMetricas();
+    const total = r?.totalCitas || 0;
+    const aceptadas = r?.citasAceptadas || 0;
+    const triage = m?.citasConTriage || 0;
+    const pct = (n: number) => total ? `${Math.round((n / total) * 100)}%` : '0%';
+    return [
+      { label: 'Citas aceptadas', valor: pct(aceptadas), detalle: `${aceptadas} de ${total}` },
+      { label: 'Con triage IA', valor: pct(triage), detalle: `${triage} citas orientadas` },
+      { label: 'IA clínica', valor: m?.apiKeyActiva ? 'Activa' : 'Demo', detalle: m?.versionIa || 'Sin métricas' }
+    ];
+  }
+
 }
-
-// Controlador de Portal Admin: Provee interfaz de supervisión de cuentas, reseteo de claves y métricas globales.
-
-// Logica de Portal Admin: Filtros en tiempo real para busqueda de usuarios por texto.
