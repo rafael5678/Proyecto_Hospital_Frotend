@@ -566,7 +566,15 @@ export class PacientePortalComponent implements OnInit {
   }
 
   proximaCita(): Cita | null {
-    return this.proximas()[0] ?? null;
+    const ahora = Date.now();
+    return this.proximas()
+      .filter(c => !['CANCELADA', 'RECHAZADA'].includes((c.estado || '').toUpperCase()))
+      .filter(c => {
+        const t = new Date(c.fechaHora).getTime();
+        return !Number.isNaN(t) && t >= ahora;
+      })
+      .slice()
+      .sort((a, b) => new Date(a.fechaHora).getTime() - new Date(b.fechaHora).getTime())[0] ?? null;
   }
 
   irA(tab: PacienteTab, sub: PacienteSub = '') {

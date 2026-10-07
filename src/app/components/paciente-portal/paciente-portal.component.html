@@ -38,23 +38,22 @@
 
         <article class="next-card">
           <div class="next-copy">
-            <p class="eyebrow">Próxima cita</p>
             @if (proximaCita(); as c) {
+              <p class="eyebrow">Próxima cita</p>
               <h3>{{ formatFechaCita(c.fechaHora) }}</h3>
-              <p>{{ c.medicoEspecialidad || 'Consulta médica' }}</p>
+              @if (c.medicoEspecialidad) {
+                <p>{{ c.medicoEspecialidad }}</p>
+              }
               <p class="doctor-name">{{ c.medicoNombre }}</p>
-              <p class="next-state">Estado: {{ c.estado }}</p>
               <button type="button" class="btn-pill" (click)="irA('proximas', 'proximas')">Ver detalles</button>
             } @else {
-              <h3>Aún no tienes una cita próxima</h3>
-              <p>Cuando agendes, aquí verás la fecha, el médico y la especialidad reales.</p>
+              <p class="eyebrow">Próxima cita</p>
+              <h3>No tienes citas agendadas</h3>
+              <p>Cuando reserves una, aquí aparecerán la fecha y el médico reales.</p>
               <button type="button" class="btn-pill" (click)="irA('agendar', 'agendar')">Agendar cita</button>
             }
           </div>
-          <img
-            src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&w=900&q=80"
-            alt="Profesional de la salud"
-          />
+          <img src="assets/doctora-proxima.jpg" alt="" />
         </article>
 
         <div class="quick-grid">
