@@ -71,7 +71,7 @@
       </div>
 
       <h2>Bienvenido</h2>
-      <p class="auth-subtitle">Inicia sesión para acceder al sistema. El portal se abre según tu cuenta.</p>
+      <p class="auth-subtitle">Inicia sesión con tus credenciales para acceder al sistema.</p>
 
       <form (ngSubmit)="onSubmit()">
         <label for="email">Usuario o correo electrónico</label>
@@ -127,16 +127,9 @@
       </form>
 
       <p class="register-line">
-        ¿Eres paciente y no tienes cuenta?
+        ¿No tienes cuenta?
         <a routerLink="/registro">Regístrate aquí</a>
       </p>
-      <p class="staff-note">Médicos y administradores los crea únicamente la gerencia.</p>
-
-      <div class="role-row" aria-hidden="true">
-        <span class="role-chip patient">Paciente</span>
-        <span class="role-chip doctor">Médico</span>
-        <span class="role-chip admin">Administrador</span>
-      </div>
       <p class="secure-note">Tu información está protegida y cifrada.</p>
     </div>
   </section>
