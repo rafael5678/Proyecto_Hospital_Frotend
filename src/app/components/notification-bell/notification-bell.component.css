@@ -1,65 +1,66 @@
 :host {
   display: inline-flex;
+  align-items: center;
   flex-shrink: 0;
   position: relative;
-  z-index: 50;
+  z-index: 80;
 }
 
 .bell {
   position: relative;
+  display: inline-flex;
 }
 
 .bell-btn {
   position: relative;
-  width: 2.35rem;
-  height: 2.35rem;
-  border: 1px solid #d1d5db;
-  border-radius: 999px;
-  background: #fff;
-  color: #0f172a;
+  width: 2.5rem;
+  height: 2.5rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #334155;
   cursor: pointer;
   display: grid;
   place-items: center;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
 }
 
 .bell-btn:hover {
-  background: #f8fafc;
+  color: #0f172a;
 }
 
-.bell.medico .bell-btn {
-  color: #1e3a8a;
-  border-color: #c7d2fe;
-  background: #eef2ff;
+.bell-icon {
+  width: 1.45rem;
+  height: 1.45rem;
+  display: block;
 }
 
-.badge {
+.dot {
   position: absolute;
-  top: -3px;
-  right: -3px;
-  min-width: 1.05rem;
-  height: 1.05rem;
+  top: 0.38rem;
+  right: 0.42rem;
+  width: 0.42rem;
+  height: 0.42rem;
   border-radius: 999px;
-  background: #dc2626;
-  color: #fff;
-  font-size: 0.62rem;
-  font-weight: 700;
-  display: grid;
-  place-items: center;
-  padding: 0 0.2rem;
+  background: #f59e0b;
+  box-shadow: 0 0 0 2px #fff;
+}
+
+.dot.unread {
+  width: 0.5rem;
+  height: 0.5rem;
 }
 
 .panel {
   position: absolute;
   right: 0;
-  top: calc(100% + 0.45rem);
+  top: calc(100% + 0.5rem);
   width: min(22rem, 86vw);
   max-height: 22rem;
   overflow: auto;
   background: #fff;
   border-radius: 0.85rem;
   box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
-  z-index: 80;
+  z-index: 90;
   padding: 0.7rem;
 }
 
@@ -98,7 +99,7 @@ li {
 }
 
 li.unread {
-  background: #f0fdf4;
+  background: #fffbeb;
 }
 
 li strong {

@@ -1,14 +1,17 @@
 <div class="bell" [class.medico]="theme() === 'medico'">
-  <button type="button" class="bell-btn" (click)="toggle()" [attr.aria-expanded]="abierta()" aria-label="Notificaciones">
-    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
-      <path fill="currentColor" d="M12 22a2.4 2.4 0 0 0 2.4-2.4h-4.8A2.4 2.4 0 0 0 12 22Zm7.2-6V11a7.2 7.2 0 0 0-5.4-7V3.2a1.8 1.8 0 1 0-3.6 0V4a7.2 7.2 0 0 0-5.4 7v5L3 17.6V19h18v-1.4L19.2 16Z"/>
+  <button type="button" class="bell-btn" (click)="toggle(); $event.stopPropagation()"
+    [attr.aria-expanded]="abierta()" aria-label="Notificaciones" title="Notificaciones">
+    <svg class="bell-icon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M18 8A6 6 0 1 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"
+        fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M13.73 21a2 2 0 0 1-3.46 0"
+        fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/>
     </svg>
-    @if (noLeidas() > 0) {
-      <span class="badge">{{ noLeidas() > 9 ? '9+' : noLeidas() }}</span>
-    }
+    <span class="dot" [class.unread]="noLeidas() > 0"></span>
   </button>
+
   @if (abierta()) {
-    <div class="panel" role="dialog" aria-label="Tus notificaciones">
+    <div class="panel" role="dialog" aria-label="Tus notificaciones" (click)="$event.stopPropagation()">
       <header>
         <strong>Notificaciones</strong>
         @if (noLeidas() > 0) {

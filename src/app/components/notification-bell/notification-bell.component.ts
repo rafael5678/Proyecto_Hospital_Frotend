@@ -21,24 +21,31 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.cargar();
     this.timer = setInterval(() => this.cargar(), 25000);
-    document.addEventListener('click', this.cerrarSiAfuera);
+    if (typeof document !== 'undefined') {
+      document.addEventListener('click', this.cerrarSiAfuera);
+    }
   }
 
   ngOnDestroy() {
     if (this.timer) clearInterval(this.timer);
-    document.removeEventListener('click', this.cerrarSiAfuera);
+    if (typeof document !== 'undefined') {
+      document.removeEventListener('click', this.cerrarSiAfuera);
+    }
   }
 
-  private cerrarSiAfuera = (ev: MouseEvent) => {
-    const target = ev.target as HTMLElement | null;
-    if (this.abierta() && target && !target.closest('.bell')) {
-      this.abierta.set(false);
-    }
+  private cerrarSiAfuera = () => {
+    if (this.abierta()) this.abierta.set(false);
   };
 
   cargar() {
-    this.svc.listar().subscribe({ next: n => this.items.set(n) });
-    this.svc.noLeidas().subscribe({ next: r => this.noLeidas.set(r.total) });
+    this.svc.listar().subscribe({
+      next: n => this.items.set(n),
+      error: () => this.items.set([])
+    });
+    this.svc.noLeidas().subscribe({
+      next: r => this.noLeidas.set(r.total),
+      error: () => this.noLeidas.set(0)
+    });
   }
 
   toggle() {
