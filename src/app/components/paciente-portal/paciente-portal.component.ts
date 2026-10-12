@@ -304,7 +304,9 @@ export class PacientePortalComponent implements OnInit {
       this.onMedicoChange();
       return;
     }
-    this.avisoMedico.set(`No hay un médico de ${esp} en el directorio. Elige otro o se asignará más adelante.`);
+    this.avisoMedico.set(
+      `No hay un médico de ${esp} en el directorio. Pídele al administrador que cree uno en Médicos → Registrar médico (especialidad ${esp}). Mientras tanto puedes elegir otro médico.`
+    );
   }
 
   private fechaParaApi(): string {
@@ -328,16 +330,21 @@ export class PacientePortalComponent implements OnInit {
       this.horarios.set([]);
       return;
     }
+    this.avisoCita.set('Buscando el próximo cupo…');
     this.svc.horariosMedico(this.medicoId).subscribe({ next: h => this.horarios.set(h) });
     this.svc.cuposMedico(this.medicoId).subscribe({
       next: c => {
         this.cupos.set(c);
         if (c.length) {
           this.elegirCupo(c[0]);
-          this.avisoCita.set('La aplicación asignó el primer día y hora libres de este médico.');
+          this.avisoCita.set('Cupo asignado: ' + c[0].etiqueta + '.');
         } else {
           this.avisoCita.set('Este médico no tiene cupos en las próximas semanas.');
         }
+      },
+      error: () => {
+        this.cupos.set([]);
+        this.avisoCita.set('No se pudieron cargar los cupos. Elige otro médico o recarga.');
       }
     });
   }
