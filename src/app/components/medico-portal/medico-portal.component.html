@@ -252,7 +252,7 @@
           } @else {
           <button type="button" class="btn-sm no" (click)="detenerGrabacion()">Detener grabación</button>
           }
-          @if (transcribiendoAudio()) { <span>Transcribiendo con Whisper…</span> }
+          @if (transcribiendoAudio()) { <span>Transcribiendo el audio…</span> }
           @if (vozError()) { <span class="warn-big">{{ vozError() }}</span> }
         </div>
         @if (transcripcionEnVivo()) { <p class="hint" aria-live="polite"><strong>Transcripción provisional:</strong> {{

@@ -54,7 +54,7 @@ export class AiService {
       catchError(() => of({
         texto: '',
         modoDemo: true,
-        mensaje: 'Whisper no disponible. Usa la transcripción en vivo del navegador o escribe el texto.'
+        mensaje: 'La transcripción de IA no está disponible. Usa la voz del navegador o escribe el texto.'
       }))
     );
   }
@@ -179,5 +179,3 @@ export class AiService {
     };
   }
 }
-
-// Documentación interna: AiService gestiona la comunicación con los endpoints de evaluación clínica y triage.

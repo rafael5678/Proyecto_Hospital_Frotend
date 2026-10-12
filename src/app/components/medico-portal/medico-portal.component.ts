@@ -341,7 +341,7 @@ export class MedicoPortalComponent implements OnInit, OnDestroy {
       const text = Array.from(event.results).map(result => result[0].transcript).join(' ');
       this.transcripcionEnVivo.set(text);
     };
-    this.recognition.onerror = () => this.vozError.set('La transcripción en vivo del navegador no está disponible; Whisper intentará transcribir al terminar.');
+    this.recognition.onerror = () => this.vozError.set('La transcripción en vivo del navegador no está disponible; la IA intentará transcribir al terminar.');
     try {
       this.recognition.start();
     } catch {
@@ -364,7 +364,7 @@ export class MedicoPortalComponent implements OnInit, OnDestroy {
       error: () => {
         const texto = this.transcripcionEnVivo().trim();
         if (texto) this.soapReq.transcripcion = [this.soapReq.transcripcion?.trim(), texto].filter(Boolean).join('\n');
-        this.vozError.set('No se pudo enviar el audio a Whisper. Se conservó la transcripción del navegador, si estaba disponible.');
+        this.vozError.set('No se pudo enviar el audio a la IA. Se conservó la transcripción del navegador, si estaba disponible.');
         this.transcribiendoAudio.set(false);
       }
     });
