@@ -123,7 +123,7 @@
       @if (tab() === 'agendar') {
         <div class="card section booking-card">
           <h2 class="section-title">Agendar cita médica</h2>
-          <p class="hint">Obligatorio: síntomas, autorización, médico y fecha. Si marcas un problema de piel puedes describirlo o subir una foto. El análisis asigna al médico de la especialidad (o avisa si no hay uno).</p>
+          <p class="hint">Describe los síntomas y autoriza el análisis. La aplicación elige el médico, el día y la hora más próximos en las que ese médico trabaja. Si entra un caso más grave en el mismo cupo, se reprograma al otro paciente y se le avisa.</p>
           <label>Síntomas y motivo de consulta *</label>
           <textarea class="input" rows="4" [(ngModel)]="sintomas" placeholder="Describe qué sientes, desde cuándo y cómo ha cambiado..."></textarea>
           <div class="form-row">
@@ -210,15 +210,28 @@
             <p class="hint">Cita con <strong>{{ med.nombre }}</strong> ({{ med.especialidad }}).</p>
           }
           @if (horarios().length) {
-            <p class="hint">Horarios del médico:</p>
-            <ul>
+            <p class="hint"><strong>Días en que trabaja:</strong></p>
+            <ul class="horario-lista">
               @for (h of horarios(); track h.id) {
-                <li>Día {{ h.diaSemana }}: {{ h.horaInicio }} - {{ h.horaFin }}</li>
+                <li>{{ h.diaNombre || nombreDia(h.diaSemana) }}: {{ horaCorta(h.horaInicio) }} – {{ horaCorta(h.horaFin) }}</li>
               }
             </ul>
           }
-          <label>Fecha y hora preferidas *</label>
-          <input class="input" type="datetime-local" [(ngModel)]="fechaHora" />
+          @if (avisoCita()) {
+            <p class="hint medico-asignado">{{ avisoCita() }}</p>
+          }
+          <label>Cupo asignado (el más próximo)</label>
+          @if (cupos().length) {
+            <div class="slot-grid">
+              @for (c of cupos(); track c.fechaHora) {
+                <button type="button" class="slot-chip" [class.active]="cupoActivo(c)" (click)="elegirCupo(c)">
+                  {{ c.etiqueta }}
+                </button>
+              }
+            </div>
+          } @else if (medicoId) {
+            <p class="hint">Buscando el próximo cupo laboral…</p>
+          }
           <label>Nota adicional para el médico (opcional)</label>
           <input class="input" [(ngModel)]="motivo" placeholder="Información adicional" />
           <button type="button" class="btn btn-green" (click)="agendar()" [disabled]="!puedeAgendar()">{{ loading() ? 'Agendando...' : 'Agendar cita' }}</button>

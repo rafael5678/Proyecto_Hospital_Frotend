@@ -471,3 +471,7 @@
 .bar-green  { background: linear-gradient(135deg, #22c55e, #16a34a); }
 .bar-blue   { background: linear-gradient(135deg, #3b82f6, #2563eb); }
 
+.especialidad-select {
+  min-height: 11rem;
+}
+

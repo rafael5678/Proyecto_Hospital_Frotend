@@ -127,3 +127,19 @@ export interface AiTranscripcionResponse {
   modoDemo: boolean;
   mensaje: string;
 }
+
+export interface AiAdminOperacionRequest {
+  instruccion: string;
+}
+
+export interface AiAdminOperacionResponse {
+  accion: 'CREAR_MEDICO' | 'CREAR_PACIENTE' | 'INFO' | string;
+  nombre?: string;
+  email?: string;
+  especialidad?: string;
+  passwordSugerida?: string;
+  documento?: string;
+  telefono?: string;
+  mensaje: string;
+  modoDemo?: boolean;
+}

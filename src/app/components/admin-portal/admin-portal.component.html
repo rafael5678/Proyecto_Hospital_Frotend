@@ -173,7 +173,12 @@
             <input class="input" placeholder="Documento" [(ngModel)]="form.documento" />
           }
           @if (form.rol === 'MEDICO') {
-            <input class="input" placeholder="Especialidad" [(ngModel)]="form.especialidad" />
+            <select class="input" [(ngModel)]="form.especialidad" aria-label="Especialidad">
+              <option value="">Especialidad</option>
+              @for (esp of especialidades; track esp) {
+                <option [value]="esp">{{ esp }}</option>
+              }
+            </select>
             <input class="input" placeholder="Consultorio" [(ngModel)]="form.consultorio" />
           }
           <input class="input" type="password" placeholder="Nueva contraseña (opcional)" [(ngModel)]="form.password" />
@@ -264,7 +269,13 @@
           <input class="input" placeholder="Nombre" [(ngModel)]="form.nombre" />
           <input class="input" placeholder="Email" [(ngModel)]="form.email" />
           <input class="input" type="password" placeholder="Contraseña" [(ngModel)]="form.password" />
-          <input class="input" placeholder="Especialidad (Cardiología, Neurología...)" [(ngModel)]="form.especialidad" />
+          <label>Especialidad</label>
+          <select class="input especialidad-select" size="8" [(ngModel)]="form.especialidad" aria-label="Especialidad del médico">
+            <option value="">Selecciona una especialidad</option>
+            @for (esp of especialidades; track esp) {
+              <option [value]="esp">{{ esp }}</option>
+            }
+          </select>
           <input class="input" placeholder="Número de licencia" [(ngModel)]="form.numeroLicencia" />
           <input class="input" placeholder="Consultorio" [(ngModel)]="form.consultorio" />
           <input class="input" type="number" placeholder="Años de experiencia" [(ngModel)]="form.anosExperiencia" />
@@ -355,6 +366,32 @@
             </tbody>
           </table>
         }
+      }
+
+      @if (tab() === 'asistente') {
+        <div class="card section form-grid">
+          <h2>Asistente Gemini de administración</h2>
+          <p class="hint">Pide crear un médico o un paciente. No crea módulos nuevos de la aplicación: usa los formularios que ya existen.</p>
+          @if (okAdmin()) { <p class="status-row">{{ okAdmin() }}</p> }
+          @if (error()) { <p class="error-msg">{{ error() }}</p> }
+          <textarea class="input" rows="4" [(ngModel)]="asistenteTexto" placeholder="Ej. Crea un médico de pediatría llamado Ana Ruiz con correo ana.ruiz@hospy.com"></textarea>
+          <button type="button" class="btn btn-purple" (click)="consultarAsistente()" [disabled]="asistenteLoading()">
+            {{ asistenteLoading() ? 'Consultando Gemini...' : 'Interpretar con Gemini' }}
+          </button>
+          @if (asistenteRsp(); as r) {
+            <div class="triage-result">
+              <p>{{ r.mensaje }}</p>
+              @if (r.accion === 'CREAR_MEDICO' || r.accion === 'CREAR_PACIENTE') {
+                <p>Acción: {{ r.accion === 'CREAR_MEDICO' ? 'Crear médico' : 'Crear paciente' }}</p>
+                <p>Nombre: {{ r.nombre || '—' }} · Correo: {{ r.email || '—' }}</p>
+                @if (r.especialidad) { <p>Especialidad: {{ r.especialidad }}</p> }
+                @if (r.documento) { <p>Documento: {{ r.documento }}</p> }
+                <p>Clave sugerida: {{ r.passwordSugerida || 'Medico123' }}</p>
+                <button type="button" class="btn btn-purple" (click)="confirmarAsistente()">Confirmar y crear</button>
+              }
+            </div>
+          }
+        </div>
       }
 
       @if (tab() === 'iasuperv') {

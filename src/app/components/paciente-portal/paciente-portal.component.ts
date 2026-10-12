@@ -6,7 +6,7 @@ import { PacienteService } from '../../services/paciente.service';
 import { AiService } from '../../services/ai.service';
 import { Cita } from '../../models/cita.model';
 import { Usuario } from '../../models/usuario.model';
-import { Horario } from '../../models/horario.model';
+import { CupoDisponible, Horario } from '../../models/horario.model';
 import { PacienteDashboard, PacientePerfil } from '../../models/paciente-perfil.model';
 import {
   AiDermatologiaRequest, AiDermatologiaResponse,
@@ -81,6 +81,8 @@ export class PacientePortalComponent implements OnInit {
   medicos = signal<Usuario[]>([]);
   medicoDetalle = signal<Usuario | null>(null);
   horarios = signal<Horario[]>([]);
+  cupos = signal<CupoDisponible[]>([]);
+  avisoCita = signal('');
   citas = signal<Cita[]>([]);
   proximas = signal<Cita[]>([]);
 
@@ -319,8 +321,47 @@ export class PacientePortalComponent implements OnInit {
   }
 
   onMedicoChange() {
-    if (!this.medicoId) return;
+    this.fechaHora = '';
+    this.cupos.set([]);
+    this.avisoCita.set('');
+    if (!this.medicoId) {
+      this.horarios.set([]);
+      return;
+    }
     this.svc.horariosMedico(this.medicoId).subscribe({ next: h => this.horarios.set(h) });
+    this.svc.cuposMedico(this.medicoId).subscribe({
+      next: c => {
+        this.cupos.set(c);
+        if (c.length) {
+          this.elegirCupo(c[0]);
+          this.avisoCita.set('La aplicación asignó el primer día y hora libres de este médico.');
+        } else {
+          this.avisoCita.set('Este médico no tiene cupos en las próximas semanas.');
+        }
+      }
+    });
+  }
+
+  elegirCupo(c: CupoDisponible) {
+    this.fechaHora = this.aDatetimeLocal(c.fechaHora);
+  }
+
+  cupoActivo(c: CupoDisponible): boolean {
+    return this.aDatetimeLocal(c.fechaHora) === this.fechaHora;
+  }
+
+  aDatetimeLocal(iso: string): string {
+    const d = new Date(iso);
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+  }
+
+  nombreDia(n: number): string {
+    return ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'][n] || `Día ${n}`;
+  }
+
+  horaCorta(h: string): string {
+    return (h || '').slice(0, 5);
   }
 
   cargarHistorial() {

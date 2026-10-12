@@ -9,7 +9,8 @@ import {
   AiSoapRequest, AiSoapResponse,
   AiStatusResponse,
   AiTriageRequest, AiTriageResponse,
-  AiTranscripcionResponse
+  AiTranscripcionResponse,
+  AiAdminOperacionRequest, AiAdminOperacionResponse
 } from '../models/ai.model';
 
 const BASE = environment.apiUrl + '/ai';
@@ -63,6 +64,10 @@ export class AiService {
     return this.http.post<AiInteraccionResponse>(`${BASE}/interacciones`, req).pipe(
       catchError(() => of(this.interLocal(req)))
     );
+  }
+
+  adminOperacion(req: AiAdminOperacionRequest) {
+    return this.http.post<AiAdminOperacionResponse>(`${BASE}/admin-operacion`, req);
   }
 
   precios(req: AiPreciosRequest) {

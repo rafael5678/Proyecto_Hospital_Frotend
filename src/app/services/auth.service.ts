@@ -29,17 +29,25 @@ export class AuthService {
   }
 
   logout() {
-    this.stopInactivityMonitor();
-    localStorage.removeItem(SESSION_KEY);
-    this.user.set(null);
+    this.cerrarSesionLocal();
     this.router.navigate(['/']);
   }
 
   logoutPorInactividad(_role: 'ADMIN' | 'MEDICO') {
+    this.cerrarSesionLocal();
+    this.router.navigate(['/'], { queryParams: { sessionExpired: '1' } });
+  }
+
+  /** Al abrir la portada no se reutiliza la cuenta anterior. */
+  cerrarSesionAlAbrirPortal() {
+    this.cerrarSesionLocal();
+  }
+
+  private cerrarSesionLocal() {
     this.stopInactivityMonitor();
+    sessionStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(SESSION_KEY);
     this.user.set(null);
-    this.router.navigate(['/'], { queryParams: { sessionExpired: '1' } });
   }
 
   get token(): string | null {
@@ -77,12 +85,13 @@ export class AuthService {
       email: res.email,
       rol: res.rol
     };
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
     this.user.set(session);
   }
 
   private loadSession(): SessionUser | null {
-    const raw = localStorage.getItem(SESSION_KEY);
+    localStorage.removeItem(SESSION_KEY);
+    const raw = sessionStorage.getItem(SESSION_KEY);
     if (!raw) return null;
     try {
       return JSON.parse(raw) as SessionUser;

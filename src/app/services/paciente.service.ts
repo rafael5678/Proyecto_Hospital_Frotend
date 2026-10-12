@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Cita, CitaRequest } from '../models/cita.model';
-import { Horario } from '../models/horario.model';
+import { CupoDisponible, Horario } from '../models/horario.model';
 import { Usuario } from '../models/usuario.model';
 import { PacienteDashboard, PacientePerfil } from '../models/paciente-perfil.model';
 
@@ -31,6 +31,12 @@ export class PacienteService {
 
   horariosMedico(medicoId: number) {
     return this.http.get<Horario[]>(`${this.publicApi}/medicos/${medicoId}/horarios`);
+  }
+
+  cuposMedico(medicoId: number) {
+    return this.http.get<CupoDisponible[]>(`${this.publicApi}/medicos/${medicoId}/cupos`, {
+      params: { limite: 12 }
+    });
   }
 
   agendarCita(data: CitaRequest) {

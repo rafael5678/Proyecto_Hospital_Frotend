@@ -75,10 +75,7 @@ export class LandingComponent implements OnInit {
   }
 
   ngOnInit() {
-    if (this.auth.isLoggedIn()) {
-      this.auth.redirectByRole();
-      return;
-    }
+    this.auth.cerrarSesionAlAbrirPortal();
 
     const savedEmail = localStorage.getItem(REMEMBERED_EMAIL_KEY);
     if (savedEmail) {

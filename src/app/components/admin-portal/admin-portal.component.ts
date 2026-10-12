@@ -9,10 +9,11 @@ import { Reporte } from '../../models/reporte.model';
 import { PortalSidebarComponent, SidebarItem } from '../portal-sidebar/portal-sidebar.component';
 import { SessionTimeoutComponent } from '../session-timeout/session-timeout.component';
 import { AiService } from '../../services/ai.service';
-import { AiPreciosRequest, AiPreciosResponse } from '../../models/ai.model';
+import { AiAdminOperacionResponse, AiPreciosRequest, AiPreciosResponse } from '../../models/ai.model';
 import { AiMetricas } from '../../models/ai-metricas.model';
+import { ESPECIALIDADES_HOSPITAL } from '../../data/especialidades';
 
-type AdminTab = 'inicio' | 'usuarios' | 'medicos' | 'citas' | 'reportes' | 'iasuperv' | 'preciosauditoria';
+type AdminTab = 'inicio' | 'usuarios' | 'medicos' | 'citas' | 'reportes' | 'iasuperv' | 'preciosauditoria' | 'asistente';
 type AdminSub = '' | 'lista' | 'crear' | 'editar' | 'claves' | 'supervision' | 'resumen' | 'mensual';
 
 @Component({
@@ -29,7 +30,7 @@ export class AdminPortalComponent implements OnInit {
 
   tab = signal<AdminTab>('inicio');
   sub = signal<AdminSub>('');
-  expandedMenus = signal<string[]>(['usuarios', 'medicos', 'citas', 'reportes']);
+  expandedMenus = signal<string[]>(['usuarios', 'medicos', 'citas', 'reportes', 'ia']);
 
   readonly menuItems: SidebarItem[] = [
     { id: 'inicio', label: 'Inicio', icon: '🏠', tab: 'inicio' },
@@ -74,6 +75,7 @@ export class AdminPortalComponent implements OnInit {
       label: 'Inteligencia Artificial',
       icon: '🤖',
       children: [
+        { id: 'ia-asist', label: 'Asistente Gemini', tab: 'asistente' },
         { id: 'ia-superv', label: 'Supervisión IA', tab: 'iasuperv' },
         { id: 'ia-precios', label: 'Auditoría precios', tab: 'preciosauditoria' }
       ]
@@ -115,6 +117,10 @@ export class AdminPortalComponent implements OnInit {
   preciosPrecioTxt = '';
   preciosRsp = signal<AiPreciosResponse | null>(null);
   preciosLoading = signal(false);
+  readonly especialidades = ESPECIALIDADES_HOSPITAL;
+  asistenteTexto = '';
+  asistenteLoading = signal(false);
+  asistenteRsp = signal<AiAdminOperacionResponse | null>(null);
 
   ngOnInit() {
     this.cargarUsuarios();
@@ -169,7 +175,8 @@ export class AdminPortalComponent implements OnInit {
       'reportes-resumen': 'Reportes — resumen',
       'reportes-mensual': 'Reportes — desglose mensual',
       iasuperv: 'IA — Supervisión y estado',
-      preciosauditoria: 'IA — Auditoría de precios'
+      preciosauditoria: 'IA — Auditoría de precios',
+      asistente: 'IA — Asistente para altas'
     };
     return map[`${t}-${s}`] ?? map[t] ?? 'Administración';
   }
@@ -318,6 +325,82 @@ export class AdminPortalComponent implements OnInit {
 
   idUsuario(u: Usuario): number {
     return u.usuarioId ?? u.id;
+  }
+
+  consultarAsistente() {
+    const texto = this.asistenteTexto.trim();
+    if (!texto) {
+      this.error.set('Escribe qué médico o paciente quieres crear.');
+      return;
+    }
+    this.error.set('');
+    this.asistenteLoading.set(true);
+    this.asistenteRsp.set(null);
+    this.ai.adminOperacion({ instruccion: texto }).subscribe({
+      next: r => {
+        this.asistenteRsp.set(r);
+        this.asistenteLoading.set(false);
+      },
+      error: e => {
+        this.asistenteLoading.set(false);
+        this.error.set(e.error?.error ?? 'Gemini no pudo interpretar la instrucción.');
+      }
+    });
+  }
+
+  confirmarAsistente() {
+    const r = this.asistenteRsp();
+    if (!r || (r.accion !== 'CREAR_MEDICO' && r.accion !== 'CREAR_PACIENTE')) return;
+    this.error.set('');
+    if (r.accion === 'CREAR_MEDICO') {
+      if (!r.nombre?.trim() || !r.email?.trim() || !r.especialidad?.trim()) {
+        this.error.set('Faltan nombre, correo o especialidad. Complétalos en Registrar médico.');
+        this.form.nombre = r.nombre || '';
+        this.form.email = r.email || '';
+        this.form.especialidad = r.especialidad || '';
+        this.form.password = r.passwordSugerida || 'Medico123';
+        this.tab.set('medicos');
+        this.sub.set('crear');
+        return;
+      }
+      this.adminService.crearMedico({
+        nombre: r.nombre, email: r.email, password: r.passwordSugerida || 'Medico123',
+        rol: 'MEDICO', especialidad: r.especialidad, telefono: r.telefono || ''
+      }).subscribe({
+        next: () => {
+          this.okAdmin.set(`Médico creado: ${r.nombre} (${r.especialidad}). Clave inicial: ${r.passwordSugerida || 'Medico123'}`);
+          this.asistenteRsp.set(null);
+          this.asistenteTexto = '';
+          this.cargarMedicos();
+          this.cargarUsuarios();
+        },
+        error: e => this.error.set(e.error?.error ?? 'No se pudo crear el médico')
+      });
+      return;
+    }
+    if (!r.nombre?.trim() || !r.email?.trim() || !r.documento?.trim()) {
+      this.form.nombre = r.nombre || '';
+      this.form.email = r.email || '';
+      this.form.documento = r.documento || '';
+      this.form.password = r.passwordSugerida || 'Paciente123';
+      this.form.telefono = r.telefono || '';
+      this.tab.set('usuarios');
+      this.sub.set('crear');
+      this.error.set('Completa documento y datos del paciente, luego pulsa Crear paciente.');
+      return;
+    }
+    this.adminService.crearUsuario({
+      nombre: r.nombre, email: r.email, password: r.passwordSugerida || 'Paciente123',
+      rol: 'PACIENTE', documento: r.documento, telefono: r.telefono || ''
+    }).subscribe({
+      next: () => {
+        this.okAdmin.set(`Paciente creado: ${r.nombre}. Clave inicial: ${r.passwordSugerida || 'Paciente123'}`);
+        this.asistenteRsp.set(null);
+        this.asistenteTexto = '';
+        this.cargarUsuarios();
+      },
+      error: e => this.error.set(e.error?.error ?? 'No se pudo crear el paciente')
+    });
   }
 
   resetForm() {

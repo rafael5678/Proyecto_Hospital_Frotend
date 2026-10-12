@@ -562,6 +562,34 @@
   }
 }
 
+.horario-lista {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: #166534;
+}
+
+.slot-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.slot-chip {
+  border: 1px solid #86efac;
+  background: #fff;
+  color: #166534;
+  border-radius: 999px;
+  padding: 0.45rem 0.8rem;
+  cursor: pointer;
+  font: inherit;
+}
+
+.slot-chip.active {
+  background: #059669;
+  color: #fff;
+  border-color: #047857;
+}
+
 @media (max-width: 768px) {
   .portal-layout.with-sidebar {
     flex-direction: column !important;

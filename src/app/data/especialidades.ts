@@ -1,0 +1,22 @@
+export const ESPECIALIDADES_HOSPITAL = [
+  'Medicina General',
+  'Cardiología',
+  'Neurología',
+  'Dermatología',
+  'Traumatología',
+  'Ortopedia',
+  'Pediatría',
+  'Ginecología',
+  'Oftalmología',
+  'Otorrinolaringología',
+  'Gastroenterología',
+  'Endocrinología',
+  'Urología',
+  'Psiquiatría',
+  'Neumología',
+  'Medicina Interna',
+  'Reumatología',
+  'Oncología',
+  'Nefrología',
+  'Infectología'
+] as const;
