@@ -50,5 +50,3 @@ export class PortalSidebarComponent {
     if (item.tab) this.navigate.emit(item);
   }
 }
-
-// Componente Barra Lateral: Menú unificado de navegación con opciones contextuales según el rol activo.

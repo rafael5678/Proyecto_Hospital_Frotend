@@ -82,6 +82,9 @@ export class AiService {
       severidad = 'Naranja'; nivelEsi = 2; prioridad = 8; especialidadRecomendada = 'Neumología';
     } else if (/cabeza|cefalea|mareo/.test(s)) {
       severidad = 'Amarillo'; nivelEsi = 3; prioridad = 6; especialidadRecomendada = 'Neurología';
+    } else if (/mano|hinchad|edema|inflamad|esguince|muñeca|muneca|golpe|fractura/.test(s)) {
+      severidad = 'Amarillo'; nivelEsi = 3; prioridad = 5; especialidadRecomendada = 'Traumatología';
+      hallazgos.push('Inflamación o trauma de extremidad');
     } else if (/piel|mancha|lesi[oó]n|acn[eé]/.test(s)) {
       especialidadRecomendada = 'Dermatología';
     } else if (/gripe|resfriado|tos/.test(s)) {
@@ -108,6 +111,9 @@ export class AiService {
     } else if (/roncha|urticaria|pica|varicela|tiña/.test(d)) {
       nivelRiesgo = 'MEDIO'; scoreRiesgo = 0.42;
       diagnosticosDiferenciales = ['Urticaria', 'Dermatitis atópica'];
+    } else if (/mano|hinchad|edema|inflamad|golpe|esguince/.test(d)) {
+      nivelRiesgo = 'MEDIO'; scoreRiesgo = 0.4;
+      diagnosticosDiferenciales = ['Edema o inflamación de extremidad', 'Contusión de tejidos blandos'];
     }
     return {
       nivelRiesgo, scoreRiesgo, diagnosticosDiferenciales,

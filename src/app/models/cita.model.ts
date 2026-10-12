@@ -47,5 +47,3 @@ export interface ReprogramarCitaResponse {
   correoMedicoEnviado: boolean;
   mensaje: string;
 }
-
-// Definición de modelo Cita: Refleja los atributos de fecha, hora, estado, médico y prioridad de triage.

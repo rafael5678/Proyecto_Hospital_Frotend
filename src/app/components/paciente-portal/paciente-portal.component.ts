@@ -212,7 +212,7 @@ export class PacientePortalComponent implements OnInit {
   }
 
   puedeAnalizarPiel(): boolean {
-    return !!(this.dermReq.descripcion?.trim() || this.dermReq.imagenBase64);
+    return !!(this.dermReq.descripcion?.trim() || this.dermReq.imagenBase64 || this.sintomas.trim());
   }
 
   onPielToggle() {
@@ -226,8 +226,8 @@ export class PacientePortalComponent implements OnInit {
   onFotoPiel(ev: Event) {
     const file = (ev.target as HTMLInputElement).files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      this.error.set('Sube una foto en JPG o PNG.');
+    if (!file.type.startsWith('image/') || /\.html?$/i.test(file.name)) {
+      this.error.set('Ese archivo no es una foto. Sube un JPG, PNG o WEBP (no una página .htm).');
       return;
     }
     if (file.size > 8_000_000) {
@@ -254,6 +254,9 @@ export class PacientePortalComponent implements OnInit {
         this.dermRsp.set(null);
         this.error.set('');
       };
+      img.onerror = () => {
+        this.error.set('No se pudo leer la imagen. Elige otra foto JPG o PNG.');
+      };
       img.src = reader.result as string;
     };
     reader.readAsDataURL(file);
@@ -266,8 +269,16 @@ export class PacientePortalComponent implements OnInit {
   }
 
   especialidadObjetivo(): string {
-    if (this.tieneLesionPiel && this.dermRsp()) return 'Dermatología';
-    return this.triageRsp()?.especialidadRecomendada || this.filtroEspecialidad || '';
+    const triageEsp = this.triageRsp()?.especialidadRecomendada || this.filtroEspecialidad || '';
+    if (this.tieneLesionPiel && this.dermRsp()) {
+      const riesgo = (this.dermRsp()!.nivelRiesgo || '').toUpperCase();
+      const dx = (this.dermRsp()!.diagnosticosDiferenciales || []).join(' ').toLowerCase();
+      const esPiel = /melanoma|dermatitis|acn[eé]|tiña|tinea|herpes|celulitis|imp[eé]tigo|urticaria|psoriasis|hongo/.test(dx);
+      if (riesgo === 'ALTO' || riesgo === 'CRITICO' || esPiel) return 'Dermatología';
+      if (triageEsp) return triageEsp;
+      return 'Dermatología';
+    }
+    return triageEsp;
   }
 
   medicoAsignado(): Usuario | null {
@@ -374,7 +385,7 @@ export class PacientePortalComponent implements OnInit {
 
     const despuesTriage = () => {
       if (this.tieneLesionPiel && this.puedeAnalizarPiel() && !this.dermRsp()) {
-        this.ai.dermatologia({ ...this.dermReq }).subscribe({
+        this.ai.dermatologia(this.payloadDerm()).subscribe({
           next: r => {
             this.dermRsp.set(r);
             this.asignarMedicoSegunAnalisis();
@@ -388,12 +399,7 @@ export class PacientePortalComponent implements OnInit {
     };
 
     if (!this.triageRsp()) {
-      this.triageReq = {
-        sintomas: this.sintomas,
-        duracion: this.duracionSintomas,
-        antecedentes: this.antecedentesSintomas,
-        edadPaciente: this.triageReq.edadPaciente
-      };
+      this.triageReq = this.payloadTriage();
       this.ai.triage({ ...this.triageReq }).subscribe({
         next: r => { this.triageRsp.set(r); despuesTriage(); },
         error: () => despuesTriage()
@@ -454,16 +460,12 @@ export class PacientePortalComponent implements OnInit {
 
     /* Sincronizar en ambas direcciones */
     if (this.tab() === 'agendar') {
-      this.triageReq = {
-        sintomas: this.sintomas,
-        duracion: this.duracionSintomas,
-        antecedentes: this.antecedentesSintomas,
-        edadPaciente: this.triageReq.edadPaciente
-      };
+      this.triageReq = this.payloadTriage();
     } else {
       this.sintomas = this.triageReq.sintomas || '';
       this.duracionSintomas = this.triageReq.duracion || '';
       this.antecedentesSintomas = this.triageReq.antecedentes || '';
+      this.triageReq = this.payloadTriage();
     }
 
     this.ai.triage({ ...this.triageReq }).subscribe({
@@ -485,13 +487,34 @@ export class PacientePortalComponent implements OnInit {
     this.dermLoading.set(true);
     this.error.set('');
     this.dermRsp.set(null);
-    this.ai.dermatologia({ ...this.dermReq }).subscribe({
+    this.ai.dermatologia(this.payloadDerm()).subscribe({
       next: (r) => {
         this.dermRsp.set(r);
         this.dermLoading.set(false);
         this.asignarMedicoSegunAnalisis();
       }
     });
+  }
+
+  private payloadTriage(): AiTriageRequest {
+    const sintomas = (this.tab() === 'agendar' ? this.sintomas : (this.triageReq.sintomas || this.sintomas)).trim();
+    return {
+      sintomas,
+      duracion: this.tab() === 'agendar' ? this.duracionSintomas : (this.triageReq.duracion || this.duracionSintomas),
+      antecedentes: this.tab() === 'agendar' ? this.antecedentesSintomas : (this.triageReq.antecedentes || this.antecedentesSintomas),
+      edadPaciente: this.triageReq.edadPaciente,
+      imagenBase64: this.dermReq.imagenBase64
+    };
+  }
+
+  private payloadDerm(): AiDermatologiaRequest {
+    const sintomas = this.sintomas.trim();
+    return {
+      ...this.dermReq,
+      descripcion: this.dermReq.descripcion?.trim() || sintomas,
+      sintomasAsociados: this.dermReq.sintomasAsociados?.trim() || sintomas,
+      tiempoEvolucion: this.dermReq.tiempoEvolucion || this.duracionSintomas
+    };
   }
 
   triageCambiar() {

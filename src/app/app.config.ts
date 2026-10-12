@@ -12,5 +12,3 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([jwtInterceptor]))
   ]
 };
-
-// Proveedores globales: Configuración de HttpClient con interceptores y Router habilitado.

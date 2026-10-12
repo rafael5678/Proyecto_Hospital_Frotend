@@ -12,5 +12,3 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
   }
   return next(req);
 };
-
-// Interceptor HTTP: Agrega automáticamente el token JWT Bearer a cada petición saliente al backend.

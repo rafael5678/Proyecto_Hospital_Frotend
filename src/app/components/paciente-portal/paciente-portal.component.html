@@ -161,6 +161,14 @@
               <strong>Orientación: {{ triage.severidad }} · Nivel {{ triage.nivelEsi }}/5</strong>
               <p>{{ triage.resumen }}</p>
               <p>Especialidad sugerida: {{ triage.especialidadRecomendada }} · Prioridad orientativa: {{ triage.prioridad }}/10</p>
+              @if (triage.hallazgos?.length) {
+                <ul>
+                  @for (h of triage.hallazgos; track h) {
+                    <li>{{ h }}</li>
+                  }
+                </ul>
+              }
+              @if (triage.recomendaciones) { <p>{{ triage.recomendaciones }}</p> }
               @if (triage.modoDemo) { <p class="hint">Resultado de demostración: la IA clínica real no está configurada. No uses este resultado para decidir si esperar.</p> }
               <p class="hint">Si tienes dificultad intensa para respirar, dolor fuerte en el pecho, pérdida del conocimiento u otra emergencia, contacta urgencias ahora.</p>
             </div>

@@ -71,7 +71,3 @@ export class MedicoService {
     return this.http.delete(`${this.api}/horarios/${id}`);
   }
 }
-
-// Documentación interna: MedicoService interactúa con los endpoints para registrar la atención de pacientes.
-
-// Documentación interna: Consulta y actualizacion reactiva de la agenda medica.

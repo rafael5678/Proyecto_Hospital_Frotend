@@ -49,7 +49,3 @@ export class PacienteService {
     return this.http.patch<Cita>(`${this.api}/citas/${id}/cancelar`, {});
   }
 }
-
-// Documentación interna: PacienteService canaliza las llamadas a la API para agendar citas y consultar perfiles.
-
-// Documentación interna: Manejo de payload para cita medica y adjunto de imagen.
