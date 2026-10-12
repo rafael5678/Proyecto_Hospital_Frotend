@@ -1,0 +1,57 @@
+import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
+import { DatePipe } from '@angular/common';
+import { NotificacionService } from '../../services/notificacion.service';
+import { Notificacion } from '../../models/notificacion.model';
+
+@Component({
+  selector: 'app-notification-bell',
+  standalone: true,
+  imports: [DatePipe],
+  templateUrl: './notification-bell.component.html',
+  styleUrl: './notification-bell.component.css'
+})
+export class NotificationBellComponent implements OnInit, OnDestroy {
+  theme = input<'paciente' | 'medico'>('paciente');
+  private svc = inject(NotificacionService);
+  abierta = signal(false);
+  items = signal<Notificacion[]>([]);
+  noLeidas = signal(0);
+  private timer: ReturnType<typeof setInterval> | null = null;
+
+  ngOnInit() {
+    this.cargar();
+    this.timer = setInterval(() => this.cargar(), 25000);
+    document.addEventListener('click', this.cerrarSiAfuera);
+  }
+
+  ngOnDestroy() {
+    if (this.timer) clearInterval(this.timer);
+    document.removeEventListener('click', this.cerrarSiAfuera);
+  }
+
+  private cerrarSiAfuera = (ev: MouseEvent) => {
+    const target = ev.target as HTMLElement | null;
+    if (this.abierta() && target && !target.closest('.bell')) {
+      this.abierta.set(false);
+    }
+  };
+
+  cargar() {
+    this.svc.listar().subscribe({ next: n => this.items.set(n) });
+    this.svc.noLeidas().subscribe({ next: r => this.noLeidas.set(r.total) });
+  }
+
+  toggle() {
+    this.abierta.set(!this.abierta());
+    if (this.abierta()) this.cargar();
+  }
+
+  leer(n: Notificacion) {
+    if (n.leida) return;
+    this.svc.leer(n.id).subscribe({ next: () => this.cargar() });
+  }
+
+  leerTodas() {
+    this.svc.leerTodas().subscribe({ next: () => this.cargar() });
+  }
+}

@@ -1,0 +1,118 @@
+:host {
+  display: inline-flex;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 50;
+}
+
+.bell {
+  position: relative;
+}
+
+.bell-btn {
+  position: relative;
+  width: 2.35rem;
+  height: 2.35rem;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  background: #fff;
+  color: #0f172a;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.08);
+}
+
+.bell-btn:hover {
+  background: #f8fafc;
+}
+
+.bell.medico .bell-btn {
+  color: #1e3a8a;
+  border-color: #c7d2fe;
+  background: #eef2ff;
+}
+
+.badge {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  min-width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.62rem;
+  font-weight: 700;
+  display: grid;
+  place-items: center;
+  padding: 0 0.2rem;
+}
+
+.panel {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.45rem);
+  width: min(22rem, 86vw);
+  max-height: 22rem;
+  overflow: auto;
+  background: #fff;
+  border-radius: 0.85rem;
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.16);
+  z-index: 80;
+  padding: 0.7rem;
+}
+
+.panel header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.45rem;
+}
+
+.link, .empty {
+  border: 0;
+  background: none;
+  color: #0f766e;
+  font: inherit;
+  cursor: pointer;
+  padding: 0;
+}
+
+.empty {
+  cursor: default;
+  color: #64748b;
+  margin: 0.4rem 0;
+}
+
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+li {
+  padding: 0.55rem 0.4rem;
+  border-top: 1px solid #f1f5f9;
+  cursor: pointer;
+}
+
+li.unread {
+  background: #f0fdf4;
+}
+
+li strong {
+  display: block;
+  font-size: 0.88rem;
+}
+
+li p {
+  margin: 0.25rem 0;
+  font-size: 0.8rem;
+  color: #334155;
+  white-space: pre-wrap;
+}
+
+li small {
+  color: #94a3b8;
+}

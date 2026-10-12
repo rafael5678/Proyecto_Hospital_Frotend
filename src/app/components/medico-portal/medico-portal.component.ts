@@ -8,6 +8,7 @@ import { Horario } from '../../models/horario.model';
 import { PacientePerfil } from '../../models/paciente-perfil.model';
 import { PortalSidebarComponent, SidebarItem } from '../portal-sidebar/portal-sidebar.component';
 import { SessionTimeoutComponent } from '../session-timeout/session-timeout.component';
+import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 import { AiService } from '../../services/ai.service';
 import {
   AiSoapRequest, AiSoapResponse,
@@ -32,7 +33,7 @@ type SpeechRecognitionFactory = new () => SpeechRecognitionLike;
 @Component({
   selector: 'app-medico-portal',
   standalone: true,
-  imports: [FormsModule, DatePipe, DecimalPipe, PortalSidebarComponent, SessionTimeoutComponent],
+  imports: [FormsModule, DatePipe, DecimalPipe, PortalSidebarComponent, SessionTimeoutComponent, NotificationBellComponent],
   templateUrl: './medico-portal.component.html',
   styleUrl: './medico-portal.component.css'
 })
@@ -283,9 +284,41 @@ export class MedicoPortalComponent implements OnInit, OnDestroy {
     this.error.set('');
     this.soapLoading.set(true);
     this.ai.soap(this.soapReq).subscribe({
-      next: r => this.soapRsp.set(r),
+      next: r => {
+        this.soapRsp.set(r);
+        this.hablarResumenSoap(r);
+      },
       complete: () => this.soapLoading.set(false)
     });
+  }
+
+  hablarResumenSoap(r?: AiSoapResponse) {
+    const nota = r ?? this.soapRsp();
+    if (!nota || typeof speechSynthesis === 'undefined') return;
+    const texto = [
+      'Resumen clínico de la nota SOAP.',
+      nota.especialidadSugerida ? `Especialidad sugerida: ${nota.especialidadSugerida}.` : '',
+      nota.diagnosticoPresuntivo ? `Impresión: ${nota.diagnosticoPresuntivo}.` : '',
+      nota.apreciacion ? `Apreciación: ${this.resumenCorto(nota.apreciacion)}.` : '',
+      nota.plan ? `Plan: ${this.resumenCorto(nota.plan)}.` : '',
+      'Recuerda validar este borrador con tu criterio médico.'
+    ].filter(Boolean).join(' ');
+    speechSynthesis.cancel();
+    const voz = new SpeechSynthesisUtterance(texto.slice(0, 520));
+    voz.lang = 'es-CO';
+    voz.rate = 0.95;
+    const es = speechSynthesis.getVoices().find(v => v.lang.toLowerCase().startsWith('es'));
+    if (es) voz.voice = es;
+    speechSynthesis.speak(voz);
+  }
+
+  private resumenCorto(texto: string) {
+    const limpio = texto.replace(/\s+/g, ' ').trim();
+    return limpio.length > 220 ? `${limpio.slice(0, 217)}…` : limpio;
+  }
+
+  detenerVozSoap() {
+    if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
   }
 
   async iniciarGrabacion() {

@@ -1,0 +1,33 @@
+<div class="bell" [class.medico]="theme() === 'medico'">
+  <button type="button" class="bell-btn" (click)="toggle()" [attr.aria-expanded]="abierta()" aria-label="Notificaciones">
+    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+      <path fill="currentColor" d="M12 22a2.4 2.4 0 0 0 2.4-2.4h-4.8A2.4 2.4 0 0 0 12 22Zm7.2-6V11a7.2 7.2 0 0 0-5.4-7V3.2a1.8 1.8 0 1 0-3.6 0V4a7.2 7.2 0 0 0-5.4 7v5L3 17.6V19h18v-1.4L19.2 16Z"/>
+    </svg>
+    @if (noLeidas() > 0) {
+      <span class="badge">{{ noLeidas() > 9 ? '9+' : noLeidas() }}</span>
+    }
+  </button>
+  @if (abierta()) {
+    <div class="panel" role="dialog" aria-label="Tus notificaciones">
+      <header>
+        <strong>Notificaciones</strong>
+        @if (noLeidas() > 0) {
+          <button type="button" class="link" (click)="leerTodas()">Marcar leídas</button>
+        }
+      </header>
+      @if (items().length === 0) {
+        <p class="empty">No tienes avisos todavía.</p>
+      } @else {
+        <ul>
+          @for (n of items(); track n.id) {
+            <li [class.unread]="!n.leida" (click)="leer(n)">
+              <strong>{{ n.titulo }}</strong>
+              <p>{{ n.mensaje }}</p>
+              <small>{{ n.creadaEn | date:'short' }}</small>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  }
+</div>

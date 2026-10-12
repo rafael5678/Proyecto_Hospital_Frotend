@@ -16,6 +16,7 @@
           <span class="user-avatar">{{ iniciales(auth.user()?.nombre) }}</span>
           {{ auth.user()?.nombre }}
         </span>
+        <app-notification-bell theme="medico" />
         <button type="button" class="btn logout" (click)="auth.logout()">Cerrar sesión</button>
       </div>
     </header>
@@ -240,7 +241,7 @@
       <section class="card section ai-panel">
         <header class="section-head">
           <h2 class="section-title">🧾 Escriba médico · Nota SOAP automatizada</h2>
-          <span class="chip-outline demo">Audio enviado para transcripción; borrador sujeto a revisión médica</span>
+          <span class="chip-outline demo">Al generar, la IA lee un resumen en voz alta. Borrador sujeto a revisión médica.</span>
         </header>
 
         <div class="actions-bar">
@@ -290,6 +291,8 @@
         @if (soapRsp(); as r) {
         <div class="ai-result">
           <div class="severity-row">
+            <button type="button" class="btn btn-blue" (click)="hablarResumenSoap(r)">🔊 Escuchar resumen</button>
+            <button type="button" class="btn logout" (click)="detenerVozSoap()">Detener voz</button>
             <span class="severity-chip bg-blue">Especialidad: {{ r.especialidadSugerida }}</span>
             @if (r.diagnosticoPresuntivo) {
             <span class="severity-chip bg-orange">Dx presuntivo: {{ r.diagnosticoPresuntivo }}</span>

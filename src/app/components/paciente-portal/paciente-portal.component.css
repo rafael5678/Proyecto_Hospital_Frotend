@@ -159,6 +159,8 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  overflow: visible;
+  flex-shrink: 0;
 }
 
 .user-chip {

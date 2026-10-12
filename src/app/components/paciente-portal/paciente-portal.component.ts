@@ -15,6 +15,7 @@ import {
   AiTriageRequest, AiTriageResponse
 } from '../../models/ai.model';
 import { PortalSidebarComponent, SidebarItem } from '../portal-sidebar/portal-sidebar.component';
+import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 
 type PacienteTab = 'inicio' | 'agendar' | 'historial' | 'proximas' | 'medicos' | 'perfil'
   | 'triage' | 'dermatologia' | 'interacciones' | 'precios';
@@ -24,7 +25,7 @@ type PacienteSub = '' | 'agendar' | 'historial' | 'proximas' | 'directorio' | 'e
 @Component({
   selector: 'app-paciente-portal',
   standalone: true,
-  imports: [FormsModule, DatePipe, PortalSidebarComponent],
+  imports: [FormsModule, DatePipe, PortalSidebarComponent, NotificationBellComponent],
   templateUrl: './paciente-portal.component.html',
   styleUrl: './paciente-portal.component.css'
 })

@@ -19,6 +19,7 @@
           <span class="user-avatar">{{ iniciales(auth.user()?.nombre) }}</span>
           {{ auth.user()?.nombre }}
         </span>
+        <app-notification-bell theme="paciente" />
         <button type="button" class="btn logout" (click)="auth.logout()">Cerrar sesión</button>
       </div>
     </header>
