@@ -33,6 +33,7 @@ export interface AiDermatologiaRequest {
 export interface AiDermatologiaResponse {
   nivelRiesgo: string;       /* BAJO | MEDIO | ALTO | CRITICO */
   scoreRiesgo: number;       /* 0.0 .. 1.0 */
+  explicacion?: string;
   diagnosticosDiferenciales: string[];
   caracteristicasObservadas: string[];
   recomendaciones: string;

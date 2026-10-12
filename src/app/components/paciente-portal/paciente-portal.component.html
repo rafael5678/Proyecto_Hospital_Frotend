@@ -161,34 +161,14 @@
               <strong>Orientación: {{ triage.severidad }} · Nivel {{ triage.nivelEsi }}/5</strong>
               <p>{{ triage.resumen }}</p>
               <p>Especialidad sugerida: {{ triage.especialidadRecomendada }} · Prioridad orientativa: {{ triage.prioridad }}/10</p>
-              @if (triage.hallazgos?.length) {
-                <ul>
-                  @for (h of triage.hallazgos; track h) {
-                    <li>{{ h }}</li>
-                  }
-                </ul>
-              }
-              @if (triage.recomendaciones) { <p>{{ triage.recomendaciones }}</p> }
-              @if (triage.modoDemo) { <p class="hint">Resultado de demostración: la IA clínica real no está configurada. No uses este resultado para decidir si esperar.</p> }
+              @if (triage.modoDemo) { <p class="hint">Orientación provisional. Si los síntomas empeoran, consulta de forma presencial.</p> }
               <p class="hint">Si tienes dificultad intensa para respirar, dolor fuerte en el pecho, pérdida del conocimiento u otra emergencia, contacta urgencias ahora.</p>
             </div>
           }
           @if (tieneLesionPiel && dermRsp(); as derm) {
             <div class="triage-result" role="status">
-              <strong>Orientación de piel: {{ derm.nivelRiesgo }} ({{ derm.scoreRiesgo }})</strong>
-              <p>{{ derm.advertencia }}</p>
-              <p>{{ derm.recomendaciones }}</p>
-              @if (derm.diagnosticosDiferenciales.length) {
-                <p>Posibles orientaciones: {{ derm.diagnosticosDiferenciales.join(' · ') }}</p>
-              }
-              @if (derm.caracteristicasObservadas.length) {
-                <ul>
-                  @for (c of derm.caracteristicasObservadas; track c) {
-                    <li>{{ c }}</li>
-                  }
-                </ul>
-              }
-              @if (derm.modoDemo) { <p class="hint">Análisis de demostración basado en texto; no se ha procesado una imagen clínica.</p> }
+              <strong>Severidad de piel: {{ derm.nivelRiesgo }}</strong>
+              <p>{{ derm.explicacion || 'Revisión orientativa de la lesión. Si empeora, consulta de forma presencial.' }}</p>
             </div>
           }
           @if (tieneLesionPiel) {

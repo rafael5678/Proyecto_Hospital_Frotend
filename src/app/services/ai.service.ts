@@ -97,8 +97,8 @@ export class AiService {
     }
     return {
       severidad, escala: 'ESI/MTS orientativo', nivelEsi, especialidadRecomendada, prioridad, hallazgos,
-      recomendaciones: 'Orientación con reglas ESI/MTS locales. Si hay dolor de pecho o ahogo intenso, acude a urgencias.',
-      resumen: `Orientación ${severidad} (prioridad ${prioridad}/10) hacia ${especialidadRecomendada}.`,
+      recomendaciones: 'Si hay dolor de pecho o ahogo intenso, acude a urgencias.',
+      resumen: `Severidad ${severidad} hacia ${especialidadRecomendada}.`,
       modoDemo: false
     };
   }
@@ -121,14 +121,14 @@ export class AiService {
       diagnosticosDiferenciales = ['Edema o inflamación de extremidad', 'Contusión de tejidos blandos'];
     }
     return {
-      nivelRiesgo, scoreRiesgo, diagnosticosDiferenciales,
-      caracteristicasObservadas: [
-        req.imagenBase64
-          ? 'El servidor de IA no respondió; la foto no se pudo clasificar en este intento.'
-          : 'Análisis de texto local (sin imagen)'
-      ],
-      recomendaciones: 'Clasificación local de respaldo. Correlacionar con examen físico en Dermatología.',
-      advertencia: 'No sustituye consulta con dermatólogo.',
+      nivelRiesgo, scoreRiesgo,
+      explicacion: nivelRiesgo === 'ALTO'
+        ? 'La lesión o la inflamación que describes tiene signos que conviene revisar pronto.'
+        : 'Hay un cambio en la piel. Vigílalo y consulta si empeora o aparece fiebre.',
+      diagnosticosDiferenciales,
+      caracteristicasObservadas: [],
+      recomendaciones: '',
+      advertencia: '',
       modoDemo: false
     };
   }
