@@ -1,4 +1,4 @@
-export interface Reporte {
+export interface Report {
   totalCitas: number;
   citasPendientes: number;
   citasAceptadas: number;

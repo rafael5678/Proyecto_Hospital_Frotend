@@ -1,4 +1,4 @@
-export interface PacientePerfil {
+export interface PatientProfile {
   id: number;
   usuarioId: number;
   nombre: string;
@@ -16,7 +16,7 @@ export interface PacientePerfil {
   observaciones?: string;
 }
 
-export interface PacienteDashboard {
+export interface PatientDashboard {
   totalCitas: number;
   citasPendientes: number;
   citasAceptadas: number;

@@ -3,15 +3,15 @@ import { FormsModule } from '@angular/forms';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { AdminService } from '../../services/admin.service';
-import { Usuario, UsuarioRequest } from '../../models/usuario.model';
-import { Cita } from '../../models/cita.model';
-import { Reporte } from '../../models/reporte.model';
+import { User, UserRequest } from '../../models/user.model';
+import { Appointment } from '../../models/appointment.model';
+import { Report } from '../../models/report.model';
 import { PortalSidebarComponent, SidebarItem } from '../portal-sidebar/portal-sidebar.component';
 import { SessionTimeoutComponent } from '../session-timeout/session-timeout.component';
 import { AiService } from '../../services/ai.service';
-import { AiAdminOperacionResponse, AiPreciosRequest, AiPreciosResponse } from '../../models/ai.model';
-import { AiMetricas } from '../../models/ai-metricas.model';
-import { ESPECIALIDADES_HOSPITAL } from '../../data/especialidades';
+import { AiAdminOperationResponse, AiPricesRequest, AiPricesResponse } from '../../models/ai.model';
+import { AiMetrics } from '../../models/ai.model';
+import { HOSPITAL_SPECIALTIES } from '../../data/specialties';
 
 type AdminTab = 'inicio' | 'usuarios' | 'medicos' | 'citas' | 'reportes' | 'iasuperv' | 'preciosauditoria' | 'asistente';
 type AdminSub = '' | 'lista' | 'crear' | 'editar' | 'claves' | 'supervision' | 'resumen' | 'mensual';
@@ -82,19 +82,19 @@ export class AdminPortalComponent implements OnInit {
     }
   ];
 
-  usuarios = signal<Usuario[]>([]);
-  medicos = signal<Usuario[]>([]);
-  citas = signal<Cita[]>([]);
+  usuarios = signal<User[]>([]);
+  medicos = signal<User[]>([]);
+  citas = signal<Appointment[]>([]);
   buscarCita = '';
   estadoCita = '';
-  citaAReprogramar = signal<Cita | null>(null);
+  citaAReprogramar = signal<Appointment | null>(null);
   nuevaFechaHora = '';
   motivoReprogramacion = '';
   mensajeCambio = signal('');
   guardandoCambio = signal(false);
-  reporte = signal<Reporte | null>(null);
+  reporte = signal<Report | null>(null);
 
-  form: UsuarioRequest = {
+  form: UserRequest = {
     nombre: '', email: '', password: '', rol: 'PACIENTE',
     telefono: '', documento: '', especialidad: '',
     fechaNacimiento: '', genero: '', ciudad: '', alergias: '',
@@ -106,21 +106,21 @@ export class AdminPortalComponent implements OnInit {
   nuevaClave = '';
 
   aiStatus = signal<{ apiKeyActiva: boolean; version: string } | null>(null);
-  aiMetricas = signal<AiMetricas | null>(null);
+  aiMetricas = signal<AiMetrics | null>(null);
 
-  preciosReq: AiPreciosRequest = {
+  preciosReq: AiPricesRequest = {
     medicamento: '',
     presentacion: '',
     precioReportado: 0,
     ciudad: 'Bogotá'
   };
   preciosPrecioTxt = '';
-  preciosRsp = signal<AiPreciosResponse | null>(null);
+  preciosRsp = signal<AiPricesResponse | null>(null);
   preciosLoading = signal(false);
-  readonly especialidades = ESPECIALIDADES_HOSPITAL;
+  readonly especialidades = HOSPITAL_SPECIALTIES;
   asistenteTexto = '';
   asistenteLoading = signal(false);
-  asistenteRsp = signal<AiAdminOperacionResponse | null>(null);
+  asistenteRsp = signal<AiAdminOperationResponse | null>(null);
 
   ngOnInit() {
     this.cargarUsuarios();
@@ -193,7 +193,7 @@ export class AdminPortalComponent implements OnInit {
     this.adminService.supervisarCitas().subscribe({ next: c => this.citas.set(c) });
   }
 
-  citasFiltradas(): Cita[] {
+  citasFiltradas(): Appointment[] {
     const consulta = this.buscarCita.trim().toLocaleLowerCase();
     return this.citas().filter(c => {
       const coincideEstado = !this.estadoCita || c.estado === this.estadoCita;
@@ -214,7 +214,7 @@ export class AdminPortalComponent implements OnInit {
     return this.citas().filter(c => (c.triagePrioridad ?? 0) >= 8 || ['ROJO', 'NARANJA'].includes((c.triageSeveridad ?? '').toUpperCase())).length;
   }
 
-  abrirReprogramacion(cita: Cita) {
+  abrirReprogramacion(cita: Appointment) {
     this.citaAReprogramar.set(cita);
     this.nuevaFechaHora = '';
     this.motivoReprogramacion = '';
@@ -281,7 +281,7 @@ export class AdminPortalComponent implements OnInit {
     });
   }
 
-  editar(u: Usuario) {
+  editar(u: User) {
     this.editandoId.set(this.idUsuario(u));
     this.form = {
       nombre: u.nombre, email: u.email, password: '', rol: u.rol,
@@ -299,7 +299,7 @@ export class AdminPortalComponent implements OnInit {
     if (!id) return;
     this.adminService.actualizarUsuario(id, { ...this.form, password: this.form.password || undefined }).subscribe({
       next: () => {
-        this.okAdmin.set('Usuario actualizado');
+        this.okAdmin.set('User actualizado');
         this.resetForm();
         this.editandoId.set(null);
         this.cargarUsuarios();
@@ -310,7 +310,7 @@ export class AdminPortalComponent implements OnInit {
     });
   }
 
-  restablecerClave(u: Usuario) {
+  restablecerClave(u: User) {
     if (!this.nuevaClave.trim() || this.nuevaClave.trim().length < 6) {
       this.error.set('La nueva clave debe tener al menos 6 caracteres.');
       return;
@@ -323,7 +323,7 @@ export class AdminPortalComponent implements OnInit {
     });
   }
 
-  idUsuario(u: Usuario): number {
+  idUsuario(u: User): number {
     return u.usuarioId ?? u.id;
   }
 
@@ -394,7 +394,7 @@ export class AdminPortalComponent implements OnInit {
       rol: 'PACIENTE', documento: r.documento, telefono: r.telefono || ''
     }).subscribe({
       next: () => {
-        this.okAdmin.set(`Paciente creado: ${r.nombre}. Clave inicial: ${r.passwordSugerida || 'Paciente123'}`);
+        this.okAdmin.set(`Patient creado: ${r.nombre}. Clave inicial: ${r.passwordSugerida || 'Paciente123'}`);
         this.asistenteRsp.set(null);
         this.asistenteTexto = '';
         this.cargarUsuarios();

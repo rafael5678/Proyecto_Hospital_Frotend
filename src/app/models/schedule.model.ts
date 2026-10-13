@@ -1,4 +1,4 @@
-export interface Horario {
+export interface Schedule {
   id: number;
   medicoId: number;
   diaSemana: number;
@@ -15,7 +15,7 @@ export interface CupoDisponible {
   ocupadoMenorPrioridad?: boolean;
 }
 
-export interface HorarioRequest {
+export interface ScheduleRequest {
   diaSemana: number;
   horaInicio: string;
   horaFin: string;

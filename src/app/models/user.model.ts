@@ -1,4 +1,4 @@
-export interface Usuario {
+export interface User {
   id: number;
   usuarioId?: number;
   nombre: string;
@@ -13,7 +13,7 @@ export interface Usuario {
   activo?: boolean;
 }
 
-export interface UsuarioRequest {
+export interface UserRequest {
   nombre: string;
   email: string;
   password?: string;

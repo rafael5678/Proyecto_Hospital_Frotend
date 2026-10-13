@@ -4,7 +4,7 @@ import { Router } from '@angular/router';
 import { tap } from 'rxjs/operators';
 import { environment } from '../../environments/environment';
 import { AuthResponse, LoginRequest, SessionUser } from '../models/auth.model';
-import { RegisterRequest } from '../models/paciente-perfil.model';
+import { RegisterRequest } from '../models/patient-profile.model';
 import { InactivityService } from './inactivity.service';
 
 const SESSION_KEY = 'hospy_session';

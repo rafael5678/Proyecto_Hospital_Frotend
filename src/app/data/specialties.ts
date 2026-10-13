@@ -1,4 +1,4 @@
-export const ESPECIALIDADES_HOSPITAL = [
+export const HOSPITAL_SPECIALTIES = [
   'Medicina General',
   'Cardiología',
   'Neurología',

@@ -2,17 +2,17 @@ import { Component, inject, OnDestroy, OnInit, signal, computed } from '@angular
 import { FormsModule } from '@angular/forms';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
-import { MedicoService, MedicoDashboard, MedicoPerfil } from '../../services/medico.service';
-import { Cita } from '../../models/cita.model';
-import { Horario } from '../../models/horario.model';
-import { PacientePerfil } from '../../models/paciente-perfil.model';
+import { DoctorService, DoctorDashboard, DoctorProfile } from '../../services/doctor.service';
+import { Appointment } from '../../models/appointment.model';
+import { Schedule } from '../../models/schedule.model';
+import { PatientProfile } from '../../models/patient-profile.model';
 import { PortalSidebarComponent, SidebarItem } from '../portal-sidebar/portal-sidebar.component';
 import { SessionTimeoutComponent } from '../session-timeout/session-timeout.component';
 import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 import { AiService } from '../../services/ai.service';
 import {
   AiSoapRequest, AiSoapResponse,
-  AiPreciosRequest, AiPreciosResponse, ComparativaFarmacia
+  AiPricesRequest, AiPricesResponse, ComparativaFarmacia
 } from '../../models/ai.model';
 
 type MedicoTab = 'inicio' | 'citas' | 'horarios' | 'paciente' | 'soap' | 'precios';
@@ -31,15 +31,15 @@ interface SpeechRecognitionLike {
 type SpeechRecognitionFactory = new () => SpeechRecognitionLike;
 
 @Component({
-  selector: 'app-medico-portal',
+  selector: 'app-doctor-portal',
   standalone: true,
   imports: [FormsModule, DatePipe, DecimalPipe, PortalSidebarComponent, SessionTimeoutComponent, NotificationBellComponent],
-  templateUrl: './medico-portal.component.html',
-  styleUrl: './medico-portal.component.css'
+  templateUrl: './doctor-portal.component.html',
+  styleUrl: './doctor-portal.component.css'
 })
-export class MedicoPortalComponent implements OnInit, OnDestroy {
+export class DoctorPortalComponent implements OnInit, OnDestroy {
   auth = inject(AuthService);
-  private svc = inject(MedicoService);
+  private svc = inject(DoctorService);
   private ai = inject(AiService);
 
   tab = signal<MedicoTab>('inicio');
@@ -93,13 +93,13 @@ export class MedicoPortalComponent implements OnInit, OnDestroy {
     return items;
   });
 
-  dashboard = signal<MedicoDashboard | null>(null);
-  perfil = signal<MedicoPerfil | null>(null);
-  citas = signal<Cita[]>([]);
-  horarios = signal<Horario[]>([]);
-  pacienteSeleccionado = signal<PacientePerfil | null>(null);
-  citaEnRevision = signal<Cita | null>(null);
-  historialPaciente = signal<Cita[]>([]);
+  dashboard = signal<DoctorDashboard | null>(null);
+  perfil = signal<DoctorProfile | null>(null);
+  citas = signal<Appointment[]>([]);
+  horarios = signal<Schedule[]>([]);
+  pacienteSeleccionado = signal<PatientProfile | null>(null);
+  citaEnRevision = signal<Appointment | null>(null);
+  historialPaciente = signal<Appointment[]>([]);
 
   diaSemana = 1;
   horaInicio = '08:00';
@@ -123,14 +123,14 @@ export class MedicoPortalComponent implements OnInit, OnDestroy {
   private recognition: SpeechRecognitionLike | null = null;
   private audioChunks: Blob[] = [];
 
-  preciosReq: AiPreciosRequest = {
+  preciosReq: AiPricesRequest = {
     medicamento: '',
     presentacion: '',
     precioReportado: 0,
     ciudad: 'Bogotá'
   };
   preciosPrecioTxt = '';
-  preciosRsp = signal<AiPreciosResponse | null>(null);
+  preciosRsp = signal<AiPricesResponse | null>(null);
   preciosLoading = signal(false);
 
   ngOnInit() {
@@ -193,7 +193,7 @@ export class MedicoPortalComponent implements OnInit, OnDestroy {
     this.svc.dashboard().subscribe({ next: d => this.dashboard.set(d) });
   }
 
-  citasFiltradas(): Cita[] {
+  citasFiltradas(): Appointment[] {
     if (!this.filtroEstado) return this.citas();
     return this.citas().filter(c => c.estado === this.filtroEstado);
   }
@@ -449,7 +449,7 @@ export class MedicoPortalComponent implements OnInit, OnDestroy {
     return `${momento}, ${this.apellido()}`;
   }
 
-  citasActivas(): Cita[] {
+  citasActivas(): Appointment[] {
     return this.citas().filter(c => !['CANCELADA', 'RECHAZADA'].includes(c.estado));
   }
 
@@ -460,19 +460,19 @@ export class MedicoPortalComponent implements OnInit, OnDestroy {
     return hoy.length ? `${hoy.length} en ${primera}` : primera;
   }
 
-  citasDeHoy(): Cita[] {
+  citasDeHoy(): Appointment[] {
     const hoy = new Date().toDateString();
     return this.citasActivas().filter(c => new Date(c.fechaHora).toDateString() === hoy);
   }
 
-  triagePrioritario(): Cita[] {
+  triagePrioritario(): Appointment[] {
     return this.citasActivas()
       .filter(c => c.triageSeveridad || c.triagePrioridad)
       .sort((a, b) => (b.triagePrioridad ?? 0) - (a.triagePrioridad ?? 0))
       .slice(0, 4);
   }
 
-  etiquetaPrioridad(c: Cita): string {
+  etiquetaPrioridad(c: Appointment): string {
     const sev = (c.triageSeveridad || '').toUpperCase();
     if (sev.includes('ROJO') || (c.triagePrioridad ?? 0) >= 8) return 'Urgente';
     if (sev.includes('NARANJA') || (c.triagePrioridad ?? 0) >= 6) return 'Alta';
@@ -480,7 +480,7 @@ export class MedicoPortalComponent implements OnInit, OnDestroy {
     return 'Baja';
   }
 
-  prioridadChip(c: Cita): string {
+  prioridadChip(c: Appointment): string {
     const etiqueta = this.etiquetaPrioridad(c).toLowerCase();
     return `prio ${etiqueta}`;
   }

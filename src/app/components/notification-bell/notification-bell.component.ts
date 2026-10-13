@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
-import { NotificacionService } from '../../services/notificacion.service';
-import { Notificacion } from '../../models/notificacion.model';
+import { NotificationService } from '../../services/notification.service';
+import { Notification } from '../../models/notification.model';
 
 @Component({
   selector: 'app-notification-bell',
@@ -12,9 +12,9 @@ import { Notificacion } from '../../models/notificacion.model';
 })
 export class NotificationBellComponent implements OnInit, OnDestroy {
   theme = input<'paciente' | 'medico'>('paciente');
-  private svc = inject(NotificacionService);
+  private svc = inject(NotificationService);
   abierta = signal(false);
-  items = signal<Notificacion[]>([]);
+  items = signal<Notification[]>([]);
   noLeidas = signal(0);
   private timer: ReturnType<typeof setInterval> | null = null;
 
@@ -53,7 +53,7 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
     if (this.abierta()) this.cargar();
   }
 
-  leer(n: Notificacion) {
+  leer(n: Notification) {
     if (n.leida) return;
     this.svc.leer(n.id).subscribe({ next: () => this.cargar() });
   }

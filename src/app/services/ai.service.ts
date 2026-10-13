@@ -3,14 +3,14 @@ import { HttpClient } from '@angular/common/http';
 import { catchError, of } from 'rxjs';
 import { environment } from '../../environments/environment';
 import {
-  AiDermatologiaRequest, AiDermatologiaResponse,
-  AiInteraccionRequest, AiInteraccionResponse,
-  AiPreciosRequest, AiPreciosResponse,
+  AiDermatologyRequest, AiDermatologyResponse,
+  AiInteractionRequest, AiInteractionResponse,
+  AiPricesRequest, AiPricesResponse,
   AiSoapRequest, AiSoapResponse,
   AiStatusResponse,
   AiTriageRequest, AiTriageResponse,
-  AiTranscripcionResponse,
-  AiAdminOperacionRequest, AiAdminOperacionResponse
+  AiTranscriptionResponse,
+  AiAdminOperationRequest, AiAdminOperationResponse
 } from '../models/ai.model';
 
 const BASE = environment.apiUrl + '/ai';
@@ -32,8 +32,8 @@ export class AiService {
     );
   }
 
-  dermatologia(req: AiDermatologiaRequest) {
-    return this.http.post<AiDermatologiaResponse>(`${BASE}/dermatologia`, req).pipe(
+  dermatologia(req: AiDermatologyRequest) {
+    return this.http.post<AiDermatologyResponse>(`${BASE}/dermatology`, req).pipe(
       catchError(() => of(this.dermLocal(req)))
     );
   }
@@ -51,7 +51,7 @@ export class AiService {
   transcribir(audio: Blob) {
     const form = new FormData();
     form.append('audio', audio, 'consulta.webm');
-    return this.http.post<AiTranscripcionResponse>(`${BASE}/transcribir`, form).pipe(
+    return this.http.post<AiTranscriptionResponse>(`${BASE}/transcribe`, form).pipe(
       catchError(() => of({
         texto: '',
         modoDemo: true,
@@ -60,18 +60,18 @@ export class AiService {
     );
   }
 
-  interacciones(req: AiInteraccionRequest) {
-    return this.http.post<AiInteraccionResponse>(`${BASE}/interacciones`, req).pipe(
+  interacciones(req: AiInteractionRequest) {
+    return this.http.post<AiInteractionResponse>(`${BASE}/interactions`, req).pipe(
       catchError(() => of(this.interLocal(req)))
     );
   }
 
-  adminOperacion(req: AiAdminOperacionRequest) {
-    return this.http.post<AiAdminOperacionResponse>(`${BASE}/admin-operacion`, req);
+  adminOperacion(req: AiAdminOperationRequest) {
+    return this.http.post<AiAdminOperationResponse>(`${BASE}/admin-operacion`, req);
   }
 
-  precios(req: AiPreciosRequest) {
-    return this.http.post<AiPreciosResponse>(`${BASE}/precios`, req).pipe(
+  precios(req: AiPricesRequest) {
+    return this.http.post<AiPricesResponse>(`${BASE}/prices`, req).pipe(
       catchError(() => of(this.preciosLocal(req)))
     );
   }
@@ -103,7 +103,7 @@ export class AiService {
     };
   }
 
-  private dermLocal(req: AiDermatologiaRequest): AiDermatologiaResponse {
+  private dermLocal(req: AiDermatologyRequest): AiDermatologyResponse {
     const d = (req.descripcion || '').toLowerCase();
     let nivelRiesgo = 'BAJO', scoreRiesgo = 0.18;
     let diagnosticosDiferenciales = ['Dermatitis', 'Picadura'];
@@ -136,7 +136,7 @@ export class AiService {
   private soapLocal(tx: string, nombre?: string): AiSoapResponse {
     const corte = tx.length > 280 ? tx.slice(0, 280) + '…' : tx;
     return {
-      subjetivo: `${nombre || 'Paciente'} refiere: ${corte || 'No informado'}`,
+      subjetivo: `${nombre || 'Patient'} refiere: ${corte || 'No informado'}`,
       objetivo: 'Signos vitales: no informados en la transcripción.',
       apreciacion: 'Impresión pendiente de examen físico. Borrador local.',
       plan: DEMO + ' Revisar, completar y firmar la nota.',
@@ -146,7 +146,7 @@ export class AiService {
     };
   }
 
-  private interLocal(req: AiInteraccionRequest): AiInteraccionResponse {
+  private interLocal(req: AiInteractionRequest): AiInteractionResponse {
     const meds = (req.medicamentos || []).join(', ') || 'ninguno';
     return {
       nivelRiesgoGlobal: 'BAJO',
@@ -164,7 +164,7 @@ export class AiService {
     };
   }
 
-  private preciosLocal(req: AiPreciosRequest): AiPreciosResponse {
+  private preciosLocal(req: AiPricesRequest): AiPricesResponse {
     const med = (req.medicamento || '').toLowerCase();
     let base = 30000;
     if (/acetamin|paracetamol|ibuprofeno/.test(med)) base = 7500;

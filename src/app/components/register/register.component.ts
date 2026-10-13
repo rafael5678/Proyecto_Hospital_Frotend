@@ -5,13 +5,13 @@ import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
 
 @Component({
-  selector: 'app-registro',
+  selector: 'app-register',
   standalone: true,
   imports: [FormsModule, RouterLink],
-  templateUrl: './registro.component.html',
-  styleUrl: './registro.component.css'
+  templateUrl: './register.component.html',
+  styleUrl: './register.component.css'
 })
-export class RegistroComponent implements OnInit {
+export class RegisterComponent implements OnInit {
   private auth = inject(AuthService);
   private router = inject(Router);
 

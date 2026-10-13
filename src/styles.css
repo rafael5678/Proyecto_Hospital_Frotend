@@ -162,7 +162,7 @@ th { background: #f8fafc; font-weight: 600; font-size: 0.85rem; }
   table { font-size: 0.85rem; }
 }
 
-/* ======== AI PANELS (Paciente / Médico / Admin) ======== */
+/* ======== AI PANELS (Patient / Médico / Admin) ======== */
 .ai-panel { display: block; margin-top: 1rem; }
 .ai-panel .input.big { min-height: 120px; }
 .ai-panel h3 { margin: 1.25rem 0 0.5rem; color: #0f172a; font-size: 1.05rem; }

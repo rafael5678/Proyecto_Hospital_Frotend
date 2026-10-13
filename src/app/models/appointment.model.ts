@@ -1,4 +1,4 @@
-export interface Cita {
+export interface Appointment {
   id: number;
   pacienteId: number;
   pacienteNombre: string;
@@ -24,7 +24,7 @@ export interface Cita {
   avisoAgenda?: string;
 }
 
-export interface CitaRequest {
+export interface AppointmentRequest {
   medicoId: number;
   fechaHora: string;
   motivo?: string;
@@ -41,8 +41,8 @@ export interface CitaRequest {
   dermatologiaTopDiagnostico?: string;
 }
 
-export interface ReprogramarCitaResponse {
-  cita: Cita;
+export interface RescheduleAppointmentResponse {
+  cita: Appointment;
   correoPacienteEnviado: boolean;
   correoMedicoEnviado: boolean;
   mensaje: string;

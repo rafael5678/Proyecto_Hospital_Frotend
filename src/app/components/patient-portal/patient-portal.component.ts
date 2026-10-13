@@ -2,16 +2,16 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
-import { PacienteService } from '../../services/paciente.service';
+import { PatientService } from '../../services/patient.service';
 import { AiService } from '../../services/ai.service';
-import { Cita } from '../../models/cita.model';
-import { Usuario } from '../../models/usuario.model';
-import { CupoDisponible, Horario } from '../../models/horario.model';
-import { PacienteDashboard, PacientePerfil } from '../../models/paciente-perfil.model';
+import { Appointment } from '../../models/appointment.model';
+import { User } from '../../models/user.model';
+import { CupoDisponible, Schedule } from '../../models/schedule.model';
+import { PatientDashboard, PatientProfile } from '../../models/patient-profile.model';
 import {
-  AiDermatologiaRequest, AiDermatologiaResponse,
-  AiInteraccionRequest, AiInteraccionResponse,
-  AiPreciosRequest, AiPreciosResponse,
+  AiDermatologyRequest, AiDermatologyResponse,
+  AiInteractionRequest, AiInteractionResponse,
+  AiPricesRequest, AiPricesResponse,
   AiTriageRequest, AiTriageResponse
 } from '../../models/ai.model';
 import { PortalSidebarComponent, SidebarItem } from '../portal-sidebar/portal-sidebar.component';
@@ -23,15 +23,15 @@ type PacienteSub = '' | 'agendar' | 'historial' | 'proximas' | 'directorio' | 'e
   | 'triage' | 'derm' | 'inter' | 'precios';
 
 @Component({
-  selector: 'app-paciente-portal',
+  selector: 'app-patient-portal',
   standalone: true,
   imports: [FormsModule, DatePipe, PortalSidebarComponent, NotificationBellComponent],
-  templateUrl: './paciente-portal.component.html',
-  styleUrl: './paciente-portal.component.css'
+  templateUrl: './patient-portal.component.html',
+  styleUrl: './patient-portal.component.css'
 })
-export class PacientePortalComponent implements OnInit {
+export class PatientPortalComponent implements OnInit {
   auth = inject(AuthService);
-  private svc = inject(PacienteService);
+  private svc = inject(PatientService);
   private ai = inject(AiService);
 
   tab = signal<PacienteTab>('inicio');
@@ -77,15 +77,15 @@ export class PacientePortalComponent implements OnInit {
     }
   ];
 
-  dashboard = signal<PacienteDashboard | null>(null);
-  perfil = signal<PacientePerfil | null>(null);
-  medicos = signal<Usuario[]>([]);
-  medicoDetalle = signal<Usuario | null>(null);
-  horarios = signal<Horario[]>([]);
+  dashboard = signal<PatientDashboard | null>(null);
+  perfil = signal<PatientProfile | null>(null);
+  medicos = signal<User[]>([]);
+  medicoDetalle = signal<User | null>(null);
+  horarios = signal<Schedule[]>([]);
   cupos = signal<CupoDisponible[]>([]);
   avisoCita = signal('');
-  citas = signal<Cita[]>([]);
-  proximas = signal<Cita[]>([]);
+  citas = signal<Appointment[]>([]);
+  proximas = signal<Appointment[]>([]);
 
   medicoId: number | null = null;
   fechaHora = '';
@@ -110,21 +110,21 @@ export class PacientePortalComponent implements OnInit {
   triageLoading = signal(false);
 
   /* ======= IA: Dermatologia CNN ======= */
-  dermReq: AiDermatologiaRequest = { descripcion: '', tiempoEvolucion: '', sintomasAsociados: '' };
-  dermRsp = signal<AiDermatologiaResponse | null>(null);
+  dermReq: AiDermatologyRequest = { descripcion: '', tiempoEvolucion: '', sintomasAsociados: '' };
+  dermRsp = signal<AiDermatologyResponse | null>(null);
   dermLoading = signal(false);
 
   /* ======= IA: Interacciones GNN ======= */
   interMed = '';       /* comma list */
   interDieta = '';     /* comma list */
   interSuplem = '';    /* comma list */
-  interRsp = signal<AiInteraccionResponse | null>(null);
+  interRsp = signal<AiInteractionResponse | null>(null);
   interLoading = signal(false);
 
   /* ======= IA: Precios / Prophet ======= */
-  preciosReq: AiPreciosRequest = { medicamento: '', presentacion: '', ciudad: '' };
+  preciosReq: AiPricesRequest = { medicamento: '', presentacion: '', ciudad: '' };
   preciosPrecioTxt = '';
-  preciosRsp = signal<AiPreciosResponse | null>(null);
+  preciosRsp = signal<AiPricesResponse | null>(null);
   preciosLoading = signal(false);
 
   ngOnInit() {
@@ -196,7 +196,7 @@ export class PacientePortalComponent implements OnInit {
     this.svc.listarMedicos().subscribe({ next: m => this.medicos.set(m) });
   }
 
-  medicosFiltrados(): Usuario[] {
+  medicosFiltrados(): User[] {
     const lista = this.medicos();
     const sugerida = (this.triageRsp()?.especialidadRecomendada || this.filtroEspecialidad).toLowerCase();
     if (!sugerida) return lista;
@@ -284,7 +284,7 @@ export class PacientePortalComponent implements OnInit {
     return triageEsp;
   }
 
-  medicoAsignado(): Usuario | null {
+  medicoAsignado(): User | null {
     return this.medicos().find(m => m.id === this.medicoId) ?? null;
   }
 
@@ -316,7 +316,7 @@ export class PacientePortalComponent implements OnInit {
     return f.length === 16 ? `${f}:00` : f;
   }
 
-  verMedico(m: Usuario) {
+  verMedico(m: User) {
     this.medicoDetalle.set(m);
     this.tab.set('medicos');
     this.sub.set('directorio');
@@ -407,8 +407,8 @@ export class PacientePortalComponent implements OnInit {
         next: (cita) => {
           this.loading.set(false);
           this.ok.set(cita.avisoAgenda
-            ? `Cita agendada. ${cita.avisoAgenda}`
-            : 'Cita agendada. El médico recibe el resumen de IA y tu historial por correo (si SMTP está activo).');
+            ? `Appointment agendada. ${cita.avisoAgenda}`
+            : 'Appointment agendada. El médico recibe el resumen de IA y tu historial por correo (si SMTP está activo).');
           this.fechaHora = '';
           this.motivo = '';
           this.sintomas = '';
@@ -483,7 +483,7 @@ export class PacientePortalComponent implements OnInit {
     });
   }
 
-  irAgendarConMedico(m: Usuario) {
+  irAgendarConMedico(m: User) {
     this.medicoId = m.id;
     this.medicoDetalle.set(null);
     this.tab.set('agendar');
@@ -556,7 +556,7 @@ export class PacientePortalComponent implements OnInit {
     };
   }
 
-  private payloadDerm(): AiDermatologiaRequest {
+  private payloadDerm(): AiDermatologyRequest {
     const sintomas = this.sintomas.trim();
     return {
       ...this.dermReq,
@@ -577,7 +577,7 @@ export class PacientePortalComponent implements OnInit {
       this.error.set('Ingresa al menos 1 medicamento separado por comas.');
       return;
     }
-    const req: AiInteraccionRequest = {
+    const req: AiInteractionRequest = {
       medicamentos: meds,
       dietaHabitual: this.commaList(this.interDieta),
       suplementos: this.commaList(this.interSuplem)
@@ -596,7 +596,7 @@ export class PacientePortalComponent implements OnInit {
       return;
     }
     const precio = this.preciosPrecioTxt ? parseFloat(this.preciosPrecioTxt) : undefined;
-    const req: AiPreciosRequest = {
+    const req: AiPricesRequest = {
       ...this.preciosReq,
       precioReportado: !isNaN(precio as number) ? precio : undefined
     };
@@ -637,7 +637,7 @@ export class PacientePortalComponent implements OnInit {
     return parts.slice(0, 2).map(p => p[0]?.toUpperCase() ?? '').join('');
   }
 
-  proximaCita(): Cita | null {
+  proximaCita(): Appointment | null {
     const ahora = Date.now();
     return this.proximas()
       .filter(c => !['CANCELADA', 'RECHAZADA'].includes((c.estado || '').toUpperCase()))

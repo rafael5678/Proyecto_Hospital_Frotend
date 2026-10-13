@@ -23,14 +23,14 @@ export interface AiTriageResponse {
   modoDemo?: boolean;
 }
 
-export interface AiDermatologiaRequest {
+export interface AiDermatologyRequest {
   descripcion?: string;
   imagenBase64?: string;
   tiempoEvolucion?: string;
   sintomasAsociados?: string;
 }
 
-export interface AiDermatologiaResponse {
+export interface AiDermatologyResponse {
   nivelRiesgo: string;       /* BAJO | MEDIO | ALTO | CRITICO */
   scoreRiesgo: number;       /* 0.0 .. 1.0 */
   explicacion?: string;
@@ -60,7 +60,7 @@ export interface AiSoapResponse {
   modoDemo?: boolean;
 }
 
-export interface AiInteraccionRequest {
+export interface AiInteractionRequest {
   medicamentos: string[];
   dietaHabitual?: string[];
   suplementos?: string[];
@@ -75,7 +75,7 @@ export interface AlertaInteraccion {
   accion: string;
 }
 
-export interface AiInteraccionResponse {
+export interface AiInteractionResponse {
   nivelRiesgoGlobal: string; /* NINGUNO | BAJO | MEDIO | ALTO | SEVERO */
   alertas: AlertaInteraccion[];
   recomendacionesDieteticas: string[];
@@ -83,7 +83,7 @@ export interface AiInteraccionResponse {
   modoDemo?: boolean;
 }
 
-export interface AiPreciosRequest {
+export interface AiPricesRequest {
   medicamento: string;
   presentacion?: string;
   precioReportado?: number;
@@ -101,7 +101,7 @@ export interface ComparativaFarmacia {
   sobreprecio?: boolean;
 }
 
-export interface AiPreciosResponse {
+export interface AiPricesResponse {
   precioEsperadoMin: number;
   precioEsperadoMax: number;
   precioPromedio: number;
@@ -123,17 +123,17 @@ export interface AiStatusResponse {
   version: string;
 }
 
-export interface AiTranscripcionResponse {
+export interface AiTranscriptionResponse {
   texto: string;
   modoDemo: boolean;
   mensaje: string;
 }
 
-export interface AiAdminOperacionRequest {
+export interface AiAdminOperationRequest {
   instruccion: string;
 }
 
-export interface AiAdminOperacionResponse {
+export interface AiAdminOperationResponse {
   accion: 'CREAR_MEDICO' | 'CREAR_PACIENTE' | 'INFO' | string;
   nombre?: string;
   email?: string;
@@ -143,4 +143,23 @@ export interface AiAdminOperacionResponse {
   telefono?: string;
   mensaje: string;
   modoDemo?: boolean;
+}
+
+export interface AiMetrics {
+  totalCitas: number;
+  citasConTriage: number;
+  citasConEvaluacionPiel: number;
+  citasPrioridadAlta: number;
+  citasReprogramadasPorIA: number;
+  distribucionSeveridad: { [key: string]: number };
+  apiKeyActiva: boolean;
+  versionIa: string;
+  estadoWhisper: string;
+  estadoSoap: string;
+  estadoTriage: string;
+  estadoDermatologia: string;
+  estadoInteracciones: string;
+  estadoPrecios: string;
+  timeoutMedicoSeg: number;
+  timeoutAdminSeg: number;
 }
