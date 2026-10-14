@@ -93,7 +93,9 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     return items;
   });
 
-  dashboard = signal<DoctorDashboard | null>(null);
+  dashboard = signal<DoctorDashboard | null>({
+    totalCitas: 0, citasPendientes: 0, citasAceptadas: 0, citasHoy: 0, horariosActivos: 0
+  });
   perfil = signal<DoctorProfile | null>(null);
   citas = signal<Appointment[]>([]);
   horarios = signal<Schedule[]>([]);

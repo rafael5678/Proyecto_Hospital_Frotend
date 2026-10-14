@@ -77,7 +77,9 @@ export class PatientPortalComponent implements OnInit {
     }
   ];
 
-  dashboard = signal<PatientDashboard | null>(null);
+  dashboard = signal<PatientDashboard | null>({
+    totalCitas: 0, citasPendientes: 0, citasAceptadas: 0, citasCanceladas: 0, proximasCitas: 0
+  });
   perfil = signal<PatientProfile | null>(null);
   medicos = signal<User[]>([]);
   medicoDetalle = signal<User | null>(null);
@@ -547,8 +549,10 @@ export class PatientPortalComponent implements OnInit {
 
   private payloadTriage(): AiTriageRequest {
     const sintomas = (this.tab() === 'agendar' ? this.sintomas : (this.triageReq.sintomas || this.sintomas)).trim();
+    const lesion = this.tieneLesionPiel ? (this.dermReq.descripcion || '').trim() : '';
+    const sintomasCompletos = lesion ? `${sintomas}\nTambién refiere en la piel: ${lesion}` : sintomas;
     return {
-      sintomas,
+      sintomas: sintomasCompletos,
       duracion: this.tab() === 'agendar' ? this.duracionSintomas : (this.triageReq.duracion || this.duracionSintomas),
       antecedentes: this.tab() === 'agendar' ? this.antecedentesSintomas : (this.triageReq.antecedentes || this.antecedentesSintomas),
       edadPaciente: this.triageReq.edadPaciente,
