@@ -131,16 +131,25 @@ export interface AiTranscriptionResponse {
 
 export interface AiAdminOperationRequest {
   instruccion: string;
+  borrador?: string;
 }
 
 export interface AiAdminOperationResponse {
-  accion: 'CREAR_MEDICO' | 'CREAR_PACIENTE' | 'INFO' | string;
+  accion: 'CREAR_MEDICO' | 'CREAR_PACIENTE' | 'PREGUNTAR' | 'INFO' | string;
   nombre?: string;
   email?: string;
   especialidad?: string;
   passwordSugerida?: string;
   documento?: string;
   telefono?: string;
+  numeroLicencia?: string;
+  consultorio?: string;
+  anosExperiencia?: number;
+  biografia?: string;
+  fechaNacimiento?: string;
+  genero?: string;
+  ciudad?: string;
+  alergias?: string;
   mensaje: string;
   modoDemo?: boolean;
 }

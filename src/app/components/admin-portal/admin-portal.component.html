@@ -217,24 +217,6 @@
         </table>
       }
 
-      @if (tab() === 'usuarios' && sub() === 'crear') {
-        <div class="card section form-grid">
-          <h2>Registrar paciente</h2>
-          <p class="hint">Ficha clínica del paciente. El único administrador del sistema no se puede duplicar.</p>
-          <input class="input" placeholder="Nombre completo" [(ngModel)]="form.nombre" />
-          <input class="input" placeholder="Email" [(ngModel)]="form.email" />
-          <input class="input" type="password" placeholder="Contraseña" [(ngModel)]="form.password" />
-          <input class="input" placeholder="Teléfono" [(ngModel)]="form.telefono" />
-          <input class="input" placeholder="Documento de identidad" [(ngModel)]="form.documento" />
-          <input class="input" type="date" [(ngModel)]="form.fechaNacimiento" />
-          <input class="input" placeholder="Género" [(ngModel)]="form.genero" />
-          <input class="input" placeholder="Ciudad" [(ngModel)]="form.ciudad" />
-          <input class="input" placeholder="Alergias / antecedentes" [(ngModel)]="form.alergias" />
-          <button type="button" class="btn btn-purple" (click)="crearUsuario()">Crear paciente</button>
-          @if (error()) { <p class="error-msg">{{ error() }}</p> }
-        </div>
-      }
-
       @if (tab() === 'medicos' && sub() === 'lista') {
         <h2 class="section-title">Médicos registrados</h2>
         <table>
@@ -260,30 +242,6 @@
             }
           </tbody>
         </table>
-      }
-
-      @if (tab() === 'medicos' && sub() === 'crear') {
-        <div class="card section form-grid">
-          <h2>Registrar médico</h2>
-          <p class="hint">Datos profesionales. La especialidad se usa al agendar por triage.</p>
-          <input class="input" placeholder="Nombre" [(ngModel)]="form.nombre" />
-          <input class="input" placeholder="Email" [(ngModel)]="form.email" />
-          <input class="input" type="password" placeholder="Contraseña" [(ngModel)]="form.password" />
-          <label>Especialidad</label>
-          <select class="input especialidad-select" size="8" [(ngModel)]="form.especialidad" aria-label="Especialidad del médico">
-            <option value="">Selecciona una especialidad</option>
-            @for (esp of especialidades; track esp) {
-              <option [value]="esp">{{ esp }}</option>
-            }
-          </select>
-          <input class="input" placeholder="Número de licencia" [(ngModel)]="form.numeroLicencia" />
-          <input class="input" placeholder="Consultorio" [(ngModel)]="form.consultorio" />
-          <input class="input" type="number" placeholder="Años de experiencia" [(ngModel)]="form.anosExperiencia" />
-          <input class="input" placeholder="Teléfono" [(ngModel)]="form.telefono" />
-          <textarea class="input" placeholder="Biografía profesional" [(ngModel)]="form.biografia"></textarea>
-          <button type="button" class="btn btn-purple" (click)="crearUsuario()">Crear médico</button>
-          @if (error()) { <p class="error-msg">{{ error() }}</p> }
-        </div>
       }
 
       @if (tab() === 'citas' && sub() === 'supervision') {
@@ -369,28 +327,21 @@
       }
 
       @if (tab() === 'asistente') {
-        <div class="card section form-grid">
+        <div class="card section asistente-card">
           <h2>Asistente Gemini de administración</h2>
-          <p class="hint">Pide crear un médico o un paciente. No crea módulos nuevos de la aplicación: usa los formularios que ya existen.</p>
-          @if (okAdmin()) { <p class="status-row">{{ okAdmin() }}</p> }
+          <p class="hint">Aquí se crean los médicos y los pacientes. Escribe lo que sepas y Gemini pide lo que falte: especialidad, años de experiencia, licencia, teléfono o documento. Cuando está completo, crea la cuenta.</p>
           @if (error()) { <p class="error-msg">{{ error() }}</p> }
-          <textarea class="input" rows="4" [(ngModel)]="asistenteTexto" placeholder="Ej. Crea un médico de pediatría llamado Ana Ruiz con correo ana.ruiz@hospy.com"></textarea>
+          <div class="asistente-chat">
+            @for (m of asistenteChat(); track $index) {
+              <p class="asistente-linea" [class.asistente-ia]="m.rol === 'ia'">{{ m.texto }}</p>
+            } @empty {
+              <p class="hint">Ejemplo: Crea un médico de pediatría llamado Ana Ruiz, correo ana.ruiz@hospy.com</p>
+            }
+          </div>
+          <textarea class="input" rows="3" [(ngModel)]="asistenteTexto" placeholder="Responde a Gemini o pide un alta nueva"></textarea>
           <button type="button" class="btn btn-purple" (click)="consultarAsistente()" [disabled]="asistenteLoading()">
-            {{ asistenteLoading() ? 'Consultando Gemini...' : 'Interpretar con Gemini' }}
+            {{ asistenteLoading() ? 'Gemini está trabajando...' : 'Enviar a Gemini' }}
           </button>
-          @if (asistenteRsp(); as r) {
-            <div class="triage-result">
-              <p>{{ r.mensaje }}</p>
-              @if (r.accion === 'CREAR_MEDICO' || r.accion === 'CREAR_PACIENTE') {
-                <p>Acción: {{ r.accion === 'CREAR_MEDICO' ? 'Crear médico' : 'Crear paciente' }}</p>
-                <p>Nombre: {{ r.nombre || '—' }} · Correo: {{ r.email || '—' }}</p>
-                @if (r.especialidad) { <p>Especialidad: {{ r.especialidad }}</p> }
-                @if (r.documento) { <p>Documento: {{ r.documento }}</p> }
-                <p>Clave sugerida: {{ r.passwordSugerida || 'Medico123' }}</p>
-                <button type="button" class="btn btn-purple" (click)="confirmarAsistente()">Confirmar y crear</button>
-              }
-            </div>
-          }
         </div>
       }
 

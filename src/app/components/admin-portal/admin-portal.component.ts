@@ -40,7 +40,6 @@ export class AdminPortalComponent implements OnInit {
       icon: '👥',
       children: [
         { id: 'u-lista', label: 'Listar usuarios', tab: 'usuarios', sub: 'lista' },
-        { id: 'u-crear', label: 'Registrar paciente', tab: 'usuarios', sub: 'crear' },
         { id: 'u-claves', label: 'Accesos y claves', tab: 'usuarios', sub: 'claves' }
       ]
     },
@@ -49,8 +48,7 @@ export class AdminPortalComponent implements OnInit {
       label: 'Médicos',
       icon: '🩺',
       children: [
-        { id: 'm-lista', label: 'Listar médicos', tab: 'medicos', sub: 'lista' },
-        { id: 'm-crear', label: 'Registrar médico', tab: 'medicos', sub: 'crear' }
+        { id: 'm-lista', label: 'Listar médicos', tab: 'medicos', sub: 'lista' }
       ]
     },
     {
@@ -121,6 +119,8 @@ export class AdminPortalComponent implements OnInit {
   asistenteTexto = '';
   asistenteLoading = signal(false);
   asistenteRsp = signal<AiAdminOperationResponse | null>(null);
+  asistenteBorrador = '';
+  asistenteChat = signal<{ rol: 'admin' | 'ia'; texto: string }[]>([]);
 
   ngOnInit() {
     this.cargarUsuarios();
@@ -176,7 +176,7 @@ export class AdminPortalComponent implements OnInit {
       'reportes-mensual': 'Reportes — desglose mensual',
       iasuperv: 'IA — Supervisión y estado',
       preciosauditoria: 'IA — Auditoría de precios',
-      asistente: 'IA — Asistente para altas'
+      asistente: 'IA — Crear médico o paciente'
     };
     return map[`${t}-${s}`] ?? map[t] ?? 'Administración';
   }
@@ -247,29 +247,6 @@ export class AdminPortalComponent implements OnInit {
     this.adminService.reportes().subscribe({ next: r => this.reporte.set(r) });
   }
 
-  crearUsuario() {
-    this.error.set('');
-    if (this.tab() === 'medicos') {
-      if (!this.form.especialidad?.trim()) {
-        this.error.set('Indica la especialidad del médico.');
-        return;
-      }
-      this.adminService.crearMedico({ ...this.form, rol: 'MEDICO' }).subscribe({
-        next: () => { this.resetForm(); this.cargarMedicos(); this.cargarUsuarios(); this.sub.set('lista'); },
-        error: (e) => this.error.set(e.error?.error ?? 'Error al crear médico')
-      });
-      return;
-    }
-    if (!this.form.documento?.trim()) {
-      this.error.set('El paciente requiere documento.');
-      return;
-    }
-    this.adminService.crearUsuario({ ...this.form, rol: 'PACIENTE' }).subscribe({
-      next: () => { this.resetForm(); this.cargarUsuarios(); this.sub.set('lista'); },
-      error: (e) => this.error.set(e.error?.error ?? 'Error al crear paciente')
-    });
-  }
-
   desactivar(id: number) {
     this.cambiarEstado(id, false);
   }
@@ -330,16 +307,25 @@ export class AdminPortalComponent implements OnInit {
   consultarAsistente() {
     const texto = this.asistenteTexto.trim();
     if (!texto) {
-      this.error.set('Escribe qué médico o paciente quieres crear.');
+      this.error.set('Escribe el médico o el paciente que quieres crear.');
       return;
     }
     this.error.set('');
+    this.okAdmin.set('');
+    this.asistenteChat.update(c => [...c, { rol: 'admin', texto }]);
+    this.asistenteTexto = '';
     this.asistenteLoading.set(true);
-    this.asistenteRsp.set(null);
-    this.ai.adminOperacion({ instruccion: texto }).subscribe({
+    this.ai.adminOperacion({ instruccion: texto, borrador: this.asistenteBorrador || undefined }).subscribe({
       next: r => {
         this.asistenteRsp.set(r);
+        if (r.accion === 'INFO') this.asistenteBorrador = '';
+        else this.asistenteBorrador = JSON.stringify(r);
+        if (r.accion === 'CREAR_MEDICO' || r.accion === 'CREAR_PACIENTE') {
+          this.crearDesdeAsistente(r);
+          return;
+        }
         this.asistenteLoading.set(false);
+        this.asistenteChat.update(c => [...c, { rol: 'ia', texto: r.mensaje }]);
       },
       error: e => {
         this.asistenteLoading.set(false);
@@ -348,58 +334,54 @@ export class AdminPortalComponent implements OnInit {
     });
   }
 
-  confirmarAsistente() {
-    const r = this.asistenteRsp();
-    if (!r || (r.accion !== 'CREAR_MEDICO' && r.accion !== 'CREAR_PACIENTE')) return;
-    this.error.set('');
-    if (r.accion === 'CREAR_MEDICO') {
-      if (!r.nombre?.trim() || !r.email?.trim() || !r.especialidad?.trim()) {
-        this.error.set('Faltan nombre, correo o especialidad. Complétalos en Registrar médico.');
-        this.form.nombre = r.nombre || '';
-        this.form.email = r.email || '';
-        this.form.especialidad = r.especialidad || '';
-        this.form.password = r.passwordSugerida || 'Medico123';
-        this.tab.set('medicos');
-        this.sub.set('crear');
-        return;
-      }
-      this.adminService.crearMedico({
-        nombre: r.nombre, email: r.email, password: r.passwordSugerida || 'Medico123',
-        rol: 'MEDICO', especialidad: r.especialidad, telefono: r.telefono || ''
-      }).subscribe({
-        next: () => {
-          this.okAdmin.set(`Médico creado: ${r.nombre} (${r.especialidad}). Clave inicial: ${r.passwordSugerida || 'Medico123'}`);
-          this.asistenteRsp.set(null);
-          this.asistenteTexto = '';
-          this.cargarMedicos();
-          this.cargarUsuarios();
-        },
-        error: e => this.error.set(e.error?.error ?? 'No se pudo crear el médico')
-      });
-      return;
-    }
-    if (!r.nombre?.trim() || !r.email?.trim() || !r.documento?.trim()) {
-      this.form.nombre = r.nombre || '';
-      this.form.email = r.email || '';
-      this.form.documento = r.documento || '';
-      this.form.password = r.passwordSugerida || 'Paciente123';
-      this.form.telefono = r.telefono || '';
-      this.tab.set('usuarios');
-      this.sub.set('crear');
-      this.error.set('Completa documento y datos del paciente, luego pulsa Crear paciente.');
-      return;
-    }
-    this.adminService.crearUsuario({
-      nombre: r.nombre, email: r.email, password: r.passwordSugerida || 'Paciente123',
-      rol: 'PACIENTE', documento: r.documento, telefono: r.telefono || ''
-    }).subscribe({
+  private crearDesdeAsistente(r: AiAdminOperationResponse) {
+    const clave = r.passwordSugerida || (r.accion === 'CREAR_MEDICO' ? 'Medico123' : 'Paciente123');
+    const comun = {
+      nombre: r.nombre || '',
+      email: r.email || '',
+      password: clave,
+      telefono: r.telefono || '',
+      ciudad: r.ciudad || '',
+      genero: r.genero || '',
+      alergias: r.alergias || '',
+      fechaNacimiento: r.fechaNacimiento || ''
+    };
+    const alta = r.accion === 'CREAR_MEDICO'
+      ? this.adminService.crearMedico({
+          ...comun,
+          rol: 'MEDICO',
+          especialidad: r.especialidad || '',
+          numeroLicencia: r.numeroLicencia || '',
+          consultorio: r.consultorio || '',
+          anosExperiencia: r.anosExperiencia,
+          biografia: r.biografia || ''
+        })
+      : this.adminService.crearUsuario({
+          ...comun,
+          rol: 'PACIENTE',
+          documento: r.documento || ''
+        });
+    alta.subscribe({
       next: () => {
-        this.okAdmin.set(`Patient creado: ${r.nombre}. Clave inicial: ${r.passwordSugerida || 'Paciente123'}`);
+        this.asistenteLoading.set(false);
+        const tipo = r.accion === 'CREAR_MEDICO' ? 'Médico' : 'Paciente';
+        this.asistenteChat.update(c => [...c, {
+          rol: 'ia',
+          texto: `${tipo} creado: ${r.nombre}. Correo ${r.email}. Clave inicial: ${clave}. Entrégasela; no se vuelve a mostrar.`
+        }]);
+        this.asistenteBorrador = '';
         this.asistenteRsp.set(null);
-        this.asistenteTexto = '';
         this.cargarUsuarios();
+        this.cargarMedicos();
+        this.cargarReportes();
       },
-      error: e => this.error.set(e.error?.error ?? 'No se pudo crear el paciente')
+      error: e => {
+        this.asistenteLoading.set(false);
+        this.asistenteChat.update(c => [...c, {
+          rol: 'ia',
+          texto: e.error?.error ?? 'No se pudo crear la cuenta. Corrige el dato y vuelve a enviarlo.'
+        }]);
+      }
     });
   }
 
