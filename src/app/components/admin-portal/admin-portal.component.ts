@@ -536,11 +536,14 @@ export class AdminPortalComponent implements OnInit {
 
   private enviarVozAsistente(audio: Blob) {
     const enVivo = this.asistenteVozEnVivo().trim();
-    const enviar = (texto: string) => {
+    const enviar = (texto: string, motivo?: string) => {
       this.asistenteTranscribiendo.set(false);
       this.asistenteVozEnVivo.set('');
       if (!texto) {
-        this.error.set('No se entendió el audio. Habla de nuevo o escribe los datos.');
+        const navegador = this.navegadorSinVoz()
+          ? ' Este navegador no reconoce la voz por sí mismo; en Chrome o Edge funciona aunque Gemini esté ocupado.'
+          : '';
+        this.error.set((motivo || 'No se entendió el audio. Habla de nuevo o escribe los datos.') + navegador);
         return;
       }
       this.asistenteTexto = texto;
@@ -552,9 +555,15 @@ export class AdminPortalComponent implements OnInit {
     }
     this.asistenteTranscribiendo.set(true);
     this.ai.transcribir(audio).subscribe({
-      next: result => enviar(result.texto.trim() || enVivo),
+      next: result => enviar(result.texto.trim() || enVivo, result.mensaje),
       error: () => enviar(enVivo)
     });
+  }
+
+  private navegadorSinVoz(): boolean {
+    const w = window as Window & { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown };
+    const nav = navigator as Navigator & { brave?: unknown };
+    return !(w.SpeechRecognition || w.webkitSpeechRecognition) || !!nav.brave;
   }
 
   resetForm() {
