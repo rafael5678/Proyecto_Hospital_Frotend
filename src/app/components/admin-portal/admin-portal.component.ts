@@ -16,6 +16,18 @@ import { HOSPITAL_SPECIALTIES } from '../../data/specialties';
 type AdminTab = 'inicio' | 'usuarios' | 'medicos' | 'citas' | 'reportes' | 'iasuperv' | 'preciosauditoria' | 'asistente';
 type AdminSub = '' | 'lista' | 'crear' | 'editar' | 'claves' | 'supervision' | 'resumen' | 'mensual';
 
+interface SpeechRecognitionLike {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  onresult: ((event: { results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => void) | null;
+  onerror: (() => void) | null;
+  start(): void;
+  stop(): void;
+}
+
+type SpeechRecognitionFactory = new () => SpeechRecognitionLike;
+
 @Component({
   selector: 'app-admin-portal',
   standalone: true,
@@ -121,6 +133,13 @@ export class AdminPortalComponent implements OnInit {
   asistenteRsp = signal<AiAdminOperationResponse | null>(null);
   asistenteBorrador = '';
   asistenteChat = signal<{ rol: 'admin' | 'ia'; texto: string }[]>([]);
+  asistenteEscuchando = signal(false);
+  asistenteTranscribiendo = signal(false);
+  asistenteVozEnVivo = signal('');
+  asistenteResponderVoz = true;
+  private asistenteGrabadora: MediaRecorder | null = null;
+  private asistenteAudio: Blob[] = [];
+  private asistenteReconocimiento: SpeechRecognitionLike | null = null;
 
   ngOnInit() {
     this.cargarUsuarios();
@@ -323,14 +342,14 @@ export class AdminPortalComponent implements OnInit {
           const falta = this.preguntaSiFalta(r);
           if (falta) {
             this.asistenteLoading.set(false);
-            this.asistenteChat.update(c => [...c, { rol: 'ia', texto: falta }]);
+            this.responderAsistente(falta);
             return;
           }
           this.crearDesdeAsistente(r);
           return;
         }
         this.asistenteLoading.set(false);
-        this.asistenteChat.update(c => [...c, { rol: 'ia', texto: r.mensaje }]);
+        this.responderAsistente(r.mensaje);
       },
       error: e => {
         this.asistenteLoading.set(false);
@@ -354,6 +373,14 @@ export class AdminPortalComponent implements OnInit {
     } else {
       if (!r.documento?.trim()) faltan.push('el documento de identidad');
       if (!r.telefono || r.telefono.replace(/\D/g, '').length < 7) faltan.push('el teléfono');
+      if (!r.fechaNacimiento || !/^\d{4}-\d{2}-\d{2}$/.test(r.fechaNacimiento)) faltan.push('la fecha de nacimiento');
+      if (!r.genero?.trim()) faltan.push('el género');
+      if (!r.tipoSangre?.trim()) faltan.push('el tipo de sangre');
+      if (!r.direccion?.trim()) faltan.push('la dirección');
+      if (!r.ciudad?.trim()) faltan.push('la ciudad');
+      if (!r.alergias?.trim()) faltan.push('las alergias (o «ninguna»)');
+      if (!r.contactoEmergencia?.trim()) faltan.push('el contacto de emergencia');
+      if (!r.telefonoEmergencia?.trim()) faltan.push('el teléfono de emergencia');
     }
     if (!faltan.length) return null;
     const quien = r.nombre?.trim();
@@ -393,18 +420,25 @@ export class AdminPortalComponent implements OnInit {
       : this.adminService.crearUsuario({
           ...comun,
           rol: 'PACIENTE',
-          documento: r.documento || ''
+          documento: r.documento || '',
+          tipoSangre: r.tipoSangre || '',
+          direccion: r.direccion || '',
+          contactoEmergencia: r.contactoEmergencia || '',
+          telefonoEmergencia: r.telefonoEmergencia || '',
+          observaciones: r.observaciones || ''
         });
     alta.subscribe({
       next: () => {
         this.asistenteLoading.set(false);
         const tipo = r.accion === 'CREAR_MEDICO' ? 'Médico' : 'Paciente';
+        const detalle = r.accion === 'CREAR_MEDICO'
+          ? `Especialidad ${r.especialidad}. Horario ${r.horario || 'el que indicaste'}.`
+          : `Documento ${r.documento}.`;
         this.asistenteChat.update(c => [...c, {
           rol: 'ia',
-          texto: r.accion === 'CREAR_MEDICO'
-            ? `${tipo} creado: ${r.nombre}. Correo ${r.email}. Horario ${r.horario || 'el que indicaste'}. La contraseña quedó guardada.`
-            : `${tipo} creado: ${r.nombre}. Correo ${r.email}. Documento ${r.documento}. La contraseña quedó guardada.`
+          texto: `${tipo} creado: ${r.nombre}. ${detalle} Para iniciar sesión: correo ${r.email} y contraseña ${clave}. Entrégaselos; la contraseña no se vuelve a mostrar.`
         }]);
+        this.hablarAsistente(`${tipo} ${r.nombre} registrado. Los datos de acceso están en pantalla.`);
         this.asistenteBorrador = '';
         this.asistenteRsp.set(null);
         this.cargarUsuarios();
@@ -413,11 +447,108 @@ export class AdminPortalComponent implements OnInit {
       },
       error: e => {
         this.asistenteLoading.set(false);
-        this.asistenteChat.update(c => [...c, {
-          rol: 'ia',
-          texto: e.error?.error ?? 'No se pudo crear la cuenta. Corrige el dato y vuelve a enviarlo.'
-        }]);
+        this.responderAsistente(e.error?.error ?? 'No se pudo crear la cuenta. Corrige el dato y vuelve a enviarlo.');
       }
+    });
+  }
+
+  private responderAsistente(texto: string) {
+    this.asistenteChat.update(c => [...c, { rol: 'ia', texto }]);
+    this.hablarAsistente(texto);
+  }
+
+  private hablarAsistente(texto: string) {
+    if (!this.asistenteResponderVoz || typeof speechSynthesis === 'undefined') return;
+    speechSynthesis.cancel();
+    const voz = new SpeechSynthesisUtterance(texto.slice(0, 600));
+    voz.lang = 'es-CO';
+    voz.rate = 1;
+    const es = speechSynthesis.getVoices().find(v => v.lang.toLowerCase().startsWith('es'));
+    if (es) voz.voice = es;
+    speechSynthesis.speak(voz);
+  }
+
+  async alternarMicrofonoAsistente() {
+    if (this.asistenteEscuchando()) {
+      this.detenerMicrofonoAsistente();
+      return;
+    }
+    this.error.set('');
+    if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
+    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      this.error.set('Este navegador no permite grabar audio. Escribe los datos.');
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      this.asistenteAudio = [];
+      this.asistenteVozEnVivo.set('');
+      this.asistenteGrabadora = new MediaRecorder(stream);
+      this.asistenteGrabadora.ondataavailable = event => {
+        if (event.data.size) this.asistenteAudio.push(event.data);
+      };
+      this.asistenteGrabadora.onstop = () => {
+        stream.getTracks().forEach(track => track.stop());
+        const audio = new Blob(this.asistenteAudio, { type: this.asistenteGrabadora?.mimeType || 'audio/webm' });
+        this.enviarVozAsistente(audio);
+      };
+      this.asistenteGrabadora.start();
+      this.asistenteEscuchando.set(true);
+      this.escucharEnVivoAsistente();
+    } catch {
+      this.error.set('No se pudo acceder al micrófono. Revisa los permisos del navegador.');
+    }
+  }
+
+  private detenerMicrofonoAsistente() {
+    this.asistenteReconocimiento?.stop();
+    this.asistenteReconocimiento = null;
+    this.asistenteEscuchando.set(false);
+    if (this.asistenteGrabadora?.state === 'recording') this.asistenteGrabadora.stop();
+  }
+
+  private escucharEnVivoAsistente() {
+    const speechWindow = window as Window & {
+      SpeechRecognition?: SpeechRecognitionFactory;
+      webkitSpeechRecognition?: SpeechRecognitionFactory;
+    };
+    const Factory = speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
+    if (!Factory) return;
+    this.asistenteReconocimiento = new Factory();
+    this.asistenteReconocimiento.lang = 'es-CO';
+    this.asistenteReconocimiento.continuous = true;
+    this.asistenteReconocimiento.interimResults = true;
+    this.asistenteReconocimiento.onresult = event => {
+      this.asistenteVozEnVivo.set(Array.from(event.results).map(result => result[0].transcript).join(' '));
+    };
+    this.asistenteReconocimiento.onerror = () => undefined;
+    try {
+      this.asistenteReconocimiento.start();
+    } catch {
+      this.asistenteReconocimiento = null;
+    }
+  }
+
+  private enviarVozAsistente(audio: Blob) {
+    const enVivo = this.asistenteVozEnVivo().trim();
+    const enviar = (texto: string) => {
+      this.asistenteTranscribiendo.set(false);
+      this.asistenteVozEnVivo.set('');
+      if (!texto) {
+        this.error.set('No se entendió el audio. Habla de nuevo o escribe los datos.');
+        return;
+      }
+      this.asistenteTexto = texto;
+      this.consultarAsistente();
+    };
+    if (!audio.size) {
+      enviar(enVivo);
+      return;
+    }
+    this.asistenteTranscribiendo.set(true);
+    this.ai.transcribir(audio).subscribe({
+      next: result => enviar(result.texto.trim() || enVivo),
+      error: () => enviar(enVivo)
     });
   }
 

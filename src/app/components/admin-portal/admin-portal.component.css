@@ -507,3 +507,43 @@
   color: #4c1d95;
 }
 
+.asistente-vivo {
+  border: 1px dashed #7c3aed;
+  background: #faf5ff;
+}
+
+.asistente-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.asistente-acciones .btn-purple {
+  flex: 1;
+}
+
+.btn-mic {
+  background: #ffffff;
+  color: #6d28d9;
+  border: 1px solid #c4b5fd;
+  padding: 0.6rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.btn-mic.grabando {
+  background: #dc2626;
+  border-color: #dc2626;
+  color: #ffffff;
+}
+
+.asistente-voz {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  color: #475569;
+}
+

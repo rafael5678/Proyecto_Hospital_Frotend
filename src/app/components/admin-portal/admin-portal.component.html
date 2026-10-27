@@ -329,7 +329,7 @@
       @if (tab() === 'asistente') {
         <div class="card section asistente-card">
           <h2>Registro Hospy</h2>
-          <p class="hint">Escribe con tus palabras. Hospy guarda lo que ya dijo y pide lo que falta: correo, contraseña, documento o, si es un médico, especialidad, experiencia, licencia y horario. El paciente también puede registrarse solo desde el inicio.</p>
+          <p class="hint">Escribe o habla con tus palabras. Hospy guarda lo que ya dijiste y pide lo que falta. Al paciente le pide los mismos datos del registro: correo, contraseña, documento, nacimiento, género, sangre, dirección, ciudad, alergias y contacto de emergencia. Al médico le pide especialidad, experiencia, licencia, teléfono y horario.</p>
           @if (error()) { <p class="error-msg">{{ error() }}</p> }
           <div class="asistente-chat">
             @for (m of asistenteChat(); track $index) {
@@ -338,10 +338,21 @@
               <p class="hint">Puedes empezar solo con el nombre. Hospy pregunta el resto y entiende la respuesta aunque la escribas en otra frase.</p>
             }
           </div>
+          @if (asistenteEscuchando()) {
+            <p class="asistente-linea asistente-vivo" aria-live="polite">🎙 {{ asistenteVozEnVivo() || 'Te escucho…' }}</p>
+          }
+          @if (asistenteTranscribiendo()) { <p class="hint">Entendiendo lo que dijiste…</p> }
           <textarea class="input" rows="3" [(ngModel)]="asistenteTexto" placeholder="Escribe el médico o el paciente, o responde lo que falte"></textarea>
-          <button type="button" class="btn btn-purple" (click)="consultarAsistente()" [disabled]="asistenteLoading()">
-            {{ asistenteLoading() ? 'Registrando...' : 'Registrar' }}
-          </button>
+          <div class="asistente-acciones">
+            <button type="button" class="btn btn-purple" (click)="consultarAsistente()" [disabled]="asistenteLoading() || asistenteEscuchando()">
+              {{ asistenteLoading() ? 'Registrando...' : 'Registrar' }}
+            </button>
+            <button type="button" class="btn btn-mic" [class.grabando]="asistenteEscuchando()" (click)="alternarMicrofonoAsistente()"
+              [disabled]="asistenteLoading() || asistenteTranscribiendo()">
+              {{ asistenteEscuchando() ? '⏹ Terminar y enviar' : '🎙 Hablar' }}
+            </button>
+            <label class="asistente-voz"><input type="checkbox" [(ngModel)]="asistenteResponderVoz" /> Responder con voz</label>
+          </div>
         </div>
       }
 

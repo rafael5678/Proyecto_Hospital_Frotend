@@ -24,7 +24,12 @@ export interface UserRequest {
   fechaNacimiento?: string;
   genero?: string;
   ciudad?: string;
+  direccion?: string;
+  tipoSangre?: string;
   alergias?: string;
+  contactoEmergencia?: string;
+  telefonoEmergencia?: string;
+  observaciones?: string;
   numeroLicencia?: string;
   consultorio?: string;
   anosExperiencia?: number;

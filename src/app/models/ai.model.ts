@@ -149,7 +149,12 @@ export interface AiAdminOperationResponse {
   fechaNacimiento?: string;
   genero?: string;
   ciudad?: string;
+  direccion?: string;
+  tipoSangre?: string;
   alergias?: string;
+  contactoEmergencia?: string;
+  telefonoEmergencia?: string;
+  observaciones?: string;
   diasAtencion?: string;
   horaInicio?: string;
   horaFin?: string;
