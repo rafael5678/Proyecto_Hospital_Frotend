@@ -29,5 +29,10 @@ export interface UserRequest {
   consultorio?: string;
   anosExperiencia?: number;
   biografia?: string;
+  diasAtencion?: string;
+  horaInicio?: string;
+  horaFin?: string;
+  horaInicio2?: string;
+  horaFin2?: string;
   activo?: boolean;
 }

@@ -329,14 +329,13 @@
       @if (tab() === 'asistente') {
         <div class="card section asistente-card">
           <h2>Registro Hospy</h2>
-          <p class="hint">Un solo lugar para crear médicos y pacientes. Escribe los datos y Hospy pide lo que falte: especialidad, años de experiencia, licencia, teléfono o documento. Cuando está completo, crea la cuenta. El paciente también puede registrarse solo desde el inicio.</p>
+          <p class="hint">Escribe con tus palabras. Hospy guarda lo que ya dijo y pide lo que falta: correo, contraseña, documento o, si es un médico, especialidad, experiencia, licencia y horario. El paciente también puede registrarse solo desde el inicio.</p>
           @if (error()) { <p class="error-msg">{{ error() }}</p> }
           <div class="asistente-chat">
             @for (m of asistenteChat(); track $index) {
               <p class="asistente-linea" [class.asistente-ia]="m.rol === 'ia'">{{ m.texto }}</p>
             } @empty {
-              <p class="hint">Médico: Crea un médico de pediatría llamado Ana Ruiz, correo ana.ruiz@hospy.com</p>
-              <p class="hint">Paciente: Crea al paciente Juan Pérez, documento 1234567890, correo juan.perez@hospy.com, teléfono 3001234567</p>
+              <p class="hint">Puedes empezar solo con el nombre. Hospy pregunta el resto y entiende la respuesta aunque la escribas en otra frase.</p>
             }
           </div>
           <textarea class="input" rows="3" [(ngModel)]="asistenteTexto" placeholder="Escribe el médico o el paciente, o responde lo que falte"></textarea>

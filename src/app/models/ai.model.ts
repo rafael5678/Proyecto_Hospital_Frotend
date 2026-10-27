@@ -150,6 +150,12 @@ export interface AiAdminOperationResponse {
   genero?: string;
   ciudad?: string;
   alergias?: string;
+  diasAtencion?: string;
+  horaInicio?: string;
+  horaFin?: string;
+  horaInicio2?: string;
+  horaFin2?: string;
+  horario?: string;
   mensaje: string;
   modoDemo?: boolean;
 }

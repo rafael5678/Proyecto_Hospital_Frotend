@@ -318,9 +318,14 @@ export class AdminPortalComponent implements OnInit {
     this.ai.adminOperacion({ instruccion: texto, borrador: this.asistenteBorrador || undefined }).subscribe({
       next: r => {
         this.asistenteRsp.set(r);
-        if (r.accion === 'INFO') this.asistenteBorrador = '';
-        else this.asistenteBorrador = JSON.stringify(r);
+        this.asistenteBorrador = r.accion === 'INFO' && !r.nombre ? '' : JSON.stringify(r);
         if (r.accion === 'CREAR_MEDICO' || r.accion === 'CREAR_PACIENTE') {
+          const falta = this.preguntaSiFalta(r);
+          if (falta) {
+            this.asistenteLoading.set(false);
+            this.asistenteChat.update(c => [...c, { rol: 'ia', texto: falta }]);
+            return;
+          }
           this.crearDesdeAsistente(r);
           return;
         }
@@ -334,8 +339,32 @@ export class AdminPortalComponent implements OnInit {
     });
   }
 
+  private preguntaSiFalta(r: AiAdminOperationResponse): string | null {
+    const medico = r.accion === 'CREAR_MEDICO';
+    const faltan: string[] = [];
+    if (!r.nombre?.trim()) faltan.push('el nombre completo');
+    if (!r.email?.includes('@')) faltan.push('el correo');
+    if (!r.passwordSugerida || r.passwordSugerida.length < 6) faltan.push('la contraseña');
+    if (medico) {
+      if (!r.especialidad?.trim()) faltan.push('la especialidad');
+      if (r.anosExperiencia == null) faltan.push('los años de experiencia');
+      if (!r.numeroLicencia?.trim()) faltan.push('el número de licencia');
+      if (!r.telefono || r.telefono.replace(/\D/g, '').length < 7) faltan.push('el teléfono');
+      if (!r.diasAtencion || !r.horaInicio || !r.horaFin) faltan.push('el horario de atención, con los días y las horas');
+    } else {
+      if (!r.documento?.trim()) faltan.push('el documento de identidad');
+      if (!r.telefono || r.telefono.replace(/\D/g, '').length < 7) faltan.push('el teléfono');
+    }
+    if (!faltan.length) return null;
+    const quien = r.nombre?.trim();
+    const lista = faltan.length === 1 ? faltan[0] : `${faltan.slice(0, -1).join(', ')} y ${faltan[faltan.length - 1]}`;
+    return quien
+      ? `${quien} ya quedó anotado. Para registrarlo me falta ${lista}. Puedes escribirlos como quieras.`
+      : `Para registrarlo me falta ${lista}. Puedes escribirlos como quieras.`;
+  }
+
   private crearDesdeAsistente(r: AiAdminOperationResponse) {
-    const clave = r.passwordSugerida || (r.accion === 'CREAR_MEDICO' ? 'Medico123' : 'Paciente123');
+    const clave = r.passwordSugerida || '';
     const comun = {
       nombre: r.nombre || '',
       email: r.email || '',
@@ -354,7 +383,12 @@ export class AdminPortalComponent implements OnInit {
           numeroLicencia: r.numeroLicencia || '',
           consultorio: r.consultorio || '',
           anosExperiencia: r.anosExperiencia,
-          biografia: r.biografia || ''
+          biografia: r.biografia || '',
+          diasAtencion: r.diasAtencion || '',
+          horaInicio: r.horaInicio || '',
+          horaFin: r.horaFin || '',
+          horaInicio2: r.horaInicio2 || '',
+          horaFin2: r.horaFin2 || ''
         })
       : this.adminService.crearUsuario({
           ...comun,
@@ -367,7 +401,9 @@ export class AdminPortalComponent implements OnInit {
         const tipo = r.accion === 'CREAR_MEDICO' ? 'Médico' : 'Paciente';
         this.asistenteChat.update(c => [...c, {
           rol: 'ia',
-          texto: `${tipo} creado: ${r.nombre}. Correo ${r.email}. Clave inicial: ${clave}. Entrégasela; no se vuelve a mostrar.`
+          texto: r.accion === 'CREAR_MEDICO'
+            ? `${tipo} creado: ${r.nombre}. Correo ${r.email}. Horario ${r.horario || 'el que indicaste'}. La contraseña quedó guardada.`
+            : `${tipo} creado: ${r.nombre}. Correo ${r.email}. Documento ${r.documento}. La contraseña quedó guardada.`
         }]);
         this.asistenteBorrador = '';
         this.asistenteRsp.set(null);
