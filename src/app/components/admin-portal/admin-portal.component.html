@@ -328,19 +328,20 @@
 
       @if (tab() === 'asistente') {
         <div class="card section asistente-card">
-          <h2>Asistente Gemini de administración</h2>
-          <p class="hint">Aquí se crean los médicos y los pacientes. Escribe lo que sepas y Gemini pide lo que falte: especialidad, años de experiencia, licencia, teléfono o documento. Cuando está completo, crea la cuenta.</p>
+          <h2>Registro Hospy</h2>
+          <p class="hint">Un solo lugar para crear médicos y pacientes. Escribe los datos y Hospy pide lo que falte: especialidad, años de experiencia, licencia, teléfono o documento. Cuando está completo, crea la cuenta. El paciente también puede registrarse solo desde el inicio.</p>
           @if (error()) { <p class="error-msg">{{ error() }}</p> }
           <div class="asistente-chat">
             @for (m of asistenteChat(); track $index) {
               <p class="asistente-linea" [class.asistente-ia]="m.rol === 'ia'">{{ m.texto }}</p>
             } @empty {
-              <p class="hint">Ejemplo: Crea un médico de pediatría llamado Ana Ruiz, correo ana.ruiz@hospy.com</p>
+              <p class="hint">Médico: Crea un médico de pediatría llamado Ana Ruiz, correo ana.ruiz@hospy.com</p>
+              <p class="hint">Paciente: Crea al paciente Juan Pérez, documento 1234567890, correo juan.perez@hospy.com, teléfono 3001234567</p>
             }
           </div>
-          <textarea class="input" rows="3" [(ngModel)]="asistenteTexto" placeholder="Responde a Gemini o pide un alta nueva"></textarea>
+          <textarea class="input" rows="3" [(ngModel)]="asistenteTexto" placeholder="Escribe el médico o el paciente, o responde lo que falte"></textarea>
           <button type="button" class="btn btn-purple" (click)="consultarAsistente()" [disabled]="asistenteLoading()">
-            {{ asistenteLoading() ? 'Gemini está trabajando...' : 'Enviar a Gemini' }}
+            {{ asistenteLoading() ? 'Registrando...' : 'Registrar' }}
           </button>
         </div>
       }
@@ -424,7 +425,7 @@
               <div class="card inner ai-superv-card soap">
                 <h4>📝 Escriba médico SOAP</h4>
                 <ul>
-                  <li>Gemini transcribe el audio si hay API key; si no, voz del navegador</li>
+                  <li>Hospy transcribe el audio si hay clave; si no, usa la voz del navegador</li>
                   <li>Borrador S / O / A / P para firmar</li>
                   <li>Usa triage + historial del paciente</li>
                   <li>Estado Whisper: {{ m.estadoWhisper }}</li>

@@ -308,7 +308,7 @@ export class PatientPortalComponent implements OnInit {
       return;
     }
     this.avisoMedico.set(
-      `No hay un médico de ${esp} en el directorio. El administrador puede crearlo en Inteligencia Artificial → Asistente Gemini (especialidad ${esp}). Mientras tanto puedes elegir otro médico.`
+      `No hay un médico de ${esp} en el directorio. El administrador puede crearlo en Inteligencia Artificial → Registro Hospy (especialidad ${esp}). Mientras tanto puedes elegir otro médico.`
     );
   }
 

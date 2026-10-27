@@ -73,7 +73,7 @@ export class AdminPortalComponent implements OnInit {
       label: 'Inteligencia Artificial',
       icon: '🤖',
       children: [
-        { id: 'ia-asist', label: 'Asistente Gemini', tab: 'asistente' },
+        { id: 'ia-asist', label: 'Registro Hospy', tab: 'asistente' },
         { id: 'ia-superv', label: 'Supervisión IA', tab: 'iasuperv' },
         { id: 'ia-precios', label: 'Auditoría precios', tab: 'preciosauditoria' }
       ]
@@ -176,7 +176,7 @@ export class AdminPortalComponent implements OnInit {
       'reportes-mensual': 'Reportes — desglose mensual',
       iasuperv: 'IA — Supervisión y estado',
       preciosauditoria: 'IA — Auditoría de precios',
-      asistente: 'IA — Crear médico o paciente'
+      asistente: 'Registro Hospy'
     };
     return map[`${t}-${s}`] ?? map[t] ?? 'Administración';
   }
@@ -329,7 +329,7 @@ export class AdminPortalComponent implements OnInit {
       },
       error: e => {
         this.asistenteLoading.set(false);
-        this.error.set(e.error?.error ?? 'Gemini no pudo interpretar la instrucción.');
+        this.error.set(e.error?.error ?? 'No se pudo interpretar la instrucción.');
       }
     });
   }
