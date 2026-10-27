@@ -367,7 +367,7 @@ export class AdminPortalComponent implements OnInit {
     const faltan: string[] = [];
     if (!r.nombre?.trim()) faltan.push('el nombre completo');
     if (!r.email?.includes('@')) faltan.push('el correo');
-    if (!r.passwordSugerida || r.passwordSugerida.length < 6) faltan.push('la contraseña');
+    if (!r.passwordSugerida || r.passwordSugerida.length < 6) faltan.push('la contraseña (mínimo 6 caracteres)');
     if (medico) {
       if (!r.especialidad?.trim()) faltan.push('la especialidad');
       if (r.anosExperiencia == null) faltan.push('los años de experiencia');
