@@ -132,6 +132,7 @@ export interface AiTranscriptionResponse {
 export interface AiAdminOperationRequest {
   instruccion: string;
   borrador?: string;
+  historial?: string[];
 }
 
 export interface AiAdminOperationResponse {

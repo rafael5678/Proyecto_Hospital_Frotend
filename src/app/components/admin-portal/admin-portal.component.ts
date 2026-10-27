@@ -132,6 +132,7 @@ export class AdminPortalComponent implements OnInit {
   asistenteLoading = signal(false);
   asistenteRsp = signal<AiAdminOperationResponse | null>(null);
   asistenteBorrador = '';
+  private asistenteHistorial: string[] = [];
   asistenteChat = signal<{ rol: 'admin' | 'ia'; texto: string }[]>([]);
   asistenteEscuchando = signal(false);
   asistenteTranscribiendo = signal(false);
@@ -334,10 +335,13 @@ export class AdminPortalComponent implements OnInit {
     this.asistenteChat.update(c => [...c, { rol: 'admin', texto }]);
     this.asistenteTexto = '';
     this.asistenteLoading.set(true);
-    this.ai.adminOperacion({ instruccion: texto, borrador: this.asistenteBorrador || undefined }).subscribe({
+    const historial = this.asistenteBorrador ? [...this.asistenteHistorial] : [];
+    this.ai.adminOperacion({ instruccion: texto, borrador: this.asistenteBorrador || undefined, historial }).subscribe({
       next: r => {
         this.asistenteRsp.set(r);
-        this.asistenteBorrador = r.accion === 'INFO' && !r.nombre ? '' : JSON.stringify(r);
+        const sigue = !(r.accion === 'INFO' && !r.nombre);
+        this.asistenteBorrador = sigue ? JSON.stringify(r) : '';
+        this.asistenteHistorial = sigue ? [...historial, texto] : [];
         if (r.accion === 'CREAR_MEDICO' || r.accion === 'CREAR_PACIENTE') {
           const falta = this.preguntaSiFalta(r);
           if (falta) {
@@ -440,6 +444,7 @@ export class AdminPortalComponent implements OnInit {
         }]);
         this.hablarAsistente(`${tipo} ${r.nombre} registrado. Los datos de acceso están en pantalla.`);
         this.asistenteBorrador = '';
+        this.asistenteHistorial = [];
         this.asistenteRsp.set(null);
         this.cargarUsuarios();
         this.cargarMedicos();
