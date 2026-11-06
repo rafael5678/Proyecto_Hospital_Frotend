@@ -227,13 +227,24 @@
           </tbody>
         </table>
         } @else { <p class="empty">No hay consultas previas registradas.</p> }
+        @if (citaYaConsultada()) {
+        <p class="empty">Ya se consultó. No hay más consulta pendiente.</p>
+        } @else {
         <div class="actions-bar" style="margin-top: 1.5rem;">
           <button type="button" class="btn btn-blue" (click)="irAConsulta()">Preparar la consulta</button>
         </div>
+        }
       </div>
       }
 
-      @if (tab() === 'soap') {
+      @if (tab() === 'soap' && citaYaConsultada()) {
+      <section class="card section">
+        <h2 class="section-title">Consulta</h2>
+        <p class="empty">Ya se consultó. No hay más consulta pendiente.</p>
+      </section>
+      }
+
+      @if (tab() === 'soap' && !citaYaConsultada()) {
       <section class="card section ai-panel">
         <header class="section-head">
           <h2 class="section-title">Consulta</h2>
@@ -338,13 +349,6 @@
         </div>
         }
 
-        @if (consultaCerrada()) {
-        <section class="consulta-sim">
-          <h3>Consulta concluida</h3>
-          <p>{{ avisoOk() }}</p>
-          <p class="hint">La cita queda como concluida para ti, para el paciente y para el administrador.</p>
-        </section>
-        } @else {
         <section class="consulta-sim">
           <h3>Simulación de la consulta</h3>
           <p class="hint">Habla con el paciente. Te responde como si estuviera en el consultorio. Al final eliges la receta y le llega a la campana y al correo.</p>
@@ -386,7 +390,6 @@
             @if (avisoOk()) { <span class="hint">{{ avisoOk() }}</span> }
           </div>
         </section>
-        }
       </section>
       }
 

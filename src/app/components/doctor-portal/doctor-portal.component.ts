@@ -140,6 +140,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   avisoEnviando = signal(false);
   avisoOk = signal('');
   consultaCerrada = signal(false);
+  private citasCerradas = signal<number[]>([]);
   preciosPrecioTxt = '';
   preciosRsp = signal<AiPricesResponse | null>(null);
   preciosLoading = signal(false);
@@ -229,7 +230,12 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   }
 
   verPaciente(citaId: number) {
-    this.citaEnRevision.set(this.citas().find(c => c.id === citaId) ?? null);
+    const encontrada = this.citas().find(c => c.id === citaId) ?? null;
+    this.citaEnRevision.set(
+      encontrada && (encontrada.estado === 'COMPLETADA' || this.citasCerradas().includes(citaId))
+        ? { ...encontrada, estado: 'COMPLETADA' }
+        : encontrada
+    );
     this.historialPaciente.set([]);
     this.svc.verPaciente(citaId).subscribe({
       next: p => {
@@ -471,8 +477,15 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   }
 
   irAConsulta() {
+    if (this.citaYaConsultada()) return;
     this.tab.set('soap');
     this.sub.set('');
+  }
+
+  citaYaConsultada(): boolean {
+    const cita = this.citaEnRevision();
+    if (!cita) return false;
+    return cita.estado === 'COMPLETADA' || this.citasCerradas().includes(cita.id);
   }
 
   iniciarConsulta() {
@@ -551,13 +564,20 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     }).subscribe({
       next: r => {
         this.consultaCerrada.set(true);
-        this.avisoOk.set(r.mensaje || 'Consulta concluida. El paciente ya tiene la receta en la campana.');
+        this.citasCerradas.update(ids => ids.includes(cita.id) ? ids : [...ids, cita.id]);
+        this.avisoOk.set('');
+        this.detenerVozSoap();
+        this.soapRsp.set(null);
         this.dialogo = [];
         this.sugeridos = [];
         this.elegidos = [];
         this.cuidadosEnvio = '';
         this.preguntaSim = '';
-        this.citas.update(lista => lista.map(c => c.id === cita.id ? { ...c, estado: 'COMPLETADA' } : c));
+        this.soapReq.transcripcion = '';
+        this.soapReq.transcripcionConsulta = '';
+        const cerrada = { ...cita, estado: 'COMPLETADA' as const };
+        this.citaEnRevision.set(cerrada);
+        this.citas.update(lista => lista.map(c => c.id === cita.id ? cerrada : c));
         this.cargarCitas();
       },
       error: () => this.error.set('No se pudo enviar el aviso. Publica el backend en Render y vuelve a intentarlo.'),
