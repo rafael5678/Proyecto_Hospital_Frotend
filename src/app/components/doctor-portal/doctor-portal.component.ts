@@ -288,9 +288,9 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
       this.error.set('Confirma que el paciente autorizó el envío de la transcripción al servicio de IA.');
       return;
     }
-    const tx = (this.soapReq.transcripcion || this.soapReq.transcripcionConsulta || '').trim();
+    const tx = this.asegurarRelato();
     if (!tx) {
-      this.error.set('Escriba o pegue la transcripción de la consulta.');
+      this.error.set('El cuadro está vacío. El texto gris era solo un ejemplo. Escribe el relato o abre al paciente desde su cita.');
       return;
     }
     this.soapReq.transcripcion = tx;
@@ -314,13 +314,15 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     const nota = r ?? this.soapRsp();
     if (!nota || typeof speechSynthesis === 'undefined') return;
     const texto = [
-      'Resumen para la consulta.',
-      nota.resumenParaMedico ? this.resumenCorto(nota.resumenParaMedico) : '',
-      nota.enfoqueEnConsulta ? `En la cita: ${this.resumenCorto(nota.enfoqueEnConsulta)}.` : '',
-      nota.cuidados ? `Cuidados: ${this.resumenCorto(nota.cuidados)}.` : ''
-    ].filter(Boolean).join(' ');
+      `Resumen de ${this.soapReq.nombrePaciente || 'la consulta'}.`,
+      nota.resumenParaMedico || '',
+      nota.enfoqueEnConsulta ? `Qué revisar ahora: ${nota.enfoqueEnConsulta}` : '',
+      nota.preguntasSugeridas ? `Pregúntale: ${nota.preguntasSugeridas}` : '',
+      nota.medicamentosSugeridos ? `Medicamentos a considerar: ${nota.medicamentosSugeridos}` : '',
+      nota.cuidados ? `Cuidados: ${nota.cuidados}` : ''
+    ].filter(Boolean).join('. ');
     speechSynthesis.cancel();
-    const voz = new SpeechSynthesisUtterance(texto.slice(0, 520));
+    const voz = new SpeechSynthesisUtterance(texto.slice(0, 1400));
     voz.lang = 'es-CO';
     voz.rate = 0.95;
     const es = speechSynthesis.getVoices().find(v => v.lang.toLowerCase().startsWith('es'));
@@ -328,9 +330,24 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     speechSynthesis.speak(voz);
   }
 
-  private resumenCorto(texto: string) {
-    const limpio = texto.replace(/\s+/g, ' ').trim();
-    return limpio.length > 220 ? `${limpio.slice(0, 217)}…` : limpio;
+  private asegurarRelato(): string {
+    const escrito = (this.soapReq.transcripcion || this.soapReq.transcripcionConsulta || '').trim();
+    if (escrito) {
+      this.soapReq.transcripcion = escrito;
+      return escrito;
+    }
+    const cita = this.citaEnRevision();
+    const deCita = [
+      cita?.motivo ? `Motivo: ${cita.motivo}` : '',
+      cita?.triageSintomas ? `Síntomas: ${cita.triageSintomas}` : '',
+      cita?.triageDuracion ? `Desde hace: ${cita.triageDuracion}` : '',
+      cita?.triageAntecedentes ? `Antecedentes: ${cita.triageAntecedentes}` : '',
+      cita?.triageResumen || '',
+      cita?.dermatologiaReportaIa ? `Piel: ${cita.dermatologiaReportaIa}` : ''
+    ].filter(Boolean).join('\n');
+    const relato = deCita || (this.soapReq.motivoInicial || '').trim();
+    if (relato) this.soapReq.transcripcion = relato;
+    return relato;
   }
 
   detenerVozSoap() {
@@ -458,9 +475,9 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
       this.error.set('Marca la autorización antes de iniciar la simulación.');
       return;
     }
-    const ctx = (this.soapReq.transcripcion || '').trim();
-    if (!ctx && !this.soapReq.motivoInicial?.trim()) {
-      this.error.set('Primero abre la cita del paciente o escribe qué le pasa.');
+    const ctx = this.asegurarRelato();
+    if (!ctx) {
+      this.error.set('El cuadro está vacío. Escribe el relato o abre al paciente desde su cita, y luego inicia la consulta.');
       return;
     }
     this.dialogo = [];
