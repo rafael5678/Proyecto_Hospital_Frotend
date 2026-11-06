@@ -42,19 +42,15 @@ export class AdminPortalComponent implements OnInit {
 
   tab = signal<AdminTab>('inicio');
   sub = signal<AdminSub>('');
-  expandedMenus = signal<string[]>(['usuarios', 'medicos', 'citas', 'reportes', 'ia']);
+  expandedMenus = signal<string[]>(['medicos', 'citas', 'reportes', 'ia']);
+  readonly diasSemana = [
+    { id: '1', nombre: 'Lun' }, { id: '2', nombre: 'Mar' }, { id: '3', nombre: 'Mié' },
+    { id: '4', nombre: 'Jue' }, { id: '5', nombre: 'Vie' }, { id: '6', nombre: 'Sáb' }, { id: '7', nombre: 'Dom' }
+  ];
 
   readonly menuItems: SidebarItem[] = [
     { id: 'inicio', label: 'Inicio', icon: '🏠', tab: 'inicio' },
-    {
-      id: 'usuarios',
-      label: 'Usuarios',
-      icon: '👥',
-      children: [
-        { id: 'u-lista', label: 'Listar usuarios', tab: 'usuarios', sub: 'lista' },
-        { id: 'u-claves', label: 'Accesos y claves', tab: 'usuarios', sub: 'claves' }
-      ]
-    },
+    { id: 'usuarios', label: 'Usuarios', icon: '👥', tab: 'usuarios', sub: 'lista' },
     {
       id: 'medicos',
       label: 'Médicos',
@@ -113,6 +109,7 @@ export class AdminPortalComponent implements OnInit {
   error = signal('');
   okAdmin = signal('');
   editandoId = signal<number | null>(null);
+  claveVisible = '';
   nuevaClave = '';
   claveAdmin = '';
   claveEntregada = signal<{ nombre: string; email: string; password: string } | null>(null);
@@ -284,23 +281,48 @@ export class AdminPortalComponent implements OnInit {
 
   editar(u: User) {
     this.editandoId.set(this.idUsuario(u));
+    this.claveVisible = u.clave || '';
     this.form = {
       nombre: u.nombre, email: u.email, password: '', rol: u.rol,
-      telefono: u.telefono || '', documento: u.documento || '', especialidad: u.especialidad || '',
-      fechaNacimiento: '', genero: '', ciudad: '', alergias: '',
-      numeroLicencia: '', consultorio: u.consultorio || '', anosExperiencia: u.anosExperiencia, biografia: u.biografia || ''
+      telefono: u.telefono || '', documento: u.documento || '',
+      fechaNacimiento: u.fechaNacimiento || '', genero: u.genero || '',
+      tipoSangre: u.tipoSangre || '', direccion: u.direccion || '', ciudad: u.ciudad || '',
+      alergias: u.alergias || '', contactoEmergencia: u.contactoEmergencia || '',
+      telefonoEmergencia: u.telefonoEmergencia || '', observaciones: u.observaciones || '',
+      especialidad: u.especialidad || '', numeroLicencia: u.numeroLicencia || '',
+      consultorio: u.consultorio || '', anosExperiencia: u.anosExperiencia, biografia: u.biografia || '',
+      diasAtencion: u.diasAtencion || '', horaInicio: u.horaInicio || '', horaFin: u.horaFin || '',
+      horaInicio2: u.horaInicio2 || '', horaFin2: u.horaFin2 || ''
     };
     this.tab.set('usuarios');
     this.sub.set('editar');
     this.error.set('');
   }
 
+  diaMarcado(id: string) {
+    return (this.form.diasAtencion || '').split(',').map(s => s.trim()).includes(id);
+  }
+
+  toggleDia(id: string) {
+    const set = new Set((this.form.diasAtencion || '').split(',').map(s => s.trim()).filter(Boolean));
+    if (set.has(id)) set.delete(id);
+    else set.add(id);
+    this.form.diasAtencion = [...set].sort().join(',');
+  }
+
   guardarEdicion() {
     const id = this.editandoId();
     if (!id) return;
-    this.adminService.actualizarUsuario(id, { ...this.form, password: undefined }).subscribe({
+    const clave = this.form.password?.trim() || '';
+    if (clave && clave.length < 6) {
+      this.error.set('La nueva clave debe tener al menos 6 caracteres.');
+      return;
+    }
+    const datos: UserRequest = { ...this.form, password: clave || undefined };
+    this.adminService.actualizarUsuario(id, datos).subscribe({
       next: () => {
-        this.okAdmin.set('User actualizado');
+        this.okAdmin.set('Datos guardados. El correo y la clave de ingreso quedan como los dejaste.');
+        this.claveVisible = clave || this.claveVisible;
         this.resetForm();
         this.editandoId.set(null);
         this.cargarUsuarios();

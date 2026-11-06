@@ -10,6 +10,22 @@ export interface User {
   consultorio?: string;
   anosExperiencia?: number;
   biografia?: string;
+  numeroLicencia?: string;
+  fechaNacimiento?: string;
+  genero?: string;
+  tipoSangre?: string;
+  direccion?: string;
+  ciudad?: string;
+  alergias?: string;
+  contactoEmergencia?: string;
+  telefonoEmergencia?: string;
+  observaciones?: string;
+  diasAtencion?: string;
+  horaInicio?: string;
+  horaFin?: string;
+  horaInicio2?: string;
+  horaFin2?: string;
+  clave?: string;
   activo?: boolean;
 }
 
