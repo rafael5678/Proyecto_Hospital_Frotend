@@ -47,6 +47,12 @@ export class AdminPortalComponent implements OnInit {
 
   tab = signal<AdminTab>('inicio');
   sub = signal<AdminSub>('');
+  mesSobre = signal<number | null>(null);
+  mesFijo = signal<number | null>(null);
+  donutSobre = signal<string | null>(null);
+  donutFijo = signal<string | null>(null);
+  estadoSobre = signal<string | null>(null);
+  mesBarraSobre = signal<string | null>(null);
   expandedMenus = signal<string[]>(['medicos', 'citas', 'reportes', 'ia']);
   readonly diasSemana = [
     { id: '1', nombre: 'Lun' }, { id: '2', nombre: 'Mar' }, { id: '3', nombre: 'Mié' },
@@ -824,16 +830,33 @@ export class AdminPortalComponent implements OnInit {
     return this.citas().filter(c => new Date(c.fechaHora).toDateString() === hoy).length;
   }
 
-  puntosMensuales(): { label: string; x: number; y: number; total: number }[] {
+  puntosMensuales(): { label: string; nombre: string; x: number; y: number; total: number }[] {
     const meses = this.reporte()?.desgloseMensual ?? [];
     if (!meses.length) return [];
     const max = Math.max(...meses.map(m => m.totalCitas), 1);
     return meses.map((m, i) => ({
       label: (m.nombreMes || '').slice(0, 3),
+      nombre: m.nombreMes || 'Mes',
       total: m.totalCitas,
       x: meses.length === 1 ? 180 : 20 + (i * (320 / (meses.length - 1))),
       y: 140 - (m.totalCitas / max) * 110
     }));
+  }
+
+  mesVisible(): number | null {
+    return this.mesSobre() ?? this.mesFijo();
+  }
+
+  tocarMes(indice: number) {
+    this.mesFijo.set(this.mesFijo() === indice ? null : indice);
+  }
+
+  donutVisible(): string | null {
+    return this.donutSobre() ?? this.donutFijo();
+  }
+
+  tocarDonut(etiqueta: string) {
+    this.donutFijo.set(this.donutFijo() === etiqueta ? null : etiqueta);
   }
 
   lineaMensual(): string {
@@ -862,7 +885,7 @@ export class AdminPortalComponent implements OnInit {
     return items.map(i => ({ ...i, ancho: (i.total / max) * 100 }));
   }
 
-  donutEspecialidades(): { label: string; color: string; dash: number; gap: number; offset: number; porcentaje: number }[] {
+  donutEspecialidades(): { label: string; color: string; dash: number; gap: number; offset: number; porcentaje: number; total: number }[] {
     const colores = ['#3b82f6', '#22c55e', '#8b5cf6', '#f59e0b', '#06b6d4', '#ef4444'];
     const conteo = new Map<string, number>();
     for (const cita of this.citas()) {
@@ -882,7 +905,8 @@ export class AdminPortalComponent implements OnInit {
         dash,
         gap: circ - dash,
         offset: -(acc * circ),
-        porcentaje: Math.round(pct * 100)
+        porcentaje: Math.round(pct * 100),
+        total: n
       };
       acc += pct;
       return item;

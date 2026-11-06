@@ -5,6 +5,8 @@
 html {
   font-size: 16px;
   -webkit-text-size-adjust: 100%;
+  touch-action: pan-x pan-y;
+  zoom: 1;
 }
 
 html, body, app-root {
@@ -529,6 +531,56 @@ th { background: #f8fafc; font-weight: 600; font-size: 0.85rem; }
   border-radius: 8px 8px 3px 3px;
   background: linear-gradient(180deg, #a78bfa, #6d28d9);
 }
+.chart-vivo { position: relative; }
+.line-chart polyline,
+.line-chart line,
+.punto-visible,
+.donut circle:not(.donut-hit) { pointer-events: none; }
+.punto-hit, .donut-hit { cursor: pointer; }
+.donut-hit { pointer-events: stroke; }
+.chart-tip {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  background: #3b1d6e;
+  color: white;
+  border-radius: 10px;
+  padding: 0.35rem 0.6rem;
+  font-size: 0.78rem;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.chart-tip strong, .chart-tip span { display: block; }
+.chart-labels button,
+.donut-card li button,
+.barra-fila,
+.mes-col {
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+.chart-labels button { padding: 0.2rem 0.15rem; border-radius: 6px; }
+.chart-labels button.activa,
+.donut-card li button.activa,
+.barra-fila.activa,
+.mes-col.activa { background: #f3e8ff; }
+.donut-card li button {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  text-align: left;
+  padding: 0.28rem 0.4rem;
+  border-radius: 8px;
+}
+.chart-detalle {
+  margin: 0.7rem 0 0;
+  color: #5b21b6;
+  font-size: 0.88rem;
+}
+.mes-col.activa .mes-bar { filter: brightness(1.08); outline: 2px solid #ddd6fe; }
 @media (max-width: 800px) {
   .reporte-grid { grid-template-columns: 1fr; }
   .reporte-card.ancho { grid-column: auto; }

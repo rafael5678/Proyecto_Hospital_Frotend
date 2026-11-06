@@ -63,15 +63,27 @@
           <section class="panel-card">
             <h3>Tendencia de citas</h3>
             @if (puntosMensuales().length) {
-              <svg class="line-chart" viewBox="0 0 360 160" role="img" aria-label="Citas por mes">
-                <polyline [attr.points]="lineaMensual()" fill="none" stroke="#7c3aed" stroke-width="3" />
-                @for (p of puntosMensuales(); track p.label) {
-                  <circle [attr.cx]="p.x" [attr.cy]="p.y" r="4" fill="#7c3aed"></circle>
+              <div class="chart-vivo" (mouseleave)="mesSobre.set(null)">
+                <svg class="line-chart" viewBox="0 0 360 160" role="img" aria-label="Citas por mes">
+                  <polyline [attr.points]="lineaMensual()" fill="none" stroke="#7c3aed" stroke-width="3" />
+                  @if (mesVisible(); as activo) {
+                    <line [attr.x1]="puntosMensuales()[activo].x" y1="16" [attr.x2]="puntosMensuales()[activo].x" y2="148" stroke="#ddd6fe" stroke-width="2" />
+                  }
+                  @for (p of puntosMensuales(); track p.label; let i = $index) {
+                    <circle class="punto-visible" [attr.cx]="p.x" [attr.cy]="p.y" [attr.r]="mesVisible() === i ? 7 : 4" fill="#7c3aed" />
+                    <circle class="punto-hit" [attr.cx]="p.x" [attr.cy]="p.y" r="14" (mouseenter)="mesSobre.set(i)" (click)="tocarMes(i)" />
+                  }
+                </svg>
+                @if (mesVisible(); as activo) {
+                  <div class="chart-tip" [style.left.%]="(puntosMensuales()[activo].x / 360) * 100">
+                    <strong>{{ puntosMensuales()[activo].nombre }}</strong>
+                    <span>{{ puntosMensuales()[activo].total }} {{ puntosMensuales()[activo].total === 1 ? 'cita' : 'citas' }}</span>
+                  </div>
                 }
-              </svg>
+              </div>
               <div class="chart-labels">
-                @for (p of puntosMensuales(); track p.label) {
-                  <small>{{ p.label }}</small>
+                @for (p of puntosMensuales(); track p.label; let i = $index) {
+                  <button type="button" [class.activa]="mesVisible() === i" (mouseenter)="mesSobre.set(i)" (mouseleave)="mesSobre.set(null)" (click)="tocarMes(i)">{{ p.label }}</button>
                 }
               </div>
             } @else {
@@ -93,9 +105,23 @@
         <div class="dash-split">
           <section class="panel-card donut-card">
             <h3>Distribución por especialidad</h3>
-            <div class="donut-wrap">
+            <div class="donut-wrap" (mouseleave)="donutSobre.set(null)">
               <svg viewBox="0 0 120 120" class="donut">
                 @for (s of donutEspecialidades(); track s.label) {
+                  <circle
+                    class="donut-hit"
+                    cx="60"
+                    cy="60"
+                    r="38"
+                    fill="none"
+                    transform="rotate(-90 60 60)"
+                    stroke="transparent"
+                    stroke-width="22"
+                    [attr.stroke-dasharray]="s.dash + ' ' + s.gap"
+                    [attr.stroke-dashoffset]="s.offset"
+                    (mouseenter)="donutSobre.set(s.label)"
+                    (click)="tocarDonut(s.label)"
+                  />
                   <circle
                     cx="60"
                     cy="60"
@@ -103,20 +129,33 @@
                     fill="none"
                     transform="rotate(-90 60 60)"
                     [attr.stroke]="s.color"
-                    stroke-width="14"
+                    [attr.stroke-width]="donutVisible() === s.label ? 18 : 14"
+                    [attr.opacity]="!donutVisible() || donutVisible() === s.label ? 1 : 0.28"
                     [attr.stroke-dasharray]="s.dash + ' ' + s.gap"
                     [attr.stroke-dashoffset]="s.offset"
                   />
                 }
-                <text x="60" y="58" text-anchor="middle" class="donut-total">{{ r.totalCitas }}</text>
-                <text x="60" y="74" text-anchor="middle" class="donut-sub">citas</text>
+                @if (donutEspecialidades().find(s => s.label === donutVisible()); as elegida) {
+                  <text x="60" y="56" text-anchor="middle" class="donut-total">{{ elegida.total }}</text>
+                  <text x="60" y="72" text-anchor="middle" class="donut-sub">{{ elegida.porcentaje }}%</text>
+                } @else {
+                  <text x="60" y="58" text-anchor="middle" class="donut-total">{{ r.totalCitas }}</text>
+                  <text x="60" y="74" text-anchor="middle" class="donut-sub">citas</text>
+                }
               </svg>
               <ul>
                 @for (s of donutEspecialidades(); track s.label) {
-                  <li><i [style.background]="s.color"></i>{{ s.label }} · {{ s.porcentaje }}%</li>
+                  <li>
+                    <button type="button" [class.activa]="donutVisible() === s.label" (mouseenter)="donutSobre.set(s.label)" (click)="tocarDonut(s.label)">
+                      <i [style.background]="s.color"></i>{{ s.label }} · {{ s.total }} · {{ s.porcentaje }}%
+                    </button>
+                  </li>
                 }
               </ul>
             </div>
+            @if (donutEspecialidades().find(s => s.label === donutVisible()); as elegida) {
+              <p class="chart-detalle">{{ elegida.label }}: {{ elegida.total }} {{ elegida.total === 1 ? 'cita' : 'citas' }}, {{ elegida.porcentaje }}% del total.</p>
+            }
           </section>
 
           <section class="panel-card">
@@ -410,11 +449,14 @@
             <article class="reporte-card">
               <h3>Citas por estado</h3>
               @for (e of estadosCita(); track e.label) {
-                <div class="barra-fila">
+                <button type="button" class="barra-fila" [class.activa]="estadoSobre() === e.label" (mouseenter)="estadoSobre.set(e.label)" (mouseleave)="estadoSobre.set(null)" (click)="estadoSobre.set(estadoSobre() === e.label ? null : e.label)">
                   <span>{{ e.label }}</span>
                   <div class="barra-pista"><div class="barra-fill" [style.width.%]="e.ancho" [style.background]="e.color"></div></div>
                   <strong>{{ e.total }}</strong>
-                </div>
+                </button>
+              }
+              @if (estadosCita().find(e => e.label === estadoSobre()); as e) {
+                <p class="chart-detalle">{{ e.label }}: {{ e.total }} {{ e.total === 1 ? 'cita' : 'citas' }}.</p>
               }
             </article>
             <article class="reporte-card">
@@ -434,12 +476,15 @@
               <h3>Citas por mes</h3>
               <div class="mes-barras">
                 @for (m of barrasMes(); track m.nombre) {
-                  <div class="mes-col">
+                  <button type="button" class="mes-col" [class.activa]="mesBarraSobre() === m.nombre" (mouseenter)="mesBarraSobre.set(m.nombre)" (mouseleave)="mesBarraSobre.set(null)" (click)="mesBarraSobre.set(mesBarraSobre() === m.nombre ? null : m.nombre)">
                     <span>{{ m.total }}</span>
                     <div class="mes-bar" [style.height.px]="m.alto"></div>
                     <small>{{ m.nombre }}</small>
-                  </div>
+                  </button>
                 }
+              @if (barrasMes().find(m => m.nombre === mesBarraSobre()); as m) {
+                <p class="chart-detalle">{{ m.nombre }}: {{ m.total }} {{ m.total === 1 ? 'cita' : 'citas' }}.</p>
+              }
               </div>
             </article>
           </div>

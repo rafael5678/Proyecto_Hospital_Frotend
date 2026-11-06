@@ -4,7 +4,22 @@
   <meta charset="utf-8">
   <title>Sistema Hospy</title>
   <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <script>
+    (function () {
+      function esAtajoDeZoom(e) {
+        if (!(e.ctrlKey || e.metaKey)) return false;
+        return e.key === '+' || e.key === '-' || e.key === '=' || e.key === '_' || e.key === 'Add' || e.key === 'Subtract';
+      }
+      window.addEventListener('wheel', function (e) {
+        if (e.ctrlKey || e.metaKey) e.preventDefault();
+      }, { passive: false, capture: true });
+      window.addEventListener('keydown', function (e) {
+        if (esAtajoDeZoom(e)) e.preventDefault();
+      }, true);
+      document.addEventListener('gesturestart', function (e) { e.preventDefault(); }, { capture: true });
+    })();
+  </script>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
 </head>
 <body>
