@@ -32,6 +32,14 @@ export class AdminService {
     return this.http.patch<User>(`${this.api}/users/${id}/estado`, {}, { params: { activo } });
   }
 
+  restablecerClave(id: number, nuevaClave: string, claveAdmin: string) {
+    return this.http.patch<{ mensaje: string }>(`${this.api}/users/${id}/password`, { nuevaClave, claveAdmin });
+  }
+
+  probarGemini() {
+    return this.http.post<{ operativo: string; modelo: string; detalle: string }>(`${this.api}/ai-ping`, {});
+  }
+
   listarMedicos() {
     return this.http.get<User[]>(`${this.api}/doctors`);
   }

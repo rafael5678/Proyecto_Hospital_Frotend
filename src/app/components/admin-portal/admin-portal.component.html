@@ -181,19 +181,36 @@
             </select>
             <input class="input" placeholder="Consultorio" [(ngModel)]="form.consultorio" />
           }
-          <input class="input" type="password" placeholder="Nueva contraseña (opcional)" [(ngModel)]="form.password" />
+          <p class="hint">Nombre, teléfono y especialidad se guardan aquí. La clave solo se cambia en Accesos y claves, confirmando tu contraseña de administrador.</p>
           <button type="button" class="btn btn-purple" (click)="guardarEdicion()">Guardar cambios</button>
           @if (error()) { <p class="error-msg">{{ error() }}</p> }
         </div>
       }
 
       @if (tab() === 'usuarios' && sub() === 'claves') {
-        <h2 class="section-title">Accesos y claves</h2>
-        <p class="hint">Las contraseñas se guardan cifradas (BCrypt). Nadie puede verlas, ni el admin. Aquí restableces una nueva y se la entregas al usuario.</p>
-        @if (okAdmin()) { <p class="status-row">{{ okAdmin() }}</p> }
+        <section class="claves-panel">
+        <header class="claves-head">
+          <h2 class="section-title">Accesos y claves</h2>
+          <p class="hint">Las claves guardadas están cifradas y no se pueden leer, ni desde el navegador. Para asignar una nueva, escribe tu contraseña de administrador. Solo entonces se muestra la clave nueva, una vez, para entregársela a esa persona.</p>
+        </header>
+        <div class="clave-box">
+          <label for="nueva-clave">Nueva clave para el usuario</label>
+          <div class="clave-row">
+            <input id="nueva-clave" class="input" type="text" autocomplete="off" [(ngModel)]="nuevaClave" placeholder="Mínimo 6 caracteres" />
+            <button type="button" class="btn btn-purple" (click)="generarClave()">Generar</button>
+          </div>
+          <label for="clave-admin">Tu contraseña de administrador</label>
+          <input id="clave-admin" class="input" type="password" autocomplete="current-password" [(ngModel)]="claveAdmin" placeholder="La misma con la que iniciaste sesión" />
+        </div>
+        @if (claveEntregada(); as entregada) {
+          <div class="clave-result">
+            <strong>Clave restablecida para {{ entregada.nombre }}</strong>
+            <p>Ya puede iniciar sesión con el correo {{ entregada.email }} y esta clave:</p>
+            <code>{{ entregada.password }}</code>
+          </div>
+        }
         @if (error()) { <p class="error-msg">{{ error() }}</p> }
-        <label>Nueva clave para el usuario seleccionado</label>
-        <input class="input" type="password" [(ngModel)]="nuevaClave" placeholder="Mínimo 6 caracteres" />
+        <div class="table-wrap">
         <table>
           <thead>
             <tr><th>Nombre</th><th>Email</th><th>Rol</th><th>Estado</th><th>Clave</th><th></th></tr>
@@ -215,6 +232,8 @@
             }
           </tbody>
         </table>
+        </div>
+        </section>
       }
 
       @if (tab() === 'medicos' && sub() === 'lista') {
@@ -304,6 +323,7 @@
       @if (tab() === 'reportes' && reporte(); as r) {
         @if (sub() === 'resumen' || sub() === '') {
           <h2 class="section-title">Resumen general</h2>
+          <p class="hint">Cifras de la base de datos. Un cero es un conteo real: ese grupo no tiene registros.</p>
           <div class="stats-grid">
             <div class="stat"><span>Total citas</span><strong>{{ r.totalCitas }}</strong></div>
             <div class="stat"><span>Pendientes</span><strong>{{ r.citasPendientes }}</strong></div>
@@ -311,6 +331,43 @@
             <div class="stat"><span>Canceladas</span><strong>{{ r.citasCanceladas }}</strong></div>
             <div class="stat"><span>Pacientes</span><strong>{{ r.totalPacientes }}</strong></div>
             <div class="stat"><span>Médicos</span><strong>{{ r.totalMedicos }}</strong></div>
+          </div>
+          <div class="reporte-grid">
+            <article class="reporte-card">
+              <h3>Citas por estado</h3>
+              @for (e of estadosCita(); track e.label) {
+                <div class="barra-fila">
+                  <span>{{ e.label }}</span>
+                  <div class="barra-pista"><div class="barra-fill" [style.width.%]="e.ancho" [style.background]="e.color"></div></div>
+                  <strong>{{ e.total }}</strong>
+                </div>
+              }
+            </article>
+            <article class="reporte-card">
+              <h3>Personas registradas</h3>
+              <div class="personas-barras">
+                <div>
+                  <span>Pacientes · {{ r.totalPacientes }}</span>
+                  <div class="barra-pista"><div class="barra-fill pacientes" [style.width.%]="r.totalPacientes + r.totalMedicos > 0 ? (r.totalPacientes / (r.totalPacientes + r.totalMedicos) * 100) : 0"></div></div>
+                </div>
+                <div>
+                  <span>Médicos · {{ r.totalMedicos }}</span>
+                  <div class="barra-pista"><div class="barra-fill medicos" [style.width.%]="r.totalPacientes + r.totalMedicos > 0 ? (r.totalMedicos / (r.totalPacientes + r.totalMedicos) * 100) : 0"></div></div>
+                </div>
+              </div>
+            </article>
+            <article class="reporte-card ancho">
+              <h3>Citas por mes</h3>
+              <div class="mes-barras">
+                @for (m of barrasMes(); track m.nombre) {
+                  <div class="mes-col">
+                    <span>{{ m.total }}</span>
+                    <div class="mes-bar" [style.height.px]="m.alto"></div>
+                    <small>{{ m.nombre }}</small>
+                  </div>
+                }
+              </div>
+            </article>
           </div>
         }
         @if (sub() === 'mensual') {
@@ -329,7 +386,7 @@
       @if (tab() === 'asistente') {
         <div class="card section asistente-card">
           <h2>Registro Hospy</h2>
-          <p class="hint">Escribe o habla con tus palabras. Hospy guarda lo que ya dijiste y pide lo que falta. Al paciente le pide los mismos datos del registro: correo, contraseña, documento, nacimiento, género, sangre, dirección, ciudad, alergias y contacto de emergencia. Al médico le pide especialidad, experiencia, licencia, teléfono y horario.</p>
+          <p class="hint">Aquí se crean cuentas nuevas de pacientes y médicos, escribiendo o hablando. No lista usuarios ni cambia claves: eso está en Usuarios. Ejemplo: «Registra a la paciente Ana Gómez». Hospy pregunta lo que falte y, cuando está completo, crea la cuenta. La clave queda cifrada y se muestra una sola vez en este chat para que se la entregues.</p>
           @if (error()) { <p class="error-msg">{{ error() }}</p> }
           <div class="asistente-chat">
             @for (m of asistenteChat(); track $index) {
@@ -369,7 +426,12 @@
                 {{ m.apiKeyActiva ? 'API KEY CONFIGURADA · IA OPERATIVA' : 'MODO DEMO · SIN API KEY' }}
               </span>
               <span class="chip-outline">{{ m.versionIa }}</span>
+              <button type="button" class="btn btn-purple" (click)="probarGemini()" [disabled]="iaProbando()">
+                {{ iaProbando() ? 'Consultando Gemini…' : 'Probar Gemini' }}
+              </button>
             </div>
+            @if (iaPrueba()) { <p class="hint">{{ iaPrueba() }}</p> }
+            <p class="hint">Los números salen de las citas guardadas. Hay {{ m.totalCitas }} citas. Un cero significa que ninguna tiene ese análisis todavía, no que Gemini esté apagado.</p>
 
             <h3 style="margin-top: 1.5rem;">📊 Análisis totales procesados por la IA</h3>
             <div class="stats-grid ai-stats">
@@ -411,69 +473,39 @@
 
             <div class="ai-supervision-grid">
               <div class="card inner ai-superv-card triage">
-                <h4>🎯 Triage (agendar cita)</h4>
-                <ul>
-                  <li>Usa los mismos análisis que el paciente al agendar</li>
-                  <li>Especialidad y prioridad 1-10 persistidas en la cita</li>
-                  <li>Reprograma si entra un caso más grave</li>
-                  <li>Aviso por correo a paciente y médico</li>
-                </ul>
-                <p class="status-row">Estado: <strong>{{ m.estadoTriage }}</strong></p>
+                <h4>Triage al agendar</h4>
+                <p>{{ m.estadoTriage }}</p>
+                <p class="status-row">Guardados en citas: <strong>{{ m.citasConTriage }}</strong></p>
               </div>
 
               <div class="card inner ai-superv-card derma">
-                <h4>🔬 Piel / lesiones (en agendar)</h4>
-                <ul>
-                  <li>Texto clínico, no CNN de imagen</li>
-                  <li>Score de riesgo 0.0 - 1.0</li>
-                  <li>Llega al médico en la ficha de la cita</li>
-                  <li>Cuenta: {{ m.citasConEvaluacionPiel }} citas con piel</li>
-                </ul>
-                <p class="status-row">Estado: <strong>{{ m.estadoDermatologia }}</strong></p>
+                <h4>Piel y lesiones</h4>
+                <p>{{ m.estadoDermatologia }}</p>
+                <p class="status-row">Guardados en citas: <strong>{{ m.citasConEvaluacionPiel }}</strong></p>
               </div>
 
               <div class="card inner ai-superv-card soap">
-                <h4>📝 Escriba médico SOAP</h4>
-                <ul>
-                  <li>Hospy transcribe el audio si hay clave; si no, usa la voz del navegador</li>
-                  <li>Borrador S / O / A / P para firmar</li>
-                  <li>Usa triage + historial del paciente</li>
-                  <li>Estado Whisper: {{ m.estadoWhisper }}</li>
-                </ul>
-                <p class="status-row">Estado SOAP: <strong>{{ m.estadoSoap }}</strong></p>
+                <h4>Escriba médico SOAP</h4>
+                <p>{{ m.estadoSoap }}</p>
+                <p class="status-row">Voz: <strong>{{ m.estadoWhisper }}</strong></p>
               </div>
 
               <div class="card inner ai-superv-card inter">
-                <h4>🧬 Grafos fármaco-alimento</h4>
-                <ul>
-                  <li>Análisis interacciones medicamentosas</li>
-                  <li>Integración alertas de severidad</li>
-                  <li>5 niveles riesgo global</li>
-                  <li>Alertas + recomendaciones dieta</li>
-                </ul>
-                <p class="status-row">Estado: <strong>{{ m.estadoInteracciones }}</strong></p>
+                <h4>Interacciones de medicamentos</h4>
+                <p>{{ m.estadoInteracciones }}</p>
+                <p class="status-row">Se calcula cuando un paciente consulta sus medicamentos.</p>
               </div>
 
               <div class="card inner ai-superv-card price">
-                <h4>💰 Triangulación precios</h4>
-                <ul>
-                  <li>Análisis de sobreprecios</li>
-                  <li>Comparativa farmacias locales</li>
-                  <li>Detección desabastecimiento artificial</li>
-                  <li>Estimación rango de precios</li>
-                </ul>
-                <p class="status-row">Estado: <strong>{{ m.estadoPrecios }}</strong></p>
+                <h4>Precios de medicamentos</h4>
+                <p>{{ m.estadoPrecios }}</p>
+                <p class="status-row">Se calcula en Auditoría de precios, con el medicamento que escribas.</p>
               </div>
 
               <div class="card inner ai-superv-card sec">
-                <h4>🔐 Seguridad sesiones</h4>
-                <ul>
-                  <li>⏱ Médicos: <strong>5 min</strong> inactividad</li>
-                  <li>⏱ Administradores: <strong>10 min</strong> inactividad</li>
-                  <li>✅ JWT interceptores</li>
-                  <li>✅ Guards de rol y autenticación</li>
-                </ul>
-                <p class="status-row">Estado: <strong>Activo</strong></p>
+                <h4>Sesiones</h4>
+                <p>Médicos: {{ m.timeoutMedicoSeg / 60 }} min. Administradores: {{ m.timeoutAdminSeg / 60 }} min.</p>
+                <p class="status-row">El acceso usa el token de la sesión. Las claves no viajan en claro.</p>
               </div>
             </div>
           } @else {

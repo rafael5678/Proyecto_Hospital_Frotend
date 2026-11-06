@@ -309,3 +309,88 @@ th { background: #f8fafc; font-weight: 600; font-size: 0.85rem; }
   .price-row { grid-template-columns: 1fr; }
 }
 
+.claves-panel { display: flex; flex-direction: column; gap: 1.35rem; }
+.claves-head { display: flex; flex-direction: column; gap: 0.55rem; }
+.claves-head .section-title,
+.claves-head .hint { margin: 0; }
+.clave-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+  background: white;
+  border-radius: 18px;
+  padding: 1.25rem 1.35rem;
+  box-shadow: 0 10px 28px rgba(124, 58, 237, 0.08);
+}
+.clave-box label { font-size: 0.9rem; font-weight: 600; color: #3b1d6e; }
+.clave-row { display: flex; align-items: center; gap: 0.85rem; }
+.clave-row .input { flex: 1; min-width: 0; }
+.clave-row .btn { flex-shrink: 0; }
+.clave-result {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  border-radius: 16px;
+  padding: 1.1rem 1.25rem;
+}
+.clave-result strong { color: #065f46; }
+.clave-result p { margin: 0; color: #166534; }
+.clave-result code {
+  font-size: 1.15rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  background: white;
+  color: #064e3b;
+  padding: 0.55rem 0.8rem;
+  border-radius: 10px;
+}
+.table-wrap { margin-top: 0.35rem; }
+
+.reporte-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.15rem;
+  margin-top: 1.25rem;
+}
+.reporte-card {
+  background: white;
+  border-radius: 18px;
+  padding: 1.15rem 1.25rem;
+  box-shadow: 0 10px 28px rgba(124, 58, 237, 0.08);
+}
+.reporte-card.ancho { grid-column: 1 / -1; }
+.reporte-card h3 { margin: 0 0 0.9rem; color: #3b1d6e; font-size: 1rem; }
+.barra-fila, .personas-barras > div {
+  display: grid;
+  grid-template-columns: 92px 1fr 2rem;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 0.7rem;
+}
+.personas-barras > div { grid-template-columns: 140px 1fr; }
+.barra-pista { height: 12px; background: #f3e8ff; border-radius: 999px; overflow: hidden; }
+.barra-fill { height: 100%; border-radius: 999px; min-width: 0; }
+.barra-fill.pacientes { background: #7c3aed; }
+.barra-fill.medicos { background: #2563eb; }
+.mes-barras {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.45rem;
+  min-height: 160px;
+}
+.mes-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.35rem; }
+.mes-col span, .mes-col small { color: #64748b; font-size: 0.72rem; }
+.mes-bar {
+  width: 100%;
+  max-width: 28px;
+  border-radius: 8px 8px 3px 3px;
+  background: linear-gradient(180deg, #a78bfa, #6d28d9);
+}
+@media (max-width: 800px) {
+  .reporte-grid { grid-template-columns: 1fr; }
+  .reporte-card.ancho { grid-column: auto; }
+}
+

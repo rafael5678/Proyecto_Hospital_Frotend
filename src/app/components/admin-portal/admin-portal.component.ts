@@ -114,6 +114,10 @@ export class AdminPortalComponent implements OnInit {
   okAdmin = signal('');
   editandoId = signal<number | null>(null);
   nuevaClave = '';
+  claveAdmin = '';
+  claveEntregada = signal<{ nombre: string; email: string; password: string } | null>(null);
+  iaPrueba = signal('');
+  iaProbando = signal(false);
 
   aiStatus = signal<{ apiKeyActiva: boolean; version: string } | null>(null);
   aiMetricas = signal<AiMetrics | null>(null);
@@ -294,7 +298,7 @@ export class AdminPortalComponent implements OnInit {
   guardarEdicion() {
     const id = this.editandoId();
     if (!id) return;
-    this.adminService.actualizarUsuario(id, { ...this.form, password: this.form.password || undefined }).subscribe({
+    this.adminService.actualizarUsuario(id, { ...this.form, password: undefined }).subscribe({
       next: () => {
         this.okAdmin.set('User actualizado');
         this.resetForm();
@@ -307,16 +311,50 @@ export class AdminPortalComponent implements OnInit {
     });
   }
 
+  generarClave() {
+    const alfabeto = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    const bytes = new Uint32Array(8);
+    crypto.getRandomValues(bytes);
+    this.nuevaClave = Array.from(bytes, n => alfabeto[n % alfabeto.length]).join('');
+    this.error.set('');
+  }
+
   restablecerClave(u: User) {
-    if (!this.nuevaClave.trim() || this.nuevaClave.trim().length < 6) {
+    const clave = this.nuevaClave.trim();
+    const confirmacion = this.claveAdmin;
+    if (clave.length < 6) {
       this.error.set('La nueva clave debe tener al menos 6 caracteres.');
       return;
     }
-    this.adminService.actualizarUsuario(this.idUsuario(u), {
-      nombre: u.nombre, email: u.email, rol: u.rol, password: this.nuevaClave.trim()
-    }).subscribe({
-      next: () => { this.okAdmin.set(`Clave restablecida para ${u.email}. Entrégasela al usuario; no se vuelve a mostrar.`); this.nuevaClave = ''; this.cargarUsuarios(); },
+    if (!confirmacion.trim()) {
+      this.error.set('Escribe tu contraseña de administrador para confirmar.');
+      return;
+    }
+    this.error.set('');
+    this.adminService.restablecerClave(this.idUsuario(u), clave, confirmacion).subscribe({
+      next: () => {
+        this.claveEntregada.set({ nombre: u.nombre, email: u.email, password: clave });
+        this.okAdmin.set('');
+        this.nuevaClave = '';
+        this.claveAdmin = '';
+        this.cargarUsuarios();
+      },
       error: (e) => this.error.set(e.error?.error ?? 'No se pudo restablecer')
+    });
+  }
+
+  probarGemini() {
+    this.iaProbando.set(true);
+    this.iaPrueba.set('');
+    this.adminService.probarGemini().subscribe({
+      next: r => {
+        this.iaProbando.set(false);
+        this.iaPrueba.set(r.detalle);
+      },
+      error: (e) => {
+        this.iaProbando.set(false);
+        this.iaPrueba.set(e.error?.error ?? 'No se pudo contactar a Gemini.');
+      }
     });
   }
 
@@ -658,6 +696,28 @@ export class AdminPortalComponent implements OnInit {
 
   lineaMensual(): string {
     return this.puntosMensuales().map(p => `${p.x},${p.y}`).join(' ');
+  }
+
+  barrasMes(): { nombre: string; total: number; alto: number }[] {
+    const meses = this.reporte()?.desgloseMensual ?? [];
+    const max = Math.max(...meses.map(m => m.totalCitas), 1);
+    return meses.map(m => ({
+      nombre: (m.nombreMes || '').slice(0, 3),
+      total: m.totalCitas,
+      alto: Math.max(6, (m.totalCitas / max) * 120)
+    }));
+  }
+
+  estadosCita(): { label: string; total: number; color: string; ancho: number }[] {
+    const r = this.reporte();
+    if (!r) return [];
+    const items = [
+      { label: 'Pendientes', total: r.citasPendientes, color: '#f59e0b' },
+      { label: 'Aceptadas', total: r.citasAceptadas, color: '#16a34a' },
+      { label: 'Canceladas', total: r.citasCanceladas, color: '#94a3b8' }
+    ];
+    const max = Math.max(...items.map(i => i.total), 1);
+    return items.map(i => ({ ...i, ancho: (i.total / max) * 100 }));
   }
 
   donutEspecialidades(): { label: string; color: string; dash: number; gap: number; offset: number; porcentaje: number }[] {

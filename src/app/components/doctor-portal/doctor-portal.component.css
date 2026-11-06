@@ -215,3 +215,44 @@
 .horarios-list { list-style: none; }
 .horarios-list li { padding: 0.5rem 0; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; }
 .empty { color: #64748b; text-align: center; padding: 2rem; }
+
+.ai-panel.card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.ai-panel .section-head {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.9rem;
+  margin: 0;
+}
+
+.ai-panel .section-title { margin: 0; }
+
+.ai-panel .actions-bar {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.95rem;
+  margin: 0;
+}
+
+.ai-panel .form-grid {
+  gap: 1.35rem 1.75rem;
+  margin: 0;
+}
+
+.ai-panel .form-grid label {
+  display: block;
+  margin: 0 0 0.55rem;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #334155;
+}
+
+.ai-panel .check-row { margin: 0; }
+
+.ai-panel .ai-result { margin-top: 0.25rem; }
