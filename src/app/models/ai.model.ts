@@ -55,8 +55,29 @@ export interface AiSoapResponse {
   plan: string;               /* P */
   diagnosticoPresuntivo: string;
   procedimientosSugeridos: string;
+  resumenParaMedico?: string;
+  enfoqueEnConsulta?: string;
+  preguntasSugeridas?: string;
+  medicamentosSugeridos?: string;
+  cuidados?: string;
   procedimientos?: string[];
   especialidadSugerida?: string;
+  modoDemo?: boolean;
+}
+
+export interface AiConsultaSimRequest {
+  nombrePaciente?: string;
+  motivo?: string;
+  contexto?: string;
+  pregunta?: string;
+  dialogo?: string[];
+}
+
+export interface AiConsultaSimResponse {
+  dicePaciente: string;
+  pistaParaElMedico?: string;
+  medicamentosSugeridos?: string;
+  cuidados?: string;
   modoDemo?: boolean;
 }
 
@@ -95,6 +116,8 @@ export interface ComparativaFarmacia {
   precio: number;
   disponibilidad: string;
   url: string;
+  lugar?: string;
+  presentacion?: string;
   farmacia?: string;
   porcentajeDiferencia?: number | string;
   ciudad?: string;
@@ -110,6 +133,7 @@ export interface AiPricesResponse {
   comparativa: ComparativaFarmacia[];
   alertas: string[];
   recomendacion: string;
+  presentacionEstimada?: string;
   modoDemo?: boolean;
   nivelSobreprecio?: string;
   sospechaDesabastecimiento?: boolean;

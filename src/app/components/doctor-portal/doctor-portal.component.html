@@ -195,16 +195,13 @@
           }
         </div>
         @if (citaEnRevision(); as cita) {
-        <h3>Motivo y orientación previa a consulta</h3>
+        <h3>Lo que trae a la consulta</h3>
         <p><strong>Motivo:</strong> {{ cita.motivo || 'No informado' }}</p>
-        <p><strong>Triage:</strong> {{ cita.triageSeveridad || 'No registrado' }} · ESI {{ cita.triageNivelEsi ?? '—' }}
-          · prioridad {{ cita.triagePrioridad ?? '—' }}/10</p>
-        @if (cita.triageSintomas) { <p><strong>Síntomas referidos:</strong> {{ cita.triageSintomas }}</p> }
-        @if (cita.triageDuracion) { <p><strong>Duración:</strong> {{ cita.triageDuracion }}</p> }
-        @if (cita.triageAntecedentes) { <p><strong>Antecedentes/alergias:</strong> {{ cita.triageAntecedentes }}</p> }
+        @if (cita.triageSintomas) { <p><strong>Qué le está pasando:</strong> {{ cita.triageSintomas }}</p> }
+        @if (cita.triageDuracion) { <p><strong>Desde hace:</strong> {{ cita.triageDuracion }}</p> }
+        @if (cita.triageAntecedentes) { <p><strong>Antecedentes:</strong> {{ cita.triageAntecedentes }}</p> }
         @if (cita.triageResumen) { <p>{{ cita.triageResumen }}</p> }
-        @if (cita.dermatologiaReportaIa) { <p><strong>Orientación de piel generada:</strong> {{
-          cita.dermatologiaReportaIa }}</p> }
+        @if (cita.dermatologiaReportaIa) { <p><strong>Piel:</strong> {{ cita.dermatologiaReportaIa }}</p> }
         }
         <h3>Consultas previas</h3>
         @if (historialPaciente().length) {
@@ -231,8 +228,7 @@
         </table>
         } @else { <p class="empty">No hay consultas previas registradas.</p> }
         <div class="actions-bar" style="margin-top: 1.5rem;">
-          <button type="button" class="btn btn-blue" (click)="tab.set('soap'); sub.set('')">🧾 Ir a escriba
-            SOAP</button>
+          <button type="button" class="btn btn-blue" (click)="irAConsulta()">Preparar la consulta</button>
         </div>
       </div>
       }
@@ -240,8 +236,8 @@
       @if (tab() === 'soap') {
       <section class="card section ai-panel">
         <header class="section-head">
-          <h2 class="section-title">🧾 Escriba médico · Nota SOAP automatizada</h2>
-          <span class="chip-outline demo">Al generar, se lee un resumen en voz alta. Borrador sujeto a revisión médica.</span>
+          <h2 class="section-title">Consulta</h2>
+          <span class="chip-outline demo">Resumen para ti, distinto del aviso que vio el paciente.</span>
         </header>
 
         <div class="actions-bar">
@@ -276,64 +272,121 @@
           </div>
         </div>
 
-        <label class="check-row"><input type="checkbox" [(ngModel)]="consentimientoSoapAi" /> Confirmo la autorización
-          del paciente para enviar esta transcripción al servicio de IA.</label>
+        <label class="check-row"><input type="checkbox" [(ngModel)]="consentimientoSoapAi" /> El paciente autorizó usar
+          este relato para preparar la consulta.</label>
 
         <div class="actions-bar">
           <button type="button" class="btn btn-blue" [disabled]="soapLoading() || !consentimientoSoapAi"
             (click)="soapGenerar()">
-            {{ soapLoading() ? 'Generando SOAP…' : '🤖 Generar nota SOAP' }}
+            {{ soapLoading() ? 'Preparando…' : 'Preparar resumen' }}
           </button>
-          @if (soapRsp()?.modoDemo) { <span class="severity-chip bg-orange">MODO DEMO</span> }
+          <button type="button" class="btn btn-blue" [disabled]="consultaLoading() || !consentimientoSoapAi"
+            (click)="iniciarConsulta()">Iniciar consulta</button>
           @if (error()) { <span class="warn-big">{{ error() }}</span> }
         </div>
 
         @if (soapRsp(); as r) {
-        <div class="ai-result">
+        <div class="brief-medico">
           <div class="severity-row">
-            <button type="button" class="btn btn-blue" (click)="hablarResumenSoap(r)">🔊 Escuchar resumen</button>
-            <button type="button" class="btn logout" (click)="detenerVozSoap()">Detener voz</button>
-            <span class="severity-chip bg-blue">Especialidad: {{ r.especialidadSugerida }}</span>
-            @if (r.diagnosticoPresuntivo) {
-            <span class="severity-chip bg-orange">Dx presuntivo: {{ r.diagnosticoPresuntivo }}</span>
-            }
+            <h3>Para ti, en el consultorio</h3>
+            <button type="button" class="btn btn-blue" (click)="hablarResumenSoap(r)">Escuchar</button>
+            <button type="button" class="btn logout" (click)="detenerVozSoap()">Detener</button>
           </div>
-
-          <div class="form-grid" style="margin-top: 1rem;">
-            <div class="card inner" style="border-left: 4px solid var(--green);">
-              <h4 style="color: var(--green); margin-top: 0;">S · Subjetivo</h4>
-              <p style="margin: 0; white-space: pre-wrap;">{{ r.subjetivo }}</p>
-            </div>
-            <div class="card inner" style="border-left: 4px solid var(--blue);">
-              <h4 style="color: var(--blue); margin-top: 0;">O · Objetivo</h4>
-              <p style="margin: 0; white-space: pre-wrap;">{{ r.objetivo }}</p>
-            </div>
-            <div class="card inner" style="border-left: 4px solid var(--orange);">
-              <h4 style="color: var(--orange); margin-top: 0;">A · Apreciación</h4>
-              <p style="margin: 0; white-space: pre-wrap;">{{ r.apreciacion }}</p>
-            </div>
-            <div class="card inner" style="border-left: 4px solid #7c3aed;">
-              <h4 style="color: #7c3aed; margin-top: 0;">P · Plan</h4>
-              <p style="margin: 0; white-space: pre-wrap;">{{ r.plan }}</p>
-            </div>
-          </div>
-
-          @if (r.procedimientos?.length) {
-          <h4 style="margin-top: 1rem;">📌 Procedimientos / exámenes sugeridos</h4>
-          <ul style="margin: 0; padding-left: 1.25rem;">
-            @for (p of r.procedimientos; track p) { <li>{{ p }}</li> }
+          <p>{{ r.resumenParaMedico }}</p>
+          @if (r.enfoqueEnConsulta) {
+          <h4>Qué revisar ahora</h4>
+          <p>{{ r.enfoqueEnConsulta }}</p>
+          }
+          @if (lineas(r.preguntasSugeridas).length) {
+          <h4>Pregúntale</h4>
+          <ul>
+            @for (q of lineas(r.preguntasSugeridas); track q) { <li>{{ q }}</li> }
           </ul>
           }
+          @if (lineas(r.medicamentosSugeridos).length) {
+          <h4>Medicamentos que puedes considerar</h4>
+          <ul>
+            @for (m of lineas(r.medicamentosSugeridos); track m) { <li>{{ m }}</li> }
+          </ul>
+          }
+          @if (r.cuidados) {
+          <h4>Cuidados y ejercicio</h4>
+          <p>{{ r.cuidados }}</p>
+          }
+          @if (r.diagnosticoPresuntivo) {
+          <p class="hint">Impresión, pendiente de tu examen: {{ r.diagnosticoPresuntivo }}</p>
+          }
+        </div>
+
+        <div class="form-grid" style="margin-top: 1rem;">
+          <div class="card inner">
+            <h4>S · Lo que cuenta</h4>
+            <p>{{ r.subjetivo }}</p>
+          </div>
+          <div class="card inner">
+            <h4>O · Lo que se puede ver</h4>
+            <p>{{ r.objetivo }}</p>
+          </div>
+          <div class="card inner">
+            <h4>A · Impresión</h4>
+            <p>{{ r.apreciacion }}</p>
+          </div>
+          <div class="card inner">
+            <h4>P · Plan</h4>
+            <p>{{ r.plan }}</p>
+          </div>
         </div>
         }
+
+        <section class="consulta-sim">
+          <h3>Simulación de la consulta</h3>
+          <p class="hint">El paciente de la simulación solo responde con lo que ya contó. Tú preguntas, eliges el medicamento y le dejas el aviso en la campana.</p>
+          @if (dialogo.length) {
+          <div class="sim-dialogo">
+            @for (turno of dialogo; track $index) {
+            <p class="sim-burbuja" [class.medico]="turno.quien === 'medico'" [class.pista]="turno.quien === 'pista'">
+              {{ turno.texto }}
+            </p>
+            }
+          </div>
+          <div class="sim-pregunta">
+            <input class="input" type="text" [(ngModel)]="preguntaSim" placeholder="Pregúntale algo de la consulta"
+              (keyup.enter)="enviarPregunta()" />
+            <button type="button" class="btn btn-blue" [disabled]="consultaLoading()" (click)="enviarPregunta()">
+              {{ consultaLoading() ? 'Respondiendo…' : 'Preguntar' }}
+            </button>
+          </div>
+          }
+          @if (sugeridos.length) {
+          <h4>Elige lo que le vas a mandar</h4>
+          @for (m of sugeridos; track m) {
+          <label class="med-elige">
+            <input type="checkbox" [checked]="elegida(m)" (change)="alternarMed(m)" />
+            <span>{{ m }}</span>
+          </label>
+          }
+          }
+          <label>Qué debe hacer en casa
+            <textarea class="input" rows="3" [(ngModel)]="cuidadosEnvio" placeholder="Ejercicio suave, reposo, cuándo volver"></textarea>
+          </label>
+          <label>Nota corta para el aviso
+            <textarea class="input" rows="2" [(ngModel)]="resumenEnvio" placeholder="Qué le está pasando, en una frase"></textarea>
+          </label>
+          <div class="actions-bar">
+            <button type="button" class="btn btn-blue" [disabled]="avisoEnviando()" (click)="avisarPaciente()">
+              {{ avisoEnviando() ? 'Enviando…' : 'Avisar al paciente' }}
+            </button>
+            @if (avisoOk()) { <span class="hint">{{ avisoOk() }}</span> }
+          </div>
+        </section>
       </section>
       }
 
       @if (tab() === 'precios') {
       <section class="card section ai-panel">
         <header class="section-head">
-          <h2 class="section-title">💊 Estimación orientativa de precios</h2>
-          <span class="chip-outline demo">No consulta precios de mercado en tiempo real</span>
+          <h2 class="section-title">Precios en Colombia</h2>
+          <span class="chip-outline demo">Escribe el medicamento y la ciudad. El valor es aproximado, no el de caja de hoy.</span>
         </header>
 
         <div class="form-grid">
@@ -342,77 +395,56 @@
             <input class="input" type="text" [(ngModel)]="preciosReq.medicamento" placeholder="Ej: Atorvastatina" />
           </div>
           <div>
-            <label>Presentación</label>
-            <input class="input" type="text" [(ngModel)]="preciosReq.presentacion" placeholder="Ej: 20mg · caja x30" />
-          </div>
-          <div>
-            <label>Precio reportado por el paciente (COP)</label>
-            <input class="input" type="number" [(ngModel)]="preciosPrecioTxt" placeholder="Ej: 45000" />
-          </div>
-          <div>
             <label>Ciudad</label>
-            <input class="input" type="text" [(ngModel)]="preciosReq.ciudad" placeholder="Bogotá, Medellín…" />
+            <input class="input" type="text" [(ngModel)]="preciosReq.ciudad" placeholder="Pasto, Bogotá, Cali…" />
+          </div>
+          <div>
+            <label>Presentación, si la sabes</label>
+            <input class="input" type="text" [(ngModel)]="preciosReq.presentacion" placeholder="Si la dejas vacía, se estima la caja habitual" />
+          </div>
+          <div>
+            <label>Precio que le cobraron, si lo dijo</label>
+            <input class="input" type="number" [(ngModel)]="preciosPrecioTxt" placeholder="Opcional" />
           </div>
         </div>
 
         <div class="actions-bar">
           <button type="button" class="btn btn-blue" [disabled]="preciosLoading()" (click)="preciosAnalizar()">
-            {{ preciosLoading() ? 'Analizando mercado…' : '🔍 Triangular precio' }}
+            {{ preciosLoading() ? 'Buscando…' : 'Ver precio aproximado' }}
           </button>
-          @if (preciosRsp()?.modoDemo) { <span class="severity-chip bg-orange">MODO DEMO</span> }
           @if (error()) { <span class="warn-big">{{ error() }}</span> }
         </div>
 
         @if (preciosRsp(); as r) {
         <div class="ai-result">
-          <div class="severity-row">
-            <span class="severity-chip" [class]="severidadColor(r.nivelSobreprecio)">
-              Nivel: {{ r.nivelSobreprecio }}
-            </span>
-            <span class="severity-chip bg-blue">Desviación: {{ r.porcentajeDesviacion }}%</span>
-            @if (r.sospechaDesabastecimiento) {
-            <span class="severity-chip bg-red">⚠ Riesgo desabastecimiento</span>
-            }
-          </div>
-
-          <div class="card inner" style="margin-top: 1rem;">
-            <p style="margin: 0 0 0.5rem 0;"><strong>Evaluación:</strong> {{ r.evaluacion }}</p>
-            @if (r.recomendacion) {
-            <p style="margin: 0;"><strong>Recomendación:</strong> {{ r.recomendacion }}</p>
-            }
-          </div>
-
+          <p class="hint">Presentación: {{ r.presentacionEstimada || preciosReq.presentacion || 'la habitual' }}. Por ahí, en {{ preciosReq.ciudad }}.</p>
           <div class="price-row">
-            <div><span>Mínimo mercado</span><strong>${{ r.precioMinimo | number }}</strong></div>
-            <div><span>Promedio</span><strong>${{ r.precioPromedio | number }}</strong></div>
-            <div><span>Máximo</span><strong>${{ r.precioMaximo | number }}</strong></div>
+            <div><span>Más bajo</span><strong>${{ (r.precioEsperadoMin || r.precioMinimo) | number }}</strong></div>
+            <div><span>Por ahí</span><strong>${{ r.precioPromedio | number }}</strong></div>
+            <div><span>Más alto</span><strong>${{ (r.precioEsperadoMax || r.precioMaximo) | number }}</strong></div>
           </div>
-
-          <h4 style="margin-top: 1rem;">🏥 Comparativa por farmacia</h4>
+          @if (r.recomendacion) { <p>{{ r.recomendacion }}</p> }
           <table>
             <thead>
               <tr>
-                <th>Farmacia</th>
-                <th>Precio</th>
-                <th>Desviación</th>
-                <th>Ubicación</th>
-                <th>Estado</th>
+                <th>Dónde</th>
+                <th>Lugar</th>
+                <th>Presentación</th>
+                <th>Por ahí</th>
               </tr>
             </thead>
             <tbody>
-              @for (f of r.comparativa; track f.farmacia) {
-              <tr>
-                <td>{{ f.farmacia }}</td>
+              @for (f of r.comparativa; track $index; let primero = $first) {
+              <tr [class.lugar-barato]="primero">
+                <td>{{ f.nombre || f.farmacia }} @if (primero) { <small>más barato de la lista</small> }</td>
+                <td>{{ f.lugar || f.ciudad }}</td>
+                <td>{{ f.presentacion || r.presentacionEstimada }}</td>
                 <td>${{ f.precio | number }}</td>
-                <td>{{ f.porcentajeDiferencia }}%</td>
-                <td>{{ f.ciudad }}</td>
-                <td><span class="severity-chip" [class]="f.sobreprecio ? 'bg-red' : 'bg-green'">
-                    {{ f.sobreprecio ? 'SOBREPRECIO' : 'ACEPTABLE' }}
-                  </span></td>
               </tr>
               }
             </tbody>
           </table>
+          <p class="hint">No confirma que hoy haya existencias. Sirve para comparar la misma caja en esa ciudad.</p>
         </div>
         }
       </section>

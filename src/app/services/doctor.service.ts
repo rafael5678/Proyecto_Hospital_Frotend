@@ -59,6 +59,10 @@ export class DoctorService {
     return this.http.get<Appointment[]>(`${this.api}/appointments/${citaId}/patient-history`);
   }
 
+  enviarIndicacion(citaId: number, datos: { resumen?: string; medicamentos?: string; cuidados?: string }) {
+    return this.http.post<{ mensaje: string }>(`${this.api}/appointments/${citaId}/indicacion`, datos);
+  }
+
   misHorarios() {
     return this.http.get<Schedule[]>(`${this.api}/schedules`);
   }

@@ -12,7 +12,7 @@ import { NotificationBellComponent } from '../notification-bell/notification-bel
 import { AiService } from '../../services/ai.service';
 import {
   AiSoapRequest, AiSoapResponse,
-  AiPricesRequest, AiPricesResponse, ComparativaFarmacia
+  AiPricesRequest, AiPricesResponse
 } from '../../models/ai.model';
 
 type MedicoTab = 'inicio' | 'citas' | 'horarios' | 'paciente' | 'soap' | 'precios';
@@ -72,7 +72,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
       label: 'Escriba',
       icon: '🤖',
       children: [
-        { id: 'ia-soap', label: 'Escriba SOAP', tab: 'soap' }
+        { id: 'ia-soap', label: 'Consulta', tab: 'soap' }
       ]
     },
     {
@@ -80,7 +80,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
       label: 'Medicamentos',
       icon: '💊',
       children: [
-        { id: 'meds-precios', label: 'Triangular precios', tab: 'precios' }
+        { id: 'meds-precios', label: 'Precios en Colombia', tab: 'precios' }
       ]
     }
   ];
@@ -128,9 +128,17 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   preciosReq: AiPricesRequest = {
     medicamento: '',
     presentacion: '',
-    precioReportado: 0,
-    ciudad: 'Bogotá'
+    ciudad: ''
   };
+  dialogo: { quien: 'medico' | 'paciente' | 'pista'; texto: string }[] = [];
+  preguntaSim = '';
+  sugeridos: string[] = [];
+  elegidos: string[] = [];
+  cuidadosEnvio = '';
+  resumenEnvio = '';
+  consultaLoading = signal(false);
+  avisoEnviando = signal(false);
+  avisoOk = signal('');
   preciosPrecioTxt = '';
   preciosRsp = signal<AiPricesResponse | null>(null);
   preciosLoading = signal(false);
@@ -229,13 +237,17 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
         const cita = this.citaEnRevision();
         this.soapReq.nombrePaciente = p.nombre;
         this.soapReq.motivoInicial = cita?.motivo || cita?.triageSintomas || '';
-        if (cita?.triageResumen && !this.soapReq.transcripcion) {
-          this.soapReq.transcripcion = `[Triage IA pre-consulta] Severidad: ${cita.triageSeveridad || 'N/A'}, ` +
-            `Prioridad: ${cita.triagePrioridad || 'N/A'}/10. ${cita.triageResumen}\n` +
-            (cita.triageSintomas ? `Síntomas: ${cita.triageSintomas}\n` : '') +
-            (cita.triageAntecedentes ? `Antecedentes: ${cita.triageAntecedentes}\n` : '') +
-            (cita.dermatologiaReportaIa ? `[Dermatología IA] ${cita.dermatologiaReportaIa}\n` : '') +
-            '\n--- Transcripción de consulta ---\n';
+        if ((cita?.triageResumen || cita?.triageSintomas || cita?.motivo) && !this.soapReq.transcripcion) {
+          this.soapReq.transcripcion = [
+            cita?.triageSintomas ? `Síntomas que refirió: ${cita.triageSintomas}` : '',
+            cita?.triageDuracion ? `Desde hace: ${cita.triageDuracion}` : '',
+            cita?.triageAntecedentes ? `Antecedentes: ${cita.triageAntecedentes}` : '',
+            cita?.triageResumen ? `Relato: ${cita.triageResumen}` : '',
+            cita?.dermatologiaReportaIa ? `Piel: ${cita.dermatologiaReportaIa}` : '',
+            '',
+            '--- Lo que se dice en la consulta ---',
+            ''
+          ].filter(linea => linea !== undefined).join('\n');
         }
         this.svc.historialPaciente(citaId).subscribe({
           next: historial => this.historialPaciente.set(historial),
@@ -288,6 +300,10 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     this.ai.soap(this.soapReq).subscribe({
       next: r => {
         this.soapRsp.set(r);
+        if (!this.resumenEnvio) this.resumenEnvio = r.resumenParaMedico || '';
+        if (!this.cuidadosEnvio) this.cuidadosEnvio = r.cuidados || '';
+        const meds = this.lineas(r.medicamentosSugeridos);
+        if (meds.length) this.sugeridos = meds;
         this.hablarResumenSoap(r);
       },
       complete: () => this.soapLoading.set(false)
@@ -298,12 +314,10 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     const nota = r ?? this.soapRsp();
     if (!nota || typeof speechSynthesis === 'undefined') return;
     const texto = [
-      'Resumen clínico de la nota SOAP.',
-      nota.especialidadSugerida ? `Especialidad sugerida: ${nota.especialidadSugerida}.` : '',
-      nota.diagnosticoPresuntivo ? `Impresión: ${nota.diagnosticoPresuntivo}.` : '',
-      nota.apreciacion ? `Apreciación: ${this.resumenCorto(nota.apreciacion)}.` : '',
-      nota.plan ? `Plan: ${this.resumenCorto(nota.plan)}.` : '',
-      'Recuerda validar este borrador con tu criterio médico.'
+      'Resumen para la consulta.',
+      nota.resumenParaMedico ? this.resumenCorto(nota.resumenParaMedico) : '',
+      nota.enfoqueEnConsulta ? `En la cita: ${this.resumenCorto(nota.enfoqueEnConsulta)}.` : '',
+      nota.cuidados ? `Cuidados: ${this.resumenCorto(nota.cuidados)}.` : ''
     ].filter(Boolean).join(' ');
     speechSynthesis.cancel();
     const voz = new SpeechSynthesisUtterance(texto.slice(0, 520));
@@ -406,18 +420,111 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   }
 
   preciosAnalizar() {
-    const precio = Number(this.preciosPrecioTxt);
-    if (!this.preciosReq.medicamento.trim() || isNaN(precio) || precio <= 0) {
-      this.error.set('Escriba el medicamento y un precio positivo.');
+    if (!this.preciosReq.medicamento.trim() || !this.preciosReq.ciudad?.trim()) {
+      this.error.set('Escribe el medicamento y la ciudad. Con eso basta.');
       return;
     }
+    const precio = Number(this.preciosPrecioTxt);
+    this.preciosReq.precioReportado = !isNaN(precio) && precio > 0 ? precio : undefined;
     this.error.set('');
-    this.preciosReq.precioReportado = precio;
     this.preciosLoading.set(true);
     this.ai.precios(this.preciosReq).subscribe({
       next: r => this.preciosRsp.set(r),
-      error: () => this.error.set('Error al triangular precios. Reintente.'),
+      error: () => this.error.set('No se pudo estimar el precio. Inténtalo otra vez.'),
       complete: () => this.preciosLoading.set(false)
+    });
+  }
+
+  lineas(texto?: string): string[] {
+    if (!texto) return [];
+    return texto.split(/\n|•/).map(s => s.replace(/^[\s\-\d\.\)]+/, '').trim()).filter(Boolean);
+  }
+
+  elegida(m: string) {
+    return this.elegidos.includes(m);
+  }
+
+  alternarMed(m: string) {
+    this.elegidos = this.elegida(m) ? this.elegidos.filter(x => x !== m) : [...this.elegidos, m];
+  }
+
+  irAConsulta() {
+    this.tab.set('soap');
+    this.sub.set('');
+  }
+
+  iniciarConsulta() {
+    if (!this.consentimientoSoapAi) {
+      this.error.set('Marca la autorización antes de iniciar la simulación.');
+      return;
+    }
+    const ctx = (this.soapReq.transcripcion || '').trim();
+    if (!ctx && !this.soapReq.motivoInicial?.trim()) {
+      this.error.set('Primero abre la cita del paciente o escribe qué le pasa.');
+      return;
+    }
+    this.dialogo = [];
+    this.preguntaSim = '';
+    this.avisoOk.set('');
+    this.error.set('');
+    this.preguntarSimulacion('');
+  }
+
+  preguntarSimulacion(pregunta: string) {
+    const texto = pregunta.trim();
+    if (texto) this.dialogo = [...this.dialogo, { quien: 'medico', texto }];
+    this.consultaLoading.set(true);
+    this.ai.consulta({
+      nombrePaciente: this.soapReq.nombrePaciente,
+      motivo: this.soapReq.motivoInicial,
+      contexto: this.soapReq.transcripcion,
+      pregunta: texto,
+      dialogo: this.dialogo.map(d => `${d.quien === 'medico' ? 'Médico' : 'Paciente'}: ${d.texto}`)
+    }).subscribe({
+      next: r => {
+        const siguiente = [...this.dialogo, { quien: 'paciente' as const, texto: r.dicePaciente }];
+        if (r.pistaParaElMedico) siguiente.push({ quien: 'pista', texto: r.pistaParaElMedico });
+        this.dialogo = siguiente;
+        const meds = this.lineas(r.medicamentosSugeridos);
+        if (meds.length) this.sugeridos = meds;
+        if (!this.cuidadosEnvio && r.cuidados) this.cuidadosEnvio = r.cuidados;
+        if (!this.resumenEnvio && this.soapRsp()?.resumenParaMedico) {
+          this.resumenEnvio = this.soapRsp()!.resumenParaMedico || '';
+        }
+        this.preguntaSim = '';
+      },
+      error: () => this.error.set('No se pudo continuar la simulación.'),
+      complete: () => this.consultaLoading.set(false)
+    });
+  }
+
+  enviarPregunta() {
+    if (!this.preguntaSim.trim() || this.consultaLoading()) return;
+    this.preguntarSimulacion(this.preguntaSim);
+  }
+
+  avisarPaciente() {
+    const cita = this.citaEnRevision();
+    if (!cita) {
+      this.error.set('Abre al paciente desde su cita para poder dejarle el aviso.');
+      return;
+    }
+    const medicamentos = this.elegidos.join('; ');
+    if (!medicamentos && !this.cuidadosEnvio.trim()) {
+      this.error.set('Elige al menos un medicamento o escribe qué debe hacer.');
+      return;
+    }
+    this.error.set('');
+    this.avisoOk.set('');
+    this.avisoEnviando.set(true);
+    this.svc.enviarIndicacion(cita.id, {
+      resumen: this.resumenEnvio || this.soapRsp()?.resumenParaMedico || this.soapReq.motivoInicial,
+      medicamentos,
+      cuidados: this.cuidadosEnvio
+    }).subscribe({
+      next: r => this.avisoOk.set(r.mensaje || 'Listo. El aviso quedó en la campana del paciente.'),
+      error: () => this.error.set('No se pudo enviar el aviso. Publica el backend en Render y vuelve a intentarlo.'),
+      complete: () => this.avisoEnviando.set(false)
     });
   }
 
