@@ -16,10 +16,6 @@ export class AdminService {
     return this.http.get<User[]>(`${this.api}/users`);
   }
 
-  salud() {
-    return this.http.get<{ perfil?: string }>(`${environment.apiUrl}/health`);
-  }
-
   crearUsuario(data: UserRequest) {
     return this.http.post<User>(`${this.api}/users`, data);
   }

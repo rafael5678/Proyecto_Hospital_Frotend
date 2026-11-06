@@ -171,9 +171,6 @@
           <header class="edit-head">
             <h2>Editar {{ form.rol === 'MEDICO' ? 'médico' : 'paciente' }}</h2>
             <p class="hint">Se guardan el correo y la clave con los que esa persona entra. Si dejas la clave nueva vacía, la anterior no cambia. Al volver a abrir esta ficha, se ve lo último que quedó guardado.</p>
-            @if (servidorViejo()) {
-              <p class="error-msg">El servidor en línea es el anterior: si guardas ahora, género, dirección, sangre y la clave visible no van a volver cuando entres otra vez.</p>
-            }
           </header>
 
           <div class="edit-secciones">
