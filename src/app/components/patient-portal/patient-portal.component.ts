@@ -15,6 +15,9 @@ import {
   AiTriageRequest, AiTriageResponse
 } from '../../models/ai.model';
 import { PortalSidebarComponent, SidebarItem } from '../portal-sidebar/portal-sidebar.component';
+import {
+  GENEROS, TIPOS_SANGRE, mensajeTelefono, normalizarGenero, normalizarSangre, soloDigitos, telefonoColombiano
+} from '../../data/datos-persona';
 import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 
 type PacienteTab = 'inicio' | 'agendar' | 'historial' | 'proximas' | 'medicos' | 'perfil'
@@ -34,6 +37,9 @@ export class PatientPortalComponent implements OnInit {
   private svc = inject(PatientService);
   private ai = inject(AiService);
 
+  readonly generos = GENEROS;
+  readonly tiposSangre = TIPOS_SANGRE;
+  readonly soloDigitos = soloDigitos;
   tab = signal<PacienteTab>('inicio');
   sub = signal<PacienteSub>('');
   expandedMenus = signal<string[]>(['citas', 'medicos', 'ia', 'medicamentos']);
@@ -186,7 +192,13 @@ export class PatientPortalComponent implements OnInit {
   cargarPerfilYAntecedentes() {
     this.svc.perfil().subscribe({
       next: p => {
-        this.perfil.set({ ...p });
+        this.perfil.set({
+          ...p,
+          telefono: soloDigitos(p.telefono || ''),
+          telefonoEmergencia: soloDigitos(p.telefonoEmergencia || ''),
+          genero: normalizarGenero(p.genero || ''),
+          tipoSangre: normalizarSangre(p.tipoSangre || '')
+        });
         if (!this.antecedentesSintomas) {
           this.antecedentesSintomas = [p.alergias, p.observaciones].filter(Boolean).join(' · ');
         }
@@ -461,12 +473,33 @@ export class PatientPortalComponent implements OnInit {
   }
 
   guardarPerfil() {
-    const p = this.perfil();
-    if (!p) return;
+    const actual = this.perfil();
+    if (!actual) return;
+    const p = {
+      ...actual,
+      telefono: soloDigitos(actual.telefono || ''),
+      telefonoEmergencia: soloDigitos(actual.telefonoEmergencia || '')
+    };
+    this.perfil.set(p);
+    if (!telefonoColombiano(p.telefono || '')) {
+      this.error.set(mensajeTelefono('El teléfono'));
+      return;
+    }
+    if (!telefonoColombiano(p.telefonoEmergencia || '')) {
+      this.error.set(mensajeTelefono('El teléfono de emergencia'));
+      return;
+    }
+    this.error.set('');
     this.guardandoPerfil.set(true);
     this.svc.actualizarPerfil(p).subscribe({
       next: (res) => {
-        this.perfil.set(res);
+        this.perfil.set({
+          ...res,
+          telefono: soloDigitos(res.telefono || ''),
+          telefonoEmergencia: soloDigitos(res.telefonoEmergencia || ''),
+          genero: normalizarGenero(res.genero || ''),
+          tipoSangre: normalizarSangre(res.tipoSangre || '')
+        });
         this.guardandoPerfil.set(false);
         this.ok.set('Perfil actualizado');
       },

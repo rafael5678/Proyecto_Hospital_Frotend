@@ -12,6 +12,10 @@ import { AiService } from '../../services/ai.service';
 import { AiAdminOperationResponse, AiPricesRequest, AiPricesResponse } from '../../models/ai.model';
 import { AiMetrics } from '../../models/ai.model';
 import { HOSPITAL_SPECIALTIES } from '../../data/specialties';
+import {
+  CLAVE_MAX, CLAVE_MIN, GENEROS, TIPOS_SANGRE,
+  mensajeTelefono, normalizarGenero, normalizarSangre, soloDigitos, telefonoColombiano
+} from '../../data/datos-persona';
 
 type AdminTab = 'inicio' | 'usuarios' | 'medicos' | 'citas' | 'reportes' | 'iasuperv' | 'preciosauditoria' | 'asistente';
 type AdminSub = '' | 'lista' | 'crear' | 'editar' | 'claves' | 'supervision' | 'resumen' | 'mensual';
@@ -129,6 +133,9 @@ export class AdminPortalComponent implements OnInit {
   preciosRsp = signal<AiPricesResponse | null>(null);
   preciosLoading = signal(false);
   readonly especialidades = HOSPITAL_SPECIALTIES;
+  readonly generos = GENEROS;
+  readonly tiposSangre = TIPOS_SANGRE;
+  readonly soloDigitos = soloDigitos;
   asistenteTexto = '';
   asistenteLoading = signal(false);
   asistenteRsp = signal<AiAdminOperationResponse | null>(null);
@@ -284,11 +291,11 @@ export class AdminPortalComponent implements OnInit {
     this.claveVisible = u.clave || '';
     this.form = {
       nombre: u.nombre, email: u.email, password: '', rol: u.rol,
-      telefono: u.telefono || '', documento: u.documento || '',
-      fechaNacimiento: u.fechaNacimiento || '', genero: u.genero || '',
-      tipoSangre: u.tipoSangre || '', direccion: u.direccion || '', ciudad: u.ciudad || '',
+      telefono: soloDigitos(u.telefono || ''), documento: u.documento || '',
+      fechaNacimiento: u.fechaNacimiento || '', genero: normalizarGenero(u.genero || ''),
+      tipoSangre: normalizarSangre(u.tipoSangre || ''), direccion: u.direccion || '', ciudad: u.ciudad || '',
       alergias: u.alergias || '', contactoEmergencia: u.contactoEmergencia || '',
-      telefonoEmergencia: u.telefonoEmergencia || '', observaciones: u.observaciones || '',
+      telefonoEmergencia: soloDigitos(u.telefonoEmergencia || ''), observaciones: u.observaciones || '',
       especialidad: u.especialidad || '', numeroLicencia: u.numeroLicencia || '',
       consultorio: u.consultorio || '', anosExperiencia: u.anosExperiencia, biografia: u.biografia || '',
       diasAtencion: u.diasAtencion || '', horaInicio: u.horaInicio || '', horaFin: u.horaFin || '',
@@ -310,12 +317,43 @@ export class AdminPortalComponent implements OnInit {
     this.form.diasAtencion = [...set].sort().join(',');
   }
 
+  telefonoValido(valor?: string) {
+    return telefonoColombiano(valor || '');
+  }
+
+  private telefonoCompleto(valor?: string) {
+    const d = soloDigitos(valor || '');
+    return !!d && telefonoColombiano(d);
+  }
+
+  claveCorta() {
+    const n = (this.form.password || '').length;
+    return n > 0 && n < CLAVE_MIN;
+  }
+
+  textoClave() {
+    const n = (this.form.password || '').length;
+    if (!n) return `Mínimo ${CLAVE_MIN} caracteres. Vacía = no cambiar la clave.`;
+    if (n < CLAVE_MIN) return `${n} de ${CLAVE_MIN} caracteres como mínimo.`;
+    return `${n} caracteres. Máximo ${CLAVE_MAX}.`;
+  }
+
   guardarEdicion() {
     const id = this.editandoId();
     if (!id) return;
     const clave = this.form.password?.trim() || '';
-    if (clave && clave.length < 6) {
-      this.error.set('La nueva clave debe tener al menos 6 caracteres.');
+    this.form.telefono = soloDigitos(this.form.telefono || '');
+    this.form.telefonoEmergencia = soloDigitos(this.form.telefonoEmergencia || '');
+    if (clave && (clave.length < CLAVE_MIN || clave.length > CLAVE_MAX)) {
+      this.error.set(`La nueva clave debe tener entre ${CLAVE_MIN} y ${CLAVE_MAX} caracteres.`);
+      return;
+    }
+    if (!telefonoColombiano(this.form.telefono)) {
+      this.error.set(mensajeTelefono('El teléfono'));
+      return;
+    }
+    if (this.form.rol === 'PACIENTE' && !telefonoColombiano(this.form.telefonoEmergencia || '')) {
+      this.error.set(mensajeTelefono('El teléfono de emergencia'));
       return;
     }
     const datos: UserRequest = { ...this.form, password: clave || undefined };
@@ -427,24 +465,26 @@ export class AdminPortalComponent implements OnInit {
     const faltan: string[] = [];
     if (!r.nombre?.trim()) faltan.push('el nombre completo');
     if (!r.email?.includes('@')) faltan.push('el correo');
-    if (!r.passwordSugerida || r.passwordSugerida.length < 6) faltan.push('la contraseña (mínimo 6 caracteres)');
+    if (!r.passwordSugerida || r.passwordSugerida.length < CLAVE_MIN || r.passwordSugerida.length > CLAVE_MAX) {
+      faltan.push(`la contraseña (entre ${CLAVE_MIN} y ${CLAVE_MAX} caracteres)`);
+    }
     if (medico) {
       if (!r.especialidad?.trim()) faltan.push('la especialidad');
       if (r.anosExperiencia == null) faltan.push('los años de experiencia');
       if (!r.numeroLicencia?.trim()) faltan.push('el número de licencia');
-      if (!r.telefono || r.telefono.replace(/\D/g, '').length < 7) faltan.push('el teléfono');
+      if (!this.telefonoCompleto(r.telefono)) faltan.push('un teléfono de 10 dígitos (celular empieza por 3, fijo por 60)');
       if (!r.diasAtencion || !r.horaInicio || !r.horaFin) faltan.push('el horario de atención, con los días y las horas');
     } else {
       if (!r.documento?.trim()) faltan.push('el documento de identidad');
-      if (!r.telefono || r.telefono.replace(/\D/g, '').length < 7) faltan.push('el teléfono');
+      if (!this.telefonoCompleto(r.telefono)) faltan.push('un teléfono de 10 dígitos (celular empieza por 3, fijo por 60)');
       if (!r.fechaNacimiento || !/^\d{4}-\d{2}-\d{2}$/.test(r.fechaNacimiento)) faltan.push('la fecha de nacimiento');
-      if (!r.genero?.trim()) faltan.push('el género');
-      if (!r.tipoSangre?.trim()) faltan.push('el tipo de sangre');
+      if (!normalizarGenero(r.genero || '')) faltan.push('el género (masculino, femenino u otro)');
+      if (!normalizarSangre(r.tipoSangre || '')) faltan.push('el tipo de sangre (O+, O-, A+, A-, B+, B-, AB+ o AB-)');
       if (!r.direccion?.trim()) faltan.push('la dirección');
       if (!r.ciudad?.trim()) faltan.push('la ciudad');
       if (!r.alergias?.trim()) faltan.push('las alergias (o «ninguna»)');
       if (!r.contactoEmergencia?.trim()) faltan.push('el contacto de emergencia');
-      if (!r.telefonoEmergencia?.trim()) faltan.push('el teléfono de emergencia');
+      if (!this.telefonoCompleto(r.telefonoEmergencia)) faltan.push('un teléfono de emergencia de 10 dígitos');
     }
     if (!faltan.length) return null;
     const quien = r.nombre?.trim();
@@ -460,9 +500,9 @@ export class AdminPortalComponent implements OnInit {
       nombre: r.nombre || '',
       email: r.email || '',
       password: clave,
-      telefono: r.telefono || '',
+      telefono: soloDigitos(r.telefono || ''),
       ciudad: r.ciudad || '',
-      genero: r.genero || '',
+      genero: normalizarGenero(r.genero || ''),
       alergias: r.alergias || '',
       fechaNacimiento: r.fechaNacimiento || ''
     };
@@ -485,10 +525,10 @@ export class AdminPortalComponent implements OnInit {
           ...comun,
           rol: 'PACIENTE',
           documento: r.documento || '',
-          tipoSangre: r.tipoSangre || '',
+          tipoSangre: normalizarSangre(r.tipoSangre || ''),
           direccion: r.direccion || '',
           contactoEmergencia: r.contactoEmergencia || '',
-          telefonoEmergencia: r.telefonoEmergencia || '',
+          telefonoEmergencia: soloDigitos(r.telefonoEmergencia || ''),
           observaciones: r.observaciones || ''
         });
     alta.subscribe({

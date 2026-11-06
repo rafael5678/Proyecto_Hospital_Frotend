@@ -317,16 +317,26 @@
           <h2 class="section-title">Mi perfil</h2>
           <div><label>Nombre</label><input class="input" [(ngModel)]="p.nombre" /></div>
           <div><label>Email</label><input class="input" [value]="p.email" disabled /></div>
-          <div><label>Teléfono</label><input class="input" [(ngModel)]="p.telefono" /></div>
+          <div><label>Teléfono</label><input class="input" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="3001234567" [ngModel]="p.telefono" (ngModelChange)="p.telefono = soloDigitos($event)" /><small class="campo-ayuda">10 dígitos. Celular empieza por 3, fijo por 60.</small></div>
           <div><label>Documento</label><input class="input" [(ngModel)]="p.documento" /></div>
           <div><label>Fecha nacimiento</label><input class="input" type="date" [(ngModel)]="p.fechaNacimiento" /></div>
-          <div><label>Género</label><input class="input" [(ngModel)]="p.genero" /></div>
-          <div><label>Tipo sangre</label><input class="input" [(ngModel)]="p.tipoSangre" /></div>
+          <div><label>Género</label>
+            <select class="input" [(ngModel)]="p.genero">
+              <option value="">Seleccionar</option>
+              @for (g of generos; track g) { <option [value]="g">{{ g }}</option> }
+            </select>
+          </div>
+          <div><label>Tipo de sangre</label>
+            <select class="input" [(ngModel)]="p.tipoSangre">
+              <option value="">Seleccionar</option>
+              @for (s of tiposSangre; track s) { <option [value]="s">{{ s }}</option> }
+            </select>
+          </div>
           <div><label>Dirección</label><input class="input" [(ngModel)]="p.direccion" /></div>
           <div><label>Ciudad</label><input class="input" [(ngModel)]="p.ciudad" /></div>
           <div class="full"><label>Alergias</label><input class="input" [(ngModel)]="p.alergias" /></div>
           <div><label>Contacto emergencia</label><input class="input" [(ngModel)]="p.contactoEmergencia" /></div>
-          <div><label>Tel. emergencia</label><input class="input" [(ngModel)]="p.telefonoEmergencia" /></div>
+          <div><label>Tel. emergencia</label><input class="input" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="3001234567" [ngModel]="p.telefonoEmergencia" (ngModelChange)="p.telefonoEmergencia = soloDigitos($event)" /><small class="campo-ayuda">10 dígitos. Celular empieza por 3, fijo por 60.</small></div>
           <div class="full"><label>Observaciones</label><textarea class="input" [(ngModel)]="p.observaciones"></textarea></div>
           <button type="button" class="btn btn-green full" (click)="guardarPerfil()" [disabled]="guardandoPerfil()">
             Guardar cambios

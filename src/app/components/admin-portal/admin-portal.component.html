@@ -168,73 +168,139 @@
 
       @if (tab() === 'usuarios' && sub() === 'editar') {
         <section class="edit-usuario">
-          <h2>Editar {{ form.rol === 'MEDICO' ? 'médico' : 'paciente' }}</h2>
-          <p class="hint">Se guardan el correo y la clave con los que esa persona entra. Si dejas la clave nueva vacía, la anterior no cambia.</p>
-          <label>Nombre</label>
-          <input class="input" [(ngModel)]="form.nombre" />
-          <label>Correo</label>
-          <input class="input" type="email" autocomplete="off" [(ngModel)]="form.email" />
-          <label>Teléfono</label>
-          <input class="input" [(ngModel)]="form.telefono" />
-          <p class="clave-actual">Clave actual: <strong>{{ claveVisible || 'Aún no registrada. Escríbela abajo.' }}</strong></p>
-          <label>Nueva clave</label>
-          <input class="input" type="password" autocomplete="new-password" name="hospy-clave-nueva" [(ngModel)]="form.password" placeholder="Vacía = conservar la clave actual" />
+          <header class="edit-head">
+            <h2>Editar {{ form.rol === 'MEDICO' ? 'médico' : 'paciente' }}</h2>
+            <p class="hint">Se guardan el correo y la clave con los que esa persona entra. Si dejas la clave nueva vacía, la anterior no cambia.</p>
+          </header>
 
-          @if (form.rol === 'PACIENTE') {
-            <label>Documento</label>
-            <input class="input" [(ngModel)]="form.documento" />
-            <label>Fecha de nacimiento</label>
-            <input class="input" type="date" [(ngModel)]="form.fechaNacimiento" />
-            <label>Género</label>
-            <input class="input" [(ngModel)]="form.genero" />
-            <label>Tipo de sangre</label>
-            <input class="input" [(ngModel)]="form.tipoSangre" />
-            <label>Dirección</label>
-            <input class="input" [(ngModel)]="form.direccion" />
-            <label>Ciudad</label>
-            <input class="input" [(ngModel)]="form.ciudad" />
-            <label>Alergias</label>
-            <input class="input" [(ngModel)]="form.alergias" />
-            <label>Contacto de emergencia</label>
-            <input class="input" [(ngModel)]="form.contactoEmergencia" />
-            <label>Teléfono de emergencia</label>
-            <input class="input" [(ngModel)]="form.telefonoEmergencia" />
-          }
+          <div class="edit-secciones">
+            <article class="edit-bloque ancho">
+              <h3>Acceso</h3>
+              <div class="edit-campos cuatro">
+                <label>Nombre
+                  <input class="input" [(ngModel)]="form.nombre" />
+                </label>
+                <label>Correo
+                  <input class="input" type="email" autocomplete="off" [(ngModel)]="form.email" />
+                </label>
+                <label>Teléfono
+                  <input class="input" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="3001234567" [ngModel]="form.telefono" (ngModelChange)="form.telefono = soloDigitos($event)" />
+                  <small class="campo-ayuda" [class.campo-mal]="!!form.telefono && !telefonoValido(form.telefono)">{{ form.telefono?.length || 0 }}/10 · celular empieza por 3, fijo por 60</small>
+                </label>
+                <label>Nueva clave
+                  <input class="input" type="password" autocomplete="new-password" name="hospy-clave-nueva" maxlength="32" [(ngModel)]="form.password" placeholder="Vacía = conservar la actual" />
+                  <small class="campo-ayuda" [class.campo-mal]="claveCorta()">{{ textoClave() }}</small>
+                </label>
+                <p class="clave-actual span-2">Clave actual: <strong>{{ claveVisible || 'Aún no registrada. Escríbela arriba.' }}</strong></p>
+              </div>
+            </article>
 
-          @if (form.rol === 'MEDICO') {
-            <label>Especialidad</label>
-            <select class="input" [(ngModel)]="form.especialidad">
-              <option value="">Especialidad</option>
-              @for (esp of especialidades; track esp) {
-                <option [value]="esp">{{ esp }}</option>
-              }
-            </select>
-            <label>Licencia</label>
-            <input class="input" [(ngModel)]="form.numeroLicencia" />
-            <label>Años de experiencia</label>
-            <input class="input" type="number" [ngModel]="form.anosExperiencia ?? ''" (ngModelChange)="form.anosExperiencia = $event === '' || $event == null ? undefined : +$event" />
-            <label>Consultorio</label>
-            <input class="input" [(ngModel)]="form.consultorio" />
-            <label>Biografía</label>
-            <textarea class="input" rows="2" [(ngModel)]="form.biografia"></textarea>
-            <label>Días de atención</label>
-            <div class="dias-row">
-              @for (d of diasSemana; track d.id) {
-                <label><input type="checkbox" [checked]="diaMarcado(d.id)" (change)="toggleDia(d.id)" /> {{ d.nombre }}</label>
-              }
-            </div>
-            <label>Hora de inicio</label>
-            <input class="input" type="time" [(ngModel)]="form.horaInicio" />
-            <label>Hora de fin</label>
-            <input class="input" type="time" [(ngModel)]="form.horaFin" />
-            <label>Segunda jornada, inicio</label>
-            <input class="input" type="time" [(ngModel)]="form.horaInicio2" />
-            <label>Segunda jornada, fin</label>
-            <input class="input" type="time" [(ngModel)]="form.horaFin2" />
-          }
+            @if (form.rol === 'PACIENTE') {
+              <article class="edit-bloque">
+                <h3>Identificación</h3>
+                <div class="edit-campos">
+                  <label>Documento
+                    <input class="input" [(ngModel)]="form.documento" />
+                  </label>
+                  <label>Fecha de nacimiento
+                    <input class="input" type="date" [(ngModel)]="form.fechaNacimiento" />
+                  </label>
+                  <label>Género
+                    <select class="input" [(ngModel)]="form.genero">
+                      <option value="">Seleccionar</option>
+                      @for (g of generos; track g) { <option [value]="g">{{ g }}</option> }
+                    </select>
+                  </label>
+                  <label>Tipo de sangre
+                    <select class="input" [(ngModel)]="form.tipoSangre">
+                      <option value="">Seleccionar</option>
+                      @for (s of tiposSangre; track s) { <option [value]="s">{{ s }}</option> }
+                    </select>
+                  </label>
+                </div>
+              </article>
+              <article class="edit-bloque">
+                <h3>Ubicación y salud</h3>
+                <div class="edit-campos">
+                  <label>Dirección
+                    <input class="input" [(ngModel)]="form.direccion" />
+                  </label>
+                  <label>Ciudad
+                    <input class="input" [(ngModel)]="form.ciudad" />
+                  </label>
+                  <label class="span-2">Alergias
+                    <input class="input" [(ngModel)]="form.alergias" placeholder="Ninguna, penicilina..." />
+                  </label>
+                </div>
+              </article>
+              <article class="edit-bloque ancho">
+                <h3>Contacto de emergencia</h3>
+                <div class="edit-campos">
+                  <label>Nombre
+                    <input class="input" [(ngModel)]="form.contactoEmergencia" />
+                  </label>
+                  <label>Teléfono
+                    <input class="input" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="3001234567" [ngModel]="form.telefonoEmergencia" (ngModelChange)="form.telefonoEmergencia = soloDigitos($event)" />
+                    <small class="campo-ayuda" [class.campo-mal]="!!form.telefonoEmergencia && !telefonoValido(form.telefonoEmergencia)">{{ form.telefonoEmergencia?.length || 0 }}/10 · celular empieza por 3, fijo por 60</small>
+                  </label>
+                </div>
+              </article>
+            }
+
+            @if (form.rol === 'MEDICO') {
+              <article class="edit-bloque">
+                <h3>Perfil profesional</h3>
+                <div class="edit-campos">
+                  <label>Especialidad
+                    <select class="input" [(ngModel)]="form.especialidad">
+                      <option value="">Seleccionar</option>
+                      @for (esp of especialidades; track esp) { <option [value]="esp">{{ esp }}</option> }
+                    </select>
+                  </label>
+                  <label>Licencia
+                    <input class="input" [(ngModel)]="form.numeroLicencia" />
+                  </label>
+                  <label>Años de experiencia
+                    <input class="input" type="number" min="0" max="80" [ngModel]="form.anosExperiencia ?? ''" (ngModelChange)="form.anosExperiencia = $event === '' || $event == null ? undefined : +$event" />
+                  </label>
+                  <label>Consultorio
+                    <input class="input" [(ngModel)]="form.consultorio" />
+                  </label>
+                  <label class="span-2">Biografía
+                    <textarea class="input" rows="2" [(ngModel)]="form.biografia"></textarea>
+                  </label>
+                </div>
+              </article>
+              <article class="edit-bloque">
+                <h3>Horario</h3>
+                <div class="edit-campos">
+                  <div class="span-2">
+                    <span class="campo-titulo">Días de atención</span>
+                    <div class="dias-row">
+                      @for (d of diasSemana; track d.id) {
+                        <label><input type="checkbox" [checked]="diaMarcado(d.id)" (change)="toggleDia(d.id)" /> {{ d.nombre }}</label>
+                      }
+                    </div>
+                  </div>
+                  <label>Hora de inicio
+                    <input class="input" type="time" [(ngModel)]="form.horaInicio" />
+                  </label>
+                  <label>Hora de fin
+                    <input class="input" type="time" [(ngModel)]="form.horaFin" />
+                  </label>
+                  <label>Segunda jornada, inicio
+                    <input class="input" type="time" [(ngModel)]="form.horaInicio2" />
+                  </label>
+                  <label>Segunda jornada, fin
+                    <input class="input" type="time" [(ngModel)]="form.horaFin2" />
+                  </label>
+                </div>
+              </article>
+            }
+          </div>
 
           @if (error()) { <p class="error-msg">{{ error() }}</p> }
-          <div class="clave-row">
+          <div class="edit-acciones">
             <button type="button" class="btn btn-purple" (click)="guardarEdicion()">Guardar cambios</button>
             <button type="button" class="btn-sm" (click)="sub.set('lista')">Volver</button>
           </div>

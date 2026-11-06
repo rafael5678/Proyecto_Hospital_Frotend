@@ -3,6 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
+import { CLAVE_MAX, CLAVE_MIN, mensajeTelefono, soloDigitos, telefonoColombiano } from '../../data/datos-persona';
 
 @Component({
   selector: 'app-register',
@@ -30,6 +31,7 @@ export class RegisterComponent implements OnInit {
   contactoEmergencia = '';
   telefonoEmergencia = '';
   observaciones = '';
+  readonly soloDigitos = soloDigitos;
   error = signal('');
   loading = signal(false);
   wakingServer = signal(false);
@@ -44,8 +46,22 @@ export class RegisterComponent implements OnInit {
   }
 
   onSubmit() {
+    this.telefono = soloDigitos(this.telefono);
+    this.telefonoEmergencia = soloDigitos(this.telefonoEmergencia);
+    if (this.password.length < CLAVE_MIN || this.password.length > CLAVE_MAX) {
+      this.error.set(`La contraseña debe tener entre ${CLAVE_MIN} y ${CLAVE_MAX} caracteres.`);
+      return;
+    }
     if (this.password !== this.confirmPassword) {
       this.error.set('Las contraseñas no coinciden');
+      return;
+    }
+    if (!telefonoColombiano(this.telefono)) {
+      this.error.set(mensajeTelefono('El teléfono'));
+      return;
+    }
+    if (!telefonoColombiano(this.telefonoEmergencia)) {
+      this.error.set(mensajeTelefono('El teléfono de emergencia'));
       return;
     }
     this.loading.set(true);
