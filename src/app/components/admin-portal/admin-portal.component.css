@@ -316,56 +316,12 @@
   margin-bottom: 0.5rem;
 }
 
-/* AI stats con íconos */
-.ai-stats .ai-stat {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
-  text-align: left;
-  position: relative;
-  padding: 1.1rem;
-}
-.ai-stats .ai-stat > div { flex: 1; }
-.ai-stats .ai-stat span {
-  display: block;
-  font-size: 0.78rem;
-  color: #64748b;
-  margin-bottom: 0.15rem;
-}
-.ai-stats .ai-stat strong {
-  font-size: 1.4rem;
-  color: #4c1d95;
-  display: block;
-}
-.ai-stat-icon {
-  width: 46px;
-  height: 46px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.45rem;
-  flex-shrink: 0;
-  box-shadow: inset 0 0 0 1px rgba(0,0,0,0.05);
-}
-.triage-icon { background: #fef3c7; }
-.derma-icon  { background: #ffedd5; }
-.soap-icon   { background: #dbeafe; }
-.inter-icon  { background: #dcfce7; }
-.price-icon  { background: #fae8ff; }
-.ai-stat-desc {
-  display: block;
-  font-size: 0.7rem;
-  color: #94a3b8;
-  margin-top: 0.4rem;
-}
-
 /* Grid de supervisión tarjetas */
 .ai-supervision-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1rem;
-  margin-top: 1.5rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.9rem;
+  margin-top: 1.15rem;
 }
 .ai-superv-card {
   border: 1px solid #e9d5ff;
@@ -377,9 +333,14 @@
   gap: 0.5rem;
 }
 .ai-superv-card h4 {
-  margin: 0 0 0.25rem;
-  font-size: 0.95rem;
+  margin: 0;
+  font-size: 0.98rem;
   color: #4c1d95;
+}
+.ai-superv-card p {
+  margin: 0;
+  line-height: 1.45;
+  color: #475569;
 }
 .ai-superv-card ul {
   list-style: none;

@@ -509,31 +509,51 @@
             @if (iaPrueba()) { <p class="hint">{{ iaPrueba() }}</p> }
             <p class="hint">Los números salen de las citas guardadas. Hay {{ m.totalCitas }} citas. Un cero significa que ninguna tiene ese análisis todavía, no que Gemini esté apagado.</p>
 
-            <h3 style="margin-top: 1.5rem;">📊 Análisis totales procesados por la IA</h3>
-            <div class="stats-grid ai-stats">
-              <div class="stat ai-stat">
-                <div class="ai-stat-icon triage-icon">🎯</div>
-                <div><span>Triage en citas</span><strong>{{ m.citasConTriage }}</strong></div>
-                <small class="ai-stat-desc">Citas reales con severidad guardada</small>
-              </div>
-              <div class="stat ai-stat">
-                <div class="ai-stat-icon derma-icon">🔬</div>
-                <div><span>Dermatología</span><strong>{{ m.citasConEvaluacionPiel }}</strong></div>
-                <small class="ai-stat-desc">Evaluaciones de piel y lesiones</small>
-              </div>
-              <div class="stat ai-stat">
-                <div class="ai-stat-icon triage-icon">⚠️</div>
-                <div><span>Prioridad alta</span><strong>{{ m.citasPrioridadAlta }}</strong></div>
-                <small class="ai-stat-desc">Severidad Rojo/Naranja o prioridad ≥ 8/10</small>
-              </div>
-              <div class="stat ai-stat">
-                <div class="ai-stat-icon" style="font-size:1.5rem">🔄</div>
-                <div><span>Reprogramadas por IA</span><strong>{{ m.citasReprogramadasPorIA }}</strong></div>
-                <small class="ai-stat-desc">Citas movidas por priorización automática</small>
-              </div>
+            <h3 class="ai-bloque-titulo">Análisis totales procesados por la IA</h3>
+            <div class="ai-stats">
+              <article class="ai-stat">
+                <div class="ai-stat-top">
+                  <div class="ai-stat-icon triage-icon">🎯</div>
+                  <div>
+                    <span>Triage en citas</span>
+                    <strong>{{ m.citasConTriage }}</strong>
+                  </div>
+                </div>
+                <small>Citas con la severidad ya guardada</small>
+              </article>
+              <article class="ai-stat">
+                <div class="ai-stat-top">
+                  <div class="ai-stat-icon derma-icon">🔬</div>
+                  <div>
+                    <span>Dermatología</span>
+                    <strong>{{ m.citasConEvaluacionPiel }}</strong>
+                  </div>
+                </div>
+                <small>Evaluaciones de piel y lesiones</small>
+              </article>
+              <article class="ai-stat">
+                <div class="ai-stat-top">
+                  <div class="ai-stat-icon alerta-icon">⚠️</div>
+                  <div>
+                    <span>Prioridad alta</span>
+                    <strong>{{ m.citasPrioridadAlta }}</strong>
+                  </div>
+                </div>
+                <small>Rojo, naranja o prioridad de 8 en adelante</small>
+              </article>
+              <article class="ai-stat">
+                <div class="ai-stat-top">
+                  <div class="ai-stat-icon agenda-icon">🔄</div>
+                  <div>
+                    <span>Reprogramadas</span>
+                    <strong>{{ m.citasReprogramadasPorIA }}</strong>
+                  </div>
+                </div>
+                <small>Citas movidas por la prioridad automática</small>
+              </article>
             </div>
 
-            <h3 style="margin-top: 1.5rem;">📈 Distribución de severidad triage</h3>
+            <h3 class="ai-bloque-titulo">Distribución de severidad del triage</h3>
             <div class="severity-distribution">
               @for (entry of severidadEntries(m.distribucionSeveridad); track entry.key) {
                 <div class="severity-bar-item">
