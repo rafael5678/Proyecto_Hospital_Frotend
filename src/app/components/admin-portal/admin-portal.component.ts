@@ -8,6 +8,7 @@ import { Appointment } from '../../models/appointment.model';
 import { Report } from '../../models/report.model';
 import { PortalSidebarComponent, SidebarItem } from '../portal-sidebar/portal-sidebar.component';
 import { SessionTimeoutComponent } from '../session-timeout/session-timeout.component';
+import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 import { AiService } from '../../services/ai.service';
 import { AiAdminOperationResponse, AiPricesRequest, AiPricesResponse } from '../../models/ai.model';
 import { AiMetrics } from '../../models/ai.model';
@@ -35,7 +36,7 @@ type SpeechRecognitionFactory = new () => SpeechRecognitionLike;
 @Component({
   selector: 'app-admin-portal',
   standalone: true,
-  imports: [FormsModule, DatePipe, DecimalPipe, PortalSidebarComponent, SessionTimeoutComponent],
+  imports: [FormsModule, DatePipe, DecimalPipe, PortalSidebarComponent, SessionTimeoutComponent, NotificationBellComponent],
   templateUrl: './admin-portal.component.html',
   styleUrl: './admin-portal.component.css'
 })

@@ -139,6 +139,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   consultaLoading = signal(false);
   avisoEnviando = signal(false);
   avisoOk = signal('');
+  consultaCerrada = signal(false);
   preciosPrecioTxt = '';
   preciosRsp = signal<AiPricesResponse | null>(null);
   preciosLoading = signal(false);
@@ -480,11 +481,16 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
       this.error.set('El cuadro está vacío. Escribe el relato o abre al paciente desde su cita, y luego inicia la consulta.');
       return;
     }
-    this.dialogo = [];
+    const motivo = this.soapReq.motivoInicial?.trim() || 'lo que te conté';
+    const dias = (this.soapReq.transcripcion || '').match(/(\d+)\s*d[ií]as/);
+    this.dialogo = [{
+      quien: 'paciente',
+      texto: `Doctor, buenos días. Vengo porque ${motivo}.${dias ? ` Llevo así como ${dias[1]} días.` : ''}`
+    }];
     this.preguntaSim = '';
     this.avisoOk.set('');
+    this.consultaCerrada.set(false);
     this.error.set('');
-    this.preguntarSimulacion('');
   }
 
   preguntarSimulacion(pregunta: string) {
@@ -539,7 +545,17 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
       medicamentos,
       cuidados: this.cuidadosEnvio
     }).subscribe({
-      next: r => this.avisoOk.set(r.mensaje || 'Listo. El aviso quedó en la campana del paciente.'),
+      next: r => {
+        this.consultaCerrada.set(true);
+        this.avisoOk.set(r.mensaje || 'Consulta concluida. El paciente ya tiene la receta en la campana.');
+        this.dialogo = [];
+        this.sugeridos = [];
+        this.elegidos = [];
+        this.cuidadosEnvio = '';
+        this.preguntaSim = '';
+        this.citas.update(lista => lista.map(c => c.id === cita.id ? { ...c, estado: 'COMPLETADA' } : c));
+        this.cargarCitas();
+      },
       error: () => this.error.set('No se pudo enviar el aviso. Publica el backend en Render y vuelve a intentarlo.'),
       complete: () => this.avisoEnviando.set(false)
     });

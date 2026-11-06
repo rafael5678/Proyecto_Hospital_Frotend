@@ -19,6 +19,7 @@ import {
   GENEROS, TIPOS_SANGRE, mensajeTelefono, normalizarGenero, normalizarSangre, soloCedula, soloDigitos, telefonoColombiano
 } from '../../data/datos-persona';
 import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
+import { NotificationService } from '../../services/notification.service';
 
 type PacienteTab = 'inicio' | 'agendar' | 'historial' | 'proximas' | 'medicos' | 'perfil'
   | 'triage' | 'dermatologia' | 'interacciones' | 'precios';
@@ -34,6 +35,8 @@ type PacienteSub = '' | 'agendar' | 'historial' | 'proximas' | 'directorio' | 'e
 })
 export class PatientPortalComponent implements OnInit {
   auth = inject(AuthService);
+  private avisos = inject(NotificationService);
+  private avisosReales = signal<{ titulo: string; detalle: string }[]>([]);
   private svc = inject(PatientService);
   private ai = inject(AiService);
 
@@ -184,6 +187,9 @@ export class PatientPortalComponent implements OnInit {
   cargarInicio() {
     this.svc.dashboard().subscribe({ next: d => this.dashboard.set(d) });
     this.svc.proximas().subscribe({ next: c => this.proximas.set(c) });
+    this.avisos.listar().subscribe({
+      next: n => this.avisosReales.set(n.slice(0, 4).map(a => ({ titulo: a.titulo, detalle: a.mensaje })))
+    });
   }
 
   cargarPerfil() {
@@ -705,7 +711,7 @@ export class PatientPortalComponent implements OnInit {
   }
 
   notificacionesPaciente(): { titulo: string; detalle: string }[] {
-    const items: { titulo: string; detalle: string }[] = [];
+    const items: { titulo: string; detalle: string }[] = [...this.avisosReales()];
     const proxima = this.proximaCita();
     const dash = this.dashboard();
     const perfil = this.perfil();

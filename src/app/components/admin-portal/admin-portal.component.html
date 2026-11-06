@@ -17,6 +17,7 @@
         <app-session-timeout rol="ADMIN" theme="admin" />
       </div>
       <div class="header-user">
+        <app-notification-bell theme="medico" />
         <span class="user-chip">
           <span class="user-avatar">{{ iniciales(auth.user()?.nombre) }}</span>
           {{ auth.user()?.nombre }}
