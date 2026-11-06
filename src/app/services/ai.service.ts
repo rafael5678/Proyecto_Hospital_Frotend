@@ -174,14 +174,34 @@ export class AiService {
   }
 
   private consultaLocal(req: AiConsultaSimRequest): AiConsultaSimResponse {
-    const saludo = !req.pregunta?.trim();
+    const motivo = req.motivo?.trim() || 'el malestar que le conté';
+    const texto = `${req.motivo || ''} ${req.contexto || ''}`.toLowerCase();
+    const pregunta = (req.pregunta || '').toLowerCase();
+    const dias = texto.match(/(\d+)\s*d[ií]as/);
+    let dice: string;
+    if (!pregunta.trim()) {
+      dice = `Doctor, buenos días. Vengo porque ${motivo}.${dias ? ` Llevo así como ${dias[1]} días.` : ''}`;
+    } else if (/alerg/.test(pregunta)) {
+      dice = 'No, doctor. Alergias a medicamentos no tengo, que yo sepa. Ni a comidas, que recuerde.';
+    } else if (/tiempo|cu[aá]nto|desde|d[ií]a|evoluci/.test(pregunta)) {
+      dice = dias
+        ? `Llevo más o menos ${dias[1]} días, doctor. Empezó de a poco y no se me ha quitado.`
+        : 'Empezó hace unos días, doctor. No sabría decirle la hora exacta, pero no es de hoy.';
+    } else if (/fiebre|calentur|temperatura/.test(pregunta)) {
+      dice = 'Fiebre no he tenido, doctor. Estoy molesto, pero sin escalofrío ni temperatura alta.';
+    } else if (/tom[oóe]|pastilla|medic|analg/.test(pregunta)) {
+      dice = 'No he tomado nada formulado. A lo mucho un analgésico de la casa, y el malestar sigue ahí.';
+    } else if (/s[ií]ntoma|qu[eé] m[aá]s|duele|siente|espalda|pecho/.test(pregunta)) {
+      dice = `Lo que más siento es ${motivo}. Me molesta al moverme y si llevo rato en la misma posición. Falta de aire o un dolor que se vaya al pecho, no.`;
+    } else if (/empeor|mejor|alivia|reposo|ejerc|fuerza/.test(pregunta)) {
+      dice = 'Me empeora si hago fuerza o si estoy mucho tiempo sentado. En reposo baja un poco, pero no se quita.';
+    } else {
+      dice = `Doctor, sobre eso le cuento con lo que sé: sigo con ${motivo}. Si me pregunta más, se lo digo tal como lo siento.`;
+    }
     return {
-      dicePaciente: saludo
-        ? `Doctor, vengo porque ${req.motivo || 'me siento mal y quiero que me revise'}.`
-        : 'De lo que ya conté, eso es lo que sé. No tengo otro dato sobre esa pregunta.',
-      pistaParaElMedico: 'Simulación con el relato guardado. Examínalo antes de formular.',
-      medicamentosSugeridos: 'Analgésico habitual · tabletas · solo si el examen lo permite',
-      cuidados: 'Reposo relativo y volver si empeora.',
+      dicePaciente: dice,
+      medicamentosSugeridos: 'Analgésico habitual · tabletas · si no hay alergia y el examen lo permite\nCalor local y movimiento suave · mientras se aclara la causa',
+      cuidados: 'Calor local, caminar suave y evitar cargar peso. Volver si aparece fiebre, falta de aire o el dolor se va al pecho.',
       modoDemo: true
     };
   }

@@ -479,12 +479,12 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
       motivo: this.soapReq.motivoInicial,
       contexto: this.soapReq.transcripcion,
       pregunta: texto,
-      dialogo: this.dialogo.map(d => `${d.quien === 'medico' ? 'Médico' : 'Paciente'}: ${d.texto}`)
+      dialogo: this.dialogo
+        .filter(d => d.quien === 'medico' || d.quien === 'paciente')
+        .map(d => `${d.quien === 'medico' ? 'Médico' : 'Paciente'}: ${d.texto}`)
     }).subscribe({
       next: r => {
-        const siguiente = [...this.dialogo, { quien: 'paciente' as const, texto: r.dicePaciente }];
-        if (r.pistaParaElMedico) siguiente.push({ quien: 'pista', texto: r.pistaParaElMedico });
-        this.dialogo = siguiente;
+        this.dialogo = [...this.dialogo, { quien: 'paciente' as const, texto: r.dicePaciente }];
         const meds = this.lineas(r.medicamentosSugeridos);
         if (meds.length) this.sugeridos = meds;
         if (!this.cuidadosEnvio && r.cuidados) this.cuidadosEnvio = r.cuidados;
