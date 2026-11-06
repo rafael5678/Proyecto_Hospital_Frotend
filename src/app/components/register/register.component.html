@@ -9,13 +9,13 @@
     <form (ngSubmit)="onSubmit()" class="form-grid">
       <div class="section-title">Datos de acceso</div>
       <div><label>Nombre completo *</label><input class="input" [(ngModel)]="nombre" name="nombre" required /></div>
-      <div><label>Email *</label><input class="input" type="email" [(ngModel)]="email" name="email" required /></div>
-      <div><label>Contraseña *</label><input class="input" type="password" [(ngModel)]="password" name="password" minlength="6" maxlength="32" required /><small class="campo-ayuda">Entre 6 y 32 caracteres.</small></div>
-      <div><label>Confirmar contraseña *</label><input class="input" type="password" [(ngModel)]="confirmPassword" name="confirmPassword" minlength="6" maxlength="32" required /></div>
+      <div><label>Email *</label><input class="input" type="email" [(ngModel)]="email" name="username" autocomplete="username" required /></div>
+      <div><label>Contraseña *</label><input class="input" type="password" [(ngModel)]="password" name="new-password" autocomplete="new-password" minlength="6" maxlength="11" required /><small class="campo-ayuda">Entre 6 y 11 caracteres.</small></div>
+      <div><label>Confirmar contraseña *</label><input class="input" type="password" [(ngModel)]="confirmPassword" name="confirm-password" autocomplete="new-password" minlength="6" maxlength="11" required /></div>
       <div><label>Teléfono</label><input class="input" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="3001234567" name="telefono" [ngModel]="telefono" (ngModelChange)="telefono = soloDigitos($event)" /><small class="campo-ayuda">10 dígitos. Celular empieza por 3, fijo por 60.</small></div>
 
       <div class="section-title">Identificación</div>
-      <div><label>Documento *</label><input class="input" [(ngModel)]="documento" name="documento" required /></div>
+      <div><label>Documento *</label><input class="input" name="documento" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="1000000000" required [ngModel]="documento" (ngModelChange)="documento = soloCedula($event)" /><small class="campo-ayuda">Máximo 10 números.</small></div>
       <div><label>Fecha de nacimiento</label><input class="input" type="date" [(ngModel)]="fechaNacimiento" name="fechaNacimiento" /></div>
       <div><label>Género</label>
         <select class="input" [(ngModel)]="genero" name="genero">

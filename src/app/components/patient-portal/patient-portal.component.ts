@@ -16,7 +16,7 @@ import {
 } from '../../models/ai.model';
 import { PortalSidebarComponent, SidebarItem } from '../portal-sidebar/portal-sidebar.component';
 import {
-  GENEROS, TIPOS_SANGRE, mensajeTelefono, normalizarGenero, normalizarSangre, soloDigitos, telefonoColombiano
+  GENEROS, TIPOS_SANGRE, mensajeTelefono, normalizarGenero, normalizarSangre, soloCedula, soloDigitos, telefonoColombiano
 } from '../../data/datos-persona';
 import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 
@@ -40,6 +40,7 @@ export class PatientPortalComponent implements OnInit {
   readonly generos = GENEROS;
   readonly tiposSangre = TIPOS_SANGRE;
   readonly soloDigitos = soloDigitos;
+  readonly soloCedula = soloCedula;
   tab = signal<PacienteTab>('inicio');
   sub = signal<PacienteSub>('');
   expandedMenus = signal<string[]>(['citas', 'medicos', 'ia', 'medicamentos']);
@@ -196,6 +197,7 @@ export class PatientPortalComponent implements OnInit {
           ...p,
           telefono: soloDigitos(p.telefono || ''),
           telefonoEmergencia: soloDigitos(p.telefonoEmergencia || ''),
+          documento: /^\d+$/.test((p.documento || '').trim()) ? soloCedula(p.documento || '') : (p.documento || ''),
           genero: normalizarGenero(p.genero || ''),
           tipoSangre: normalizarSangre(p.tipoSangre || '')
         });
@@ -478,7 +480,8 @@ export class PatientPortalComponent implements OnInit {
     const p = {
       ...actual,
       telefono: soloDigitos(actual.telefono || ''),
-      telefonoEmergencia: soloDigitos(actual.telefonoEmergencia || '')
+      telefonoEmergencia: soloDigitos(actual.telefonoEmergencia || ''),
+      documento: soloCedula(actual.documento || '') || actual.documento || ''
     };
     this.perfil.set(p);
     if (!telefonoColombiano(p.telefono || '')) {

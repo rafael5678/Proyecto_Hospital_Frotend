@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
-import { CLAVE_MAX, CLAVE_MIN, mensajeTelefono, soloDigitos, telefonoColombiano } from '../../data/datos-persona';
+import { CEDULA_MAX, CLAVE_MAX, CLAVE_MIN, mensajeTelefono, soloCedula, soloDigitos, telefonoColombiano } from '../../data/datos-persona';
 
 @Component({
   selector: 'app-register',
@@ -32,6 +32,7 @@ export class RegisterComponent implements OnInit {
   telefonoEmergencia = '';
   observaciones = '';
   readonly soloDigitos = soloDigitos;
+  readonly soloCedula = soloCedula;
   error = signal('');
   loading = signal(false);
   wakingServer = signal(false);
@@ -62,6 +63,11 @@ export class RegisterComponent implements OnInit {
     }
     if (!telefonoColombiano(this.telefonoEmergencia)) {
       this.error.set(mensajeTelefono('El teléfono de emergencia'));
+      return;
+    }
+    this.documento = soloCedula(this.documento);
+    if (!this.documento) {
+      this.error.set(`La cédula solo lleva números, máximo ${CEDULA_MAX}.`);
       return;
     }
     this.loading.set(true);

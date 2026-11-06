@@ -13,8 +13,8 @@ import { AiAdminOperationResponse, AiPricesRequest, AiPricesResponse } from '../
 import { AiMetrics } from '../../models/ai.model';
 import { HOSPITAL_SPECIALTIES } from '../../data/specialties';
 import {
-  CLAVE_MAX, CLAVE_MIN, GENEROS, TIPOS_SANGRE,
-  mensajeTelefono, normalizarGenero, normalizarSangre, soloDigitos, telefonoColombiano
+  CEDULA_MAX, CLAVE_MAX, CLAVE_MIN, GENEROS, TIPOS_SANGRE,
+  mensajeTelefono, normalizarGenero, normalizarSangre, soloCedula, soloDigitos, telefonoColombiano
 } from '../../data/datos-persona';
 
 type AdminTab = 'inicio' | 'usuarios' | 'medicos' | 'citas' | 'reportes' | 'iasuperv' | 'preciosauditoria' | 'asistente';
@@ -136,6 +136,7 @@ export class AdminPortalComponent implements OnInit {
   readonly generos = GENEROS;
   readonly tiposSangre = TIPOS_SANGRE;
   readonly soloDigitos = soloDigitos;
+  readonly soloCedula = soloCedula;
   asistenteTexto = '';
   asistenteLoading = signal(false);
   asistenteRsp = signal<AiAdminOperationResponse | null>(null);
@@ -291,7 +292,7 @@ export class AdminPortalComponent implements OnInit {
     this.claveVisible = u.clave || '';
     this.form = {
       nombre: u.nombre, email: u.email, password: '', rol: u.rol,
-      telefono: soloDigitos(u.telefono || ''), documento: u.documento || '',
+      telefono: soloDigitos(u.telefono || ''), documento: this.documentoVisible(u.documento || ''),
       fechaNacimiento: u.fechaNacimiento || '', genero: normalizarGenero(u.genero || ''),
       tipoSangre: normalizarSangre(u.tipoSangre || ''), direccion: u.direccion || '', ciudad: u.ciudad || '',
       alergias: u.alergias || '', contactoEmergencia: u.contactoEmergencia || '',
@@ -319,6 +320,21 @@ export class AdminPortalComponent implements OnInit {
 
   telefonoValido(valor?: string) {
     return telefonoColombiano(valor || '');
+  }
+
+  documentoVisible(valor: string) {
+    const texto = (valor || '').trim();
+    return /^\d+$/.test(texto) ? texto.slice(0, CEDULA_MAX) : texto;
+  }
+
+  alEscribirCedula(valor: string) {
+    const texto = valor ?? '';
+    if (/[A-Za-z]/.test(texto) && !/\d/.test(texto)) return texto.slice(0, 20);
+    return soloCedula(texto);
+  }
+
+  cedulaLarga() {
+    return (this.form.documento || '').replace(/\D/g, '').length > CEDULA_MAX;
   }
 
   private telefonoCompleto(valor?: string) {
@@ -355,6 +371,21 @@ export class AdminPortalComponent implements OnInit {
     if (this.form.rol === 'PACIENTE' && !telefonoColombiano(this.form.telefonoEmergencia || '')) {
       this.error.set(mensajeTelefono('El teléfono de emergencia'));
       return;
+    }
+    if (this.form.rol === 'PACIENTE') {
+      const doc = (this.form.documento || '').trim();
+      if (doc && /^\d+$/.test(doc) && doc.length > CEDULA_MAX) {
+        this.error.set(`La cédula tiene máximo ${CEDULA_MAX} dígitos.`);
+        return;
+      }
+      if (doc && !/^\d+$/.test(doc)) {
+        const digitos = soloCedula(doc);
+        if (digitos.length >= 6) this.form.documento = digitos;
+        else if (/\d/.test(doc)) {
+          this.error.set(`La cédula solo lleva números, máximo ${CEDULA_MAX}.`);
+          return;
+        }
+      }
     }
     const datos: UserRequest = { ...this.form, password: clave || undefined };
     this.adminService.actualizarUsuario(id, datos).subscribe({

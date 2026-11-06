@@ -1,11 +1,17 @@
 export const GENEROS = ['Masculino', 'Femenino', 'Otro'] as const;
 export const TIPOS_SANGRE = ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'] as const;
 export const CLAVE_MIN = 6;
-export const CLAVE_MAX = 32;
+export const CLAVE_MAX = 11;
 export const TELEFONO_DIGITOS = 10;
+/** NUIP de la Registraduría: 10 dígitos. Las cédulas anteriores pueden ser más cortas. */
+export const CEDULA_MAX = 10;
 
 export function soloDigitos(valor: string, max = TELEFONO_DIGITOS): string {
   return (valor || '').replace(/\D/g, '').slice(0, max);
+}
+
+export function soloCedula(valor: string): string {
+  return (valor || '').replace(/\D/g, '').slice(0, CEDULA_MAX);
 }
 
 /** Celular colombiano (empieza por 3) o fijo nacional (empieza por 60), siempre de 10 dígitos. Vacío se acepta. */

@@ -178,17 +178,18 @@
               <h3>Acceso</h3>
               <div class="edit-campos cuatro">
                 <label>Nombre
-                  <input class="input" [(ngModel)]="form.nombre" />
-                </label>
-                <label>Correo
-                  <input class="input" type="email" autocomplete="off" [(ngModel)]="form.email" />
+                  <input class="input" name="nombre" autocomplete="name" [(ngModel)]="form.nombre" />
                 </label>
                 <label>Teléfono
-                  <input class="input" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="3001234567" [ngModel]="form.telefono" (ngModelChange)="form.telefono = soloDigitos($event)" />
+                  <input class="input" type="tel" name="telefono" inputmode="numeric" maxlength="10" autocomplete="tel" placeholder="3001234567" [ngModel]="form.telefono" (ngModelChange)="form.telefono = soloDigitos($event)" />
                   <small class="campo-ayuda" [class.campo-mal]="!!form.telefono && !telefonoValido(form.telefono)">{{ form.telefono?.length || 0 }}/10 · celular empieza por 3, fijo por 60</small>
                 </label>
+                <label>Correo
+                  <input class="input" type="email" name="username" autocomplete="username" [(ngModel)]="form.email" />
+                  <small class="campo-ayuda">Con este correo entra. No uses el teléfono.</small>
+                </label>
                 <label>Nueva clave
-                  <input class="input" type="password" autocomplete="new-password" name="hospy-clave-nueva" maxlength="32" [(ngModel)]="form.password" placeholder="Vacía = conservar la actual" />
+                  <input class="input" type="password" autocomplete="new-password" name="new-password" maxlength="11" [(ngModel)]="form.password" placeholder="Vacía = conservar la actual" />
                   <small class="campo-ayuda" [class.campo-mal]="claveCorta()">{{ textoClave() }}</small>
                 </label>
                 <p class="clave-actual span-2">Clave actual: <strong>{{ claveVisible || 'Aún no registrada. Escríbela arriba.' }}</strong></p>
@@ -200,7 +201,8 @@
                 <h3>Identificación</h3>
                 <div class="edit-campos">
                   <label>Documento
-                    <input class="input" [(ngModel)]="form.documento" />
+                    <input class="input" name="documento" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="1000000000" [ngModel]="form.documento" (ngModelChange)="form.documento = alEscribirCedula($event)" />
+                    <small class="campo-ayuda" [class.campo-mal]="cedulaLarga()">{{ (form.documento || '').replace(/\D/g, '').length }}/10 · la cédula colombiana tiene máximo 10 números</small>
                   </label>
                   <label>Fecha de nacimiento
                     <input class="input" type="date" [(ngModel)]="form.fechaNacimiento" />
