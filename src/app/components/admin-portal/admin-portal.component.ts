@@ -114,6 +114,7 @@ export class AdminPortalComponent implements OnInit {
   okAdmin = signal('');
   editandoId = signal<number | null>(null);
   claveVisible = '';
+  servidorViejo = signal(false);
   nuevaClave = '';
   claveAdmin = '';
   claveEntregada = signal<{ nombre: string; email: string; password: string } | null>(null);
@@ -158,6 +159,14 @@ export class AdminPortalComponent implements OnInit {
     this.cargarReportes();
     this.cargarAiStatus();
     this.cargarAiMetricas();
+    this.revisarServidor();
+  }
+
+  revisarServidor() {
+    this.adminService.salud().subscribe({
+      next: s => this.servidorViejo.set(s.perfil !== 'completo'),
+      error: () => this.servidorViejo.set(true)
+    });
   }
 
   cargarAiStatus() {
@@ -389,9 +398,17 @@ export class AdminPortalComponent implements OnInit {
     }
     const datos: UserRequest = { ...this.form, password: clave || undefined };
     this.adminService.actualizarUsuario(id, datos).subscribe({
-      next: () => {
-        this.okAdmin.set('Datos guardados. El correo y la clave de ingreso quedan como los dejaste.');
-        this.claveVisible = clave || this.claveVisible;
+      next: (guardado) => {
+        const fichaOk = this.fichaVolvio(guardado, datos);
+        const claveOk = !clave || guardado.clave === clave;
+        if (!fichaOk || !claveOk) {
+          this.servidorViejo.set(true);
+          this.error.set('El servidor en línea todavía no guardó la ficha ni puede mostrar la clave. Lo que escribiste sigue en este formulario. Hay que publicar el backend en Render y guardar otra vez.');
+          return;
+        }
+        this.okAdmin.set('Datos guardados. Si vuelves a editar, vas a ver esta misma ficha.');
+        this.claveVisible = guardado.clave || clave || this.claveVisible;
+        this.usuarios.update(lista => lista.map(u => this.idUsuario(u) === id ? { ...u, ...guardado } : u));
         this.resetForm();
         this.editandoId.set(null);
         this.cargarUsuarios();
@@ -400,6 +417,17 @@ export class AdminPortalComponent implements OnInit {
       },
       error: (e) => this.error.set(e.error?.error ?? 'No se pudo actualizar')
     });
+  }
+
+  private fichaVolvio(guardado: User, enviados: UserRequest) {
+    const campos = enviados.rol === 'MEDICO'
+      ? (['numeroLicencia', 'consultorio', 'biografia', 'diasAtencion', 'horaInicio', 'horaFin'] as const)
+      : (['fechaNacimiento', 'genero', 'tipoSangre', 'direccion', 'ciudad', 'alergias', 'contactoEmergencia', 'telefonoEmergencia'] as const);
+    const pedidos = campos.filter(c => {
+      const valor = enviados[c];
+      return valor != null && String(valor).trim() !== '';
+    });
+    return pedidos.every(c => String(guardado[c] ?? '') === String(enviados[c] ?? ''));
   }
 
   generarClave() {
