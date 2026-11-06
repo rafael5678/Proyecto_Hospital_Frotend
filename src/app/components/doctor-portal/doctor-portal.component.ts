@@ -69,7 +69,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     },
     {
       id: 'ia',
-      label: 'IA Hospitalaria',
+      label: 'Escriba',
       icon: '🤖',
       children: [
         { id: 'ia-soap', label: 'Escriba SOAP', tab: 'soap' }
@@ -184,8 +184,8 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
       'horarios-lista': 'Horarios — listado',
       'horarios-agregar': 'Horarios — agregar',
       paciente: 'Ficha del paciente',
-      soap: 'IA — Escriba médico SOAP',
-      precios: 'IA — Triangulación de precios'
+      soap: 'Escriba médico',
+      precios: 'Precios'
     };
     const key = this.sub() ? `${this.tab()}-${this.sub()}` : this.tab();
     return map[key] ?? 'Portal médico';
@@ -376,7 +376,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
       const text = Array.from(event.results).map(result => result[0].transcript).join(' ');
       this.transcripcionEnVivo.set(text);
     };
-    this.recognition.onerror = () => this.vozError.set('La transcripción en vivo del navegador no está disponible; la IA intentará transcribir al terminar.');
+    this.recognition.onerror = () => this.vozError.set('La transcripción en vivo del navegador no está disponible. Se intentará transcribir al terminar.');
     try {
       this.recognition.start();
     } catch {

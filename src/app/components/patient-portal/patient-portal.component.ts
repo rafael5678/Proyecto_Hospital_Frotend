@@ -67,7 +67,7 @@ export class PatientPortalComponent implements OnInit {
     },
     {
       id: 'ia',
-      label: 'IA Hospitalaria',
+      label: 'Orientación',
       icon: '🤖',
       children: [
         { id: 'm-inter', label: 'Interacciones fármaco-alimento', tab: 'interacciones', sub: 'inter' },
@@ -532,7 +532,7 @@ export class PatientPortalComponent implements OnInit {
   /* ============ Inteligencia Artificial ============ */
   triageAnalizar() {
     if (!this.consentimientoTriage) {
-      this.error.set('Autoriza el envío de tus datos de salud al servicio de IA para continuar.');
+      this.error.set('Autoriza el envío de tus datos de salud para continuar.');
       return;
     }
     /* En la tab de agendar se usan campos sueltos; en standalone se usa triageReq */

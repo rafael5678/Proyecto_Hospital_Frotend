@@ -492,22 +492,41 @@
       @if (tab() === 'iasuperv') {
         <section class="card section ai-panel">
           <header class="section-head">
-            <h2 class="section-title">🤖 Supervisión global de IA Hospitalaria</h2>
-            <span class="chip-outline demo">Monitoreo · Métricas · Estado</span>
+            <h2 class="section-title">Supervisión</h2>
+            <span class="chip-outline demo">Métricas y estado</span>
           </header>
 
           @if (aiMetricas(); as m) {
             <div class="ai-status-bar">
               <span class="severity-chip" [class]="m.apiKeyActiva ? 'bg-green' : 'bg-orange'">
-                {{ m.apiKeyActiva ? 'API KEY CONFIGURADA · IA OPERATIVA' : 'MODO DEMO · SIN API KEY' }}
+                {{ m.apiKeyActiva ? 'Asistente activo' : 'Asistente en espera' }}
               </span>
-              <span class="chip-outline">{{ m.versionIa }}</span>
               <button type="button" class="btn btn-purple" (click)="probarGemini()" [disabled]="iaProbando()">
-                {{ iaProbando() ? 'Consultando Gemini…' : 'Probar Gemini' }}
+                {{ iaProbando() ? 'Probando…' : 'Probar' }}
               </button>
             </div>
             @if (iaPrueba()) { <p class="hint">{{ iaPrueba() }}</p> }
-            <p class="hint">Los números salen de las citas guardadas. Hay {{ m.totalCitas }} citas. Un cero significa que ninguna tiene ese análisis todavía, no que Gemini esté apagado.</p>
+            <p class="hint">Los números salen de las citas guardadas. Hay {{ m.totalCitas }} citas. Un cero significa que ninguna tiene ese análisis todavía.</p>
+
+            <div class="ia-buscar">
+              <label for="buscar-persona">Buscar paciente o médico</label>
+              <input id="buscar-persona" class="input" [(ngModel)]="busquedaPersona" placeholder="Nombre, cédula completa o los primeros números" />
+              @if (busquedaPersona.trim().length >= 2) {
+                <div class="ia-resultados">
+                  @for (u of resultadosBusqueda(); track idUsuario(u)) {
+                    <article class="ia-resultado">
+                      <div>
+                        <strong>{{ u.nombre }}</strong>
+                        <span>{{ u.documento || 'Sin cédula' }} · {{ u.rol === 'MEDICO' ? 'Médico' : 'Paciente' }} · {{ u.email }}</span>
+                      </div>
+                      <button type="button" class="btn-sm" (click)="editar(u)">Ver ficha</button>
+                    </article>
+                  } @empty {
+                    <p class="hint">No hay nadie con esos datos.</p>
+                  }
+                </div>
+              }
+            </div>
 
             <h3 class="ai-bloque-titulo">Análisis totales procesados por la IA</h3>
             <div class="ai-stats">
@@ -570,31 +589,31 @@
             <div class="ai-supervision-grid">
               <div class="card inner ai-superv-card triage">
                 <h4>Triage al agendar</h4>
-                <p>{{ m.estadoTriage }}</p>
+                <p>{{ textoVisible(m.estadoTriage) }}</p>
                 <p class="status-row">Guardados en citas: <strong>{{ m.citasConTriage }}</strong></p>
               </div>
 
               <div class="card inner ai-superv-card derma">
                 <h4>Piel y lesiones</h4>
-                <p>{{ m.estadoDermatologia }}</p>
+                <p>{{ textoVisible(m.estadoDermatologia) }}</p>
                 <p class="status-row">Guardados en citas: <strong>{{ m.citasConEvaluacionPiel }}</strong></p>
               </div>
 
               <div class="card inner ai-superv-card soap">
                 <h4>Escriba médico SOAP</h4>
-                <p>{{ m.estadoSoap }}</p>
-                <p class="status-row">Voz: <strong>{{ m.estadoWhisper }}</strong></p>
+                <p>{{ textoVisible(m.estadoSoap) }}</p>
+                <p class="status-row">Voz: <strong>{{ textoVisible(m.estadoWhisper) }}</strong></p>
               </div>
 
               <div class="card inner ai-superv-card inter">
                 <h4>Interacciones de medicamentos</h4>
-                <p>{{ m.estadoInteracciones }}</p>
+                <p>{{ textoVisible(m.estadoInteracciones) }}</p>
                 <p class="status-row">Se calcula cuando un paciente consulta sus medicamentos.</p>
               </div>
 
               <div class="card inner ai-superv-card price">
                 <h4>Precios de medicamentos</h4>
-                <p>{{ m.estadoPrecios }}</p>
+                <p>{{ textoVisible(m.estadoPrecios) }}</p>
                 <p class="status-row">Se calcula en Auditoría de precios, con el medicamento que escribas.</p>
               </div>
 
@@ -613,7 +632,7 @@
       @if (tab() === 'preciosauditoria') {
         <section class="card section ai-panel">
           <header class="section-head">
-            <h2 class="section-title">💰 Auditoría de precios (misma herramienta del paciente)</h2>
+            <h2 class="section-title">Auditoría de precios</h2>
             <span class="chip-outline demo">Detección de sobreprecios y desabastecimiento</span>
           </header>
 

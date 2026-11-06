@@ -82,11 +82,11 @@ export class AdminPortalComponent implements OnInit {
     },
     {
       id: 'ia',
-      label: 'Inteligencia Artificial',
+      label: 'Asistente',
       icon: '🤖',
       children: [
         { id: 'ia-asist', label: 'Registro Hospy', tab: 'asistente' },
-        { id: 'ia-superv', label: 'Supervisión IA', tab: 'iasuperv' },
+        { id: 'ia-superv', label: 'Supervisión', tab: 'iasuperv' },
         { id: 'ia-precios', label: 'Auditoría precios', tab: 'preciosauditoria' }
       ]
     }
@@ -96,6 +96,7 @@ export class AdminPortalComponent implements OnInit {
   medicos = signal<User[]>([]);
   citas = signal<Appointment[]>([]);
   buscarCita = '';
+  busquedaPersona = '';
   estadoCita = '';
   citaAReprogramar = signal<Appointment | null>(null);
   nuevaFechaHora = '';
@@ -212,8 +213,8 @@ export class AdminPortalComponent implements OnInit {
       'citas-supervision': 'Citas — supervisión',
       'reportes-resumen': 'Reportes — resumen',
       'reportes-mensual': 'Reportes — desglose mensual',
-      iasuperv: 'IA — Supervisión y estado',
-      preciosauditoria: 'IA — Auditoría de precios',
+      iasuperv: 'Supervisión',
+      preciosauditoria: 'Auditoría de precios',
       asistente: 'Registro Hospy'
     };
     return map[`${t}-${s}`] ?? map[t] ?? 'Administración';
@@ -462,17 +463,59 @@ export class AdminPortalComponent implements OnInit {
     });
   }
 
+  textoVisible(texto?: string) {
+    return (texto || '')
+      .replace(/Gemini\/LLM/gi, 'el asistente')
+      .replace(/Gemini visión \+ clasificador local/gi, 'revisión de imagen')
+      .replace(/análisis Gemini\/NLP/gi, 'análisis de síntomas')
+      .replace(/Gemini revisa interacciones/gi, 'revisión de medicamentos')
+      .replace(/estimación Gemini/gi, 'estimación de precios')
+      .replace(/Gemini Audio/gi, 'voz')
+      .replace(/gemini[\w.\-]*/gi, '')
+      .replace(/\s{2,}/g, ' ')
+      .replace(/\(\s*\)/g, '')
+      .trim();
+  }
+
+  resultadosBusqueda(): User[] {
+    const frase = this.busquedaPersona.trim().toLowerCase();
+    if (frase.length < 2) return [];
+    const digitos = frase.replace(/\D/g, '');
+    const empieza = /comienza|empieza|inicia|empiec/.test(frase);
+    const pidePaciente = /paciente/.test(frase);
+    const pideMedico = /médico|medico/.test(frase);
+    const nombre = frase
+      .replace(/estoy|buscando|buscar|busco|quiero|encontrar|por favor|un paciente|una paciente|el paciente|la paciente|un médico|un medico|el médico|el medico|un usuario|usuario|con la cédula|con la cedula|cédula|cedula|documento|que comienza con|que empieza con|comienza con|empieza con|número|numero/gi, ' ')
+      .replace(/\d+/g, ' ')
+      .replace(/[^a-záéíóúñü\s]/gi, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+    return this.usuarios().filter(u => u.rol !== 'ADMIN').filter(u => {
+      if (pidePaciente && !pideMedico && u.rol !== 'PACIENTE') return false;
+      if (pideMedico && !pidePaciente && u.rol !== 'MEDICO') return false;
+      const doc = (u.documento || '').replace(/\D/g, '');
+      const docOk = digitos.length >= 3 && (empieza ? doc.startsWith(digitos) : doc.includes(digitos));
+      const nomOk = nombre.length >= 2 && (u.nombre || '').toLowerCase().includes(nombre);
+      if (digitos.length >= 3 && nombre.length >= 2) return docOk || nomOk;
+      if (digitos.length >= 3) return docOk;
+      return nomOk;
+    }).slice(0, 8);
+  }
+
   probarGemini() {
     this.iaProbando.set(true);
     this.iaPrueba.set('');
     this.adminService.probarGemini().subscribe({
       next: r => {
         this.iaProbando.set(false);
-        this.iaPrueba.set(r.detalle);
+        const detalle = (r.detalle || '').toLowerCase();
+        this.iaPrueba.set(detalle.includes('respond')
+          ? 'La prueba respondió bien.'
+          : 'La prueba no obtuvo respuesta. Intenta de nuevo en un momento.');
       },
-      error: (e) => {
+      error: () => {
         this.iaProbando.set(false);
-        this.iaPrueba.set(e.error?.error ?? 'No se pudo contactar a Gemini.');
+        this.iaPrueba.set('No se pudo hacer la prueba. Intenta de nuevo en un momento.');
       }
     });
   }
@@ -700,7 +743,7 @@ export class AdminPortalComponent implements OnInit {
       this.asistenteVozEnVivo.set('');
       if (!texto) {
         const navegador = this.navegadorSinVoz()
-          ? ' Este navegador no reconoce la voz por sí mismo; en Chrome o Edge funciona aunque Gemini esté ocupado.'
+          ? ' Este navegador no reconoce la voz por sí mismo; en Chrome o Edge funciona.'
           : '';
         this.error.set((motivo || 'No se entendió el audio. Habla de nuevo o escribe los datos.') + navegador);
         return;
@@ -885,8 +928,8 @@ export class AdminPortalComponent implements OnInit {
     }
     if (m && !m.apiKeyActiva) {
       items.push({
-        titulo: 'IA en modo demostración',
-        detalle: `${m.versionIa} · sin API key activa.`
+        titulo: 'Asistente en espera',
+        detalle: 'Todavía no hay una clave configurada.'
       });
     }
     if (m?.citasConEvaluacionPiel) {
@@ -913,8 +956,8 @@ export class AdminPortalComponent implements OnInit {
     const pct = (n: number) => total ? `${Math.round((n / total) * 100)}%` : '0%';
     return [
       { label: 'Citas aceptadas', valor: pct(aceptadas), detalle: `${aceptadas} de ${total}` },
-      { label: 'Con triage IA', valor: pct(triage), detalle: `${triage} citas orientadas` },
-      { label: 'IA clínica', valor: m?.apiKeyActiva ? 'Activa' : 'Demo', detalle: m?.versionIa || 'Sin métricas' }
+      { label: 'Con triage', valor: pct(triage), detalle: `${triage} citas orientadas` },
+      { label: 'Asistente', valor: m?.apiKeyActiva ? 'Activo' : 'En espera', detalle: m?.apiKeyActiva ? 'Listo para usar' : 'Sin conexión' }
     ];
   }
 

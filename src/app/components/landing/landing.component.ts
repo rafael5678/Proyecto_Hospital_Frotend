@@ -47,7 +47,7 @@ export class LandingComponent implements OnInit {
     },
     {
       id: 'ia',
-      title: 'IA clínica',
+      title: 'Orientación clínica',
       icon: '◎',
       angle: '108deg',
       detail: 'Analiza síntomas e imágenes para orientar el diagnóstico.'
