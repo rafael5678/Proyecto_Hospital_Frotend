@@ -17,8 +17,8 @@ import {
 } from '../../models/ai.model';
 import { PortalSidebarComponent, SidebarItem } from '../portal-sidebar/portal-sidebar.component';
 import {
-  GENEROS, TIPOS_SANGRE, mensajeTelefono, normalizarGenero, normalizarSangre, soloCedula, soloDigitos, telefonoColombiano
-} from '../../data/datos-persona';
+  GENDERS, BLOOD_TYPES, phoneMessage, normalizeGender, normalizeBloodType, idDigitsOnly, digitsOnly, isColombianPhone
+} from '../../data/person-data';
 import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 import { NotificationService } from '../../services/notification.service';
 
@@ -43,10 +43,10 @@ export class PatientPortalComponent implements OnInit {
   private svc = inject(PatientService);
   private ai = inject(AiService);
 
-  readonly generos = GENEROS;
-  readonly tiposSangre = TIPOS_SANGRE;
-  readonly soloDigitos = soloDigitos;
-  readonly soloCedula = soloCedula;
+  readonly generos = GENDERS;
+  readonly tiposSangre = BLOOD_TYPES;
+  readonly digitsOnly = digitsOnly;
+  readonly idDigitsOnly = idDigitsOnly;
   tab = signal<PacienteTab>('inicio');
   sub = signal<PacienteSub>('');
   expandedMenus = signal<string[]>(['citas', 'medicos', 'ia', 'medicamentos']);
@@ -157,7 +157,7 @@ export class PatientPortalComponent implements OnInit {
     this.ok.set('');
     if (item.tab === 'perfil' || item.tab === 'agendar') this.cargarPerfilYAntecedentes();
     if (item.tab === 'interacciones' || item.tab === 'precios') this.aplicarReceta();
-    if (item.tab === 'proximas') this.svc.proximas().subscribe({ next: c => this.proximas.set(c) });
+    if (item.tab === 'proximas') this.svc.upcoming().subscribe({ next: c => this.proximas.set(c) });
     const group = this.menuItems.find(m => m.children?.some(c => c.id === item.id));
     if (group && !this.expandedMenus().includes(group.id)) {
       this.expandedMenus.set([...this.expandedMenus(), group.id]);
@@ -190,8 +190,8 @@ export class PatientPortalComponent implements OnInit {
 
   cargarInicio() {
     this.svc.dashboard().subscribe({ next: d => this.dashboard.set(d) });
-    this.svc.proximas().subscribe({ next: c => this.proximas.set(c) });
-    this.avisos.listar().subscribe({
+    this.svc.upcoming().subscribe({ next: c => this.proximas.set(c) });
+    this.avisos.list().subscribe({
       next: n => {
         this.avisosInbox.set(n);
         this.avisosReales.set(n.slice(0, 4).map(a => ({ titulo: a.titulo, detalle: a.mensaje })));
@@ -209,11 +209,11 @@ export class PatientPortalComponent implements OnInit {
       next: p => {
         this.perfil.set({
           ...p,
-          telefono: soloDigitos(p.telefono || ''),
-          telefonoEmergencia: soloDigitos(p.telefonoEmergencia || ''),
-          documento: /^\d+$/.test((p.documento || '').trim()) ? soloCedula(p.documento || '') : (p.documento || ''),
-          genero: normalizarGenero(p.genero || ''),
-          tipoSangre: normalizarSangre(p.tipoSangre || '')
+          telefono: digitsOnly(p.telefono || ''),
+          telefonoEmergencia: digitsOnly(p.telefonoEmergencia || ''),
+          documento: /^\d+$/.test((p.documento || '').trim()) ? idDigitsOnly(p.documento || '') : (p.documento || ''),
+          genero: normalizeGender(p.genero || ''),
+          tipoSangre: normalizeBloodType(p.tipoSangre || '')
         });
         if (!this.antecedentesSintomas) {
           this.antecedentesSintomas = [p.alergias, p.observaciones].filter(Boolean).join(' · ');
@@ -223,7 +223,7 @@ export class PatientPortalComponent implements OnInit {
   }
 
   cargarMedicos() {
-    this.svc.listarMedicos().subscribe({ next: m => this.medicos.set(m) });
+    this.svc.listDoctors().subscribe({ next: m => this.medicos.set(m) });
   }
 
   medicosFiltrados(): User[] {
@@ -350,7 +350,7 @@ export class PatientPortalComponent implements OnInit {
     this.medicoDetalle.set(m);
     this.tab.set('medicos');
     this.sub.set('directorio');
-    this.svc.horariosMedico(m.id).subscribe({ next: h => this.horarios.set(h) });
+    this.svc.doctorSchedules(m.id).subscribe({ next: h => this.horarios.set(h) });
   }
 
   onMedicoChange() {
@@ -362,8 +362,8 @@ export class PatientPortalComponent implements OnInit {
       return;
     }
     this.avisoCita.set('Buscando el próximo cupo…');
-    this.svc.horariosMedico(this.medicoId).subscribe({ next: h => this.horarios.set(h) });
-    this.svc.cuposMedico(this.medicoId).subscribe({
+    this.svc.doctorSchedules(this.medicoId).subscribe({ next: h => this.horarios.set(h) });
+    this.svc.doctorSlots(this.medicoId).subscribe({
       next: c => {
         this.cupos.set(c);
         if (c.length) {
@@ -403,7 +403,7 @@ export class PatientPortalComponent implements OnInit {
   }
 
   cargarHistorial() {
-    this.svc.historial().subscribe({
+    this.svc.history().subscribe({
       next: c => {
         this.citas.set(c);
         this.aplicarReceta();
@@ -421,7 +421,7 @@ export class PatientPortalComponent implements OnInit {
     const enviar = () => {
       const triage = this.triageRsp();
       const dermatologia = this.tieneLesionPiel ? this.dermRsp() : null;
-      this.svc.agendarCita({
+      this.svc.bookAppointment({
         medicoId: this.medicoId!,
         fechaHora: this.fechaParaApi(),
         motivo: this.motivo || this.sintomas,
@@ -469,7 +469,7 @@ export class PatientPortalComponent implements OnInit {
 
     const despuesTriage = () => {
       if (this.tieneLesionPiel && this.puedeAnalizarPiel() && !this.dermRsp()) {
-        this.ai.dermatologia(this.payloadDerm()).subscribe({
+        this.ai.dermatology(this.payloadDerm()).subscribe({
           next: r => {
             this.dermRsp.set(r);
             this.asignarMedicoSegunAnalisis();
@@ -498,29 +498,29 @@ export class PatientPortalComponent implements OnInit {
     if (!actual) return;
     const p = {
       ...actual,
-      telefono: soloDigitos(actual.telefono || ''),
-      telefonoEmergencia: soloDigitos(actual.telefonoEmergencia || ''),
-      documento: soloCedula(actual.documento || '') || actual.documento || ''
+      telefono: digitsOnly(actual.telefono || ''),
+      telefonoEmergencia: digitsOnly(actual.telefonoEmergencia || ''),
+      documento: idDigitsOnly(actual.documento || '') || actual.documento || ''
     };
     this.perfil.set(p);
-    if (!telefonoColombiano(p.telefono || '')) {
-      this.error.set(mensajeTelefono('El teléfono'));
+    if (!isColombianPhone(p.telefono || '')) {
+      this.error.set(phoneMessage('El teléfono'));
       return;
     }
-    if (!telefonoColombiano(p.telefonoEmergencia || '')) {
-      this.error.set(mensajeTelefono('El teléfono de emergencia'));
+    if (!isColombianPhone(p.telefonoEmergencia || '')) {
+      this.error.set(phoneMessage('El teléfono de emergencia'));
       return;
     }
     this.error.set('');
     this.guardandoPerfil.set(true);
-    this.svc.actualizarPerfil(p).subscribe({
+    this.svc.updateProfile(p).subscribe({
       next: (res) => {
         this.perfil.set({
           ...res,
-          telefono: soloDigitos(res.telefono || ''),
-          telefonoEmergencia: soloDigitos(res.telefonoEmergencia || ''),
-          genero: normalizarGenero(res.genero || ''),
-          tipoSangre: normalizarSangre(res.tipoSangre || '')
+          telefono: digitsOnly(res.telefono || ''),
+          telefonoEmergencia: digitsOnly(res.telefonoEmergencia || ''),
+          genero: normalizeGender(res.genero || ''),
+          tipoSangre: normalizeBloodType(res.tipoSangre || '')
         });
         this.guardandoPerfil.set(false);
         this.ok.set('Perfil actualizado');
@@ -534,7 +534,7 @@ export class PatientPortalComponent implements OnInit {
 
   cancelar(id: number) {
     if (!confirm('¿Cancelar esta cita?')) return;
-    this.svc.cancelarCita(id).subscribe({
+    this.svc.cancelAppointment(id).subscribe({
       next: () => { this.cargarHistorial(); this.cargarInicio(); },
       error: (e) => this.error.set(e.error?.error ?? 'Error')
     });
@@ -593,7 +593,7 @@ export class PatientPortalComponent implements OnInit {
     this.dermLoading.set(true);
     this.error.set('');
     this.dermRsp.set(null);
-    this.ai.dermatologia(this.payloadDerm()).subscribe({
+    this.ai.dermatology(this.payloadDerm()).subscribe({
       next: (r) => {
         this.dermRsp.set(r);
         this.dermLoading.set(false);
@@ -644,7 +644,7 @@ export class PatientPortalComponent implements OnInit {
     this.interLoading.set(true);
     this.error.set('');
     this.interRsp.set(null);
-    this.ai.interacciones(req).subscribe({
+    this.ai.interactions(req).subscribe({
       next: (r) => { this.interRsp.set(r); this.interLoading.set(false); }
     });
   }
@@ -662,7 +662,7 @@ export class PatientPortalComponent implements OnInit {
     this.preciosLoading.set(true);
     this.error.set('');
     this.preciosRsp.set(null);
-    this.ai.precios(req).subscribe({
+    this.ai.estimatePrices(req).subscribe({
       next: (r) => { this.preciosRsp.set(r); this.preciosLoading.set(false); }
     });
   }

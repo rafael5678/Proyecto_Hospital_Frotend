@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
-import { CEDULA_MAX, CLAVE_MAX, CLAVE_MIN, mensajeTelefono, soloCedula, soloDigitos, telefonoColombiano } from '../../data/datos-persona';
+import { ID_MAX, PASSWORD_MAX, PASSWORD_MIN, phoneMessage, idDigitsOnly, digitsOnly, isColombianPhone } from '../../data/person-data';
 
 @Component({
   selector: 'app-register',
@@ -31,8 +31,8 @@ export class RegisterComponent implements OnInit {
   contactoEmergencia = '';
   telefonoEmergencia = '';
   observaciones = '';
-  readonly soloDigitos = soloDigitos;
-  readonly soloCedula = soloCedula;
+  readonly digitsOnly = digitsOnly;
+  readonly idDigitsOnly = idDigitsOnly;
   error = signal('');
   loading = signal(false);
   wakingServer = signal(false);
@@ -47,27 +47,27 @@ export class RegisterComponent implements OnInit {
   }
 
   onSubmit() {
-    this.telefono = soloDigitos(this.telefono);
-    this.telefonoEmergencia = soloDigitos(this.telefonoEmergencia);
-    if (this.password.length < CLAVE_MIN || this.password.length > CLAVE_MAX) {
-      this.error.set(`La contraseña debe tener entre ${CLAVE_MIN} y ${CLAVE_MAX} caracteres.`);
+    this.telefono = digitsOnly(this.telefono);
+    this.telefonoEmergencia = digitsOnly(this.telefonoEmergencia);
+    if (this.password.length < PASSWORD_MIN || this.password.length > PASSWORD_MAX) {
+      this.error.set(`La contraseña debe tener entre ${PASSWORD_MIN} y ${PASSWORD_MAX} caracteres.`);
       return;
     }
     if (this.password !== this.confirmPassword) {
       this.error.set('Las contraseñas no coinciden');
       return;
     }
-    if (!telefonoColombiano(this.telefono)) {
-      this.error.set(mensajeTelefono('El teléfono'));
+    if (!isColombianPhone(this.telefono)) {
+      this.error.set(phoneMessage('El teléfono'));
       return;
     }
-    if (!telefonoColombiano(this.telefonoEmergencia)) {
-      this.error.set(mensajeTelefono('El teléfono de emergencia'));
+    if (!isColombianPhone(this.telefonoEmergencia)) {
+      this.error.set(phoneMessage('El teléfono de emergencia'));
       return;
     }
-    this.documento = soloCedula(this.documento);
+    this.documento = idDigitsOnly(this.documento);
     if (!this.documento) {
-      this.error.set(`La cédula solo lleva números, máximo ${CEDULA_MAX}.`);
+      this.error.set(`La cédula solo lleva números, máximo ${ID_MAX}.`);
       return;
     }
     this.loading.set(true);

@@ -75,7 +75,7 @@ export class LandingComponent implements OnInit {
   }
 
   ngOnInit() {
-    this.auth.cerrarSesionAlAbrirPortal();
+    this.auth.clearSessionWhenOpeningPortal();
 
     const savedEmail = localStorage.getItem(REMEMBERED_EMAIL_KEY);
     if (savedEmail) {

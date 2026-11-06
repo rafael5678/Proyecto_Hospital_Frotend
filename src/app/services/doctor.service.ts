@@ -39,39 +39,39 @@ export class DoctorService {
     return this.http.get<DoctorProfile>(`${this.api}/profile`);
   }
 
-  misCitas() {
+  myAppointments() {
     return this.http.get<Appointment[]>(`${this.api}/appointments`);
   }
 
-  aceptar(id: number) {
+  accept(id: number) {
     return this.http.patch<Appointment>(`${this.api}/appointments/${id}/accept`, {});
   }
 
-  rechazar(id: number) {
+  reject(id: number) {
     return this.http.patch<Appointment>(`${this.api}/appointments/${id}/reject`, {});
   }
 
-  verPaciente(citaId: number) {
+  viewPatient(citaId: number) {
     return this.http.get<PatientProfile>(`${this.api}/appointments/${citaId}/patient`);
   }
 
-  historialPaciente(citaId: number) {
+  patientHistory(citaId: number) {
     return this.http.get<Appointment[]>(`${this.api}/appointments/${citaId}/patient-history`);
   }
 
-  enviarIndicacion(citaId: number, datos: { resumen?: string; medicamentos?: string; cuidados?: string }) {
+  sendPrescription(citaId: number, datos: { resumen?: string; medicamentos?: string; cuidados?: string }) {
     return this.http.post<{ mensaje: string }>(`${this.api}/appointments/${citaId}/indicacion`, datos);
   }
 
-  misHorarios() {
+  mySchedules() {
     return this.http.get<Schedule[]>(`${this.api}/schedules`);
   }
 
-  crearHorario(data: ScheduleRequest) {
+  createSchedule(data: ScheduleRequest) {
     return this.http.post<Schedule>(`${this.api}/schedules`, data);
   }
 
-  eliminarHorario(id: number) {
+  deleteSchedule(id: number) {
     return this.http.delete(`${this.api}/schedules/${id}`);
   }
 }

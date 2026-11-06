@@ -12,59 +12,59 @@ export class AdminService {
 
   constructor(private http: HttpClient) {}
 
-  listarUsuarios() {
+  listUsers() {
     return this.http.get<User[]>(`${this.api}/users`);
   }
 
-  crearUsuario(data: UserRequest) {
+  createUser(data: UserRequest) {
     return this.http.post<User>(`${this.api}/users`, data);
   }
 
-  actualizarUsuario(id: number, data: UserRequest) {
+  updateUser(id: number, data: UserRequest) {
     return this.http.put<User>(`${this.api}/users/${id}`, data);
   }
 
-  desactivarUsuario(id: number) {
+  deactivateUser(id: number) {
     return this.http.delete(`${this.api}/users/${id}`);
   }
 
-  cambiarEstado(id: number, activo: boolean) {
+  setActive(id: number, activo: boolean) {
     return this.http.patch<User>(`${this.api}/users/${id}/estado`, {}, { params: { activo } });
   }
 
-  restablecerClave(id: number, nuevaClave: string, claveAdmin: string) {
+  resetPassword(id: number, nuevaClave: string, claveAdmin: string) {
     return this.http.patch<{ mensaje: string }>(`${this.api}/users/${id}/password`, { nuevaClave, claveAdmin });
   }
 
-  probarGemini() {
+  pingAssistant() {
     return this.http.post<{ operativo: string; modelo: string; detalle: string }>(`${this.api}/ai-ping`, {});
   }
 
-  listarMedicos() {
+  listDoctors() {
     return this.http.get<User[]>(`${this.api}/doctors`);
   }
 
-  crearMedico(data: UserRequest) {
+  createDoctor(data: UserRequest) {
     return this.http.post<User>(`${this.api}/doctors`, data);
   }
 
-  actualizarMedico(id: number, data: UserRequest) {
+  updateDoctor(id: number, data: UserRequest) {
     return this.http.put<User>(`${this.api}/doctors/${id}`, data);
   }
 
-  supervisarCitas() {
+  superviseAppointments() {
     return this.http.get<Appointment[]>(`${this.api}/appointments`);
   }
 
-  reprogramarCita(id: number, fechaHora: string, motivo: string) {
+  rescheduleAppointment(id: number, fechaHora: string, motivo: string) {
     return this.http.patch<RescheduleAppointmentResponse>(`${this.api}/appointments/${id}/reschedule`, { fechaHora, motivo });
   }
 
-  reportes(anio = new Date().getFullYear()) {
+  reports(anio = new Date().getFullYear()) {
     return this.http.get<Report>(`${this.api}/reports`, { params: { anio } });
   }
 
-  aiMetricas() {
+  aiMetrics() {
     return this.http.get<AiMetrics>(`${this.api}/ai-metrics`);
   }
 }

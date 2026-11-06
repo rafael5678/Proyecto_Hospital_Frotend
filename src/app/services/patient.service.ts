@@ -21,37 +21,37 @@ export class PatientService {
     return this.http.get<PatientProfile>(`${this.api}/profile`);
   }
 
-  actualizarPerfil(data: PatientProfile) {
+  updateProfile(data: PatientProfile) {
     return this.http.put<PatientProfile>(`${this.api}/profile`, data);
   }
 
-  listarMedicos() {
+  listDoctors() {
     return this.http.get<User[]>(`${this.publicApi}/doctors`);
   }
 
-  horariosMedico(medicoId: number) {
+  doctorSchedules(medicoId: number) {
     return this.http.get<Schedule[]>(`${this.publicApi}/doctors/${medicoId}/schedules`);
   }
 
-  cuposMedico(medicoId: number) {
+  doctorSlots(medicoId: number) {
     return this.http.get<CupoDisponible[]>(`${this.publicApi}/doctors/${medicoId}/slots`, {
       params: { limite: 12 }
     });
   }
 
-  agendarCita(data: AppointmentRequest) {
+  bookAppointment(data: AppointmentRequest) {
     return this.http.post<Appointment>(`${this.api}/appointments`, data);
   }
 
-  historial() {
+  history() {
     return this.http.get<Appointment[]>(`${this.api}/appointments/history`);
   }
 
-  proximas() {
+  upcoming() {
     return this.http.get<Appointment[]>(`${this.api}/appointments/upcoming`);
   }
 
-  cancelarCita(id: number) {
+  cancelAppointment(id: number) {
     return this.http.patch<Appointment>(`${this.api}/appointments/${id}/cancel`, {});
   }
 }

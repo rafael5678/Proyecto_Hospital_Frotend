@@ -221,7 +221,7 @@
                   <input class="input" name="nombre" autocomplete="name" [(ngModel)]="form.nombre" />
                 </label>
                 <label>Teléfono
-                  <input class="input" type="tel" name="telefono" inputmode="numeric" maxlength="10" autocomplete="tel" [ngModel]="form.telefono" (ngModelChange)="form.telefono = soloDigitos($event)" />
+                  <input class="input" type="tel" name="telefono" inputmode="numeric" maxlength="10" autocomplete="tel" [ngModel]="form.telefono" (ngModelChange)="form.telefono = digitsOnly($event)" />
                   <small class="campo-ayuda" [class.campo-mal]="!!form.telefono && !telefonoValido(form.telefono)">{{ form.telefono?.length || 0 }}/10 · celular empieza por 3, fijo por 60</small>
                 </label>
                 <label>Correo
@@ -282,7 +282,7 @@
                     <input class="input" name="contacto-emergencia" autocomplete="off" [(ngModel)]="form.contactoEmergencia" />
                   </label>
                   <label>Teléfono
-                    <input class="input" type="tel" name="telefono-emergencia" inputmode="numeric" maxlength="10" autocomplete="tel" [ngModel]="form.telefonoEmergencia" (ngModelChange)="form.telefonoEmergencia = soloDigitos($event)" />
+                    <input class="input" type="tel" name="telefono-emergencia" inputmode="numeric" maxlength="10" autocomplete="tel" [ngModel]="form.telefonoEmergencia" (ngModelChange)="form.telefonoEmergencia = digitsOnly($event)" />
                     <small class="campo-ayuda" [class.campo-mal]="!!form.telefonoEmergencia && !telefonoValido(form.telefonoEmergencia)">{{ form.telefonoEmergencia?.length || 0 }}/10 · celular empieza por 3, fijo por 60</small>
                   </label>
                 </div>

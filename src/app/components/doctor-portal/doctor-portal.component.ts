@@ -211,22 +211,22 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   }
 
   cargarCitas() {
-    this.svc.misCitas().subscribe({
+    this.svc.myAppointments().subscribe({
       next: c => this.citas.set(c),
       error: () => this.error.set('Error al cargar citas')
     });
   }
 
   cargarHorarios() {
-    this.svc.misHorarios().subscribe({ next: h => this.horarios.set(h) });
+    this.svc.mySchedules().subscribe({ next: h => this.horarios.set(h) });
   }
 
   aceptar(id: number) {
-    this.svc.aceptar(id).subscribe({ next: () => { this.cargarCitas(); this.cargarInicio(); } });
+    this.svc.accept(id).subscribe({ next: () => { this.cargarCitas(); this.cargarInicio(); } });
   }
 
   rechazar(id: number) {
-    this.svc.rechazar(id).subscribe({ next: () => { this.cargarCitas(); this.cargarInicio(); } });
+    this.svc.reject(id).subscribe({ next: () => { this.cargarCitas(); this.cargarInicio(); } });
   }
 
   verPaciente(citaId: number) {
@@ -237,7 +237,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
         : encontrada
     );
     this.historialPaciente.set([]);
-    this.svc.verPaciente(citaId).subscribe({
+    this.svc.viewPatient(citaId).subscribe({
       next: p => {
         this.pacienteSeleccionado.set(p);
         /* Auto-llenar SOAP con datos del paciente y triage */
@@ -256,7 +256,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
             ''
           ].filter(linea => linea !== undefined).join('\n');
         }
-        this.svc.historialPaciente(citaId).subscribe({
+        this.svc.patientHistory(citaId).subscribe({
           next: historial => this.historialPaciente.set(historial),
           error: () => this.error.set('No se pudo cargar el historial previo del paciente.')
         });
@@ -267,7 +267,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   }
 
   agregarHorario() {
-    this.svc.crearHorario({
+    this.svc.createSchedule({
       diaSemana: this.diaSemana,
       horaInicio: this.horaInicio,
       horaFin: this.horaFin,
@@ -283,7 +283,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   }
 
   eliminarHorario(id: number) {
-    this.svc.eliminarHorario(id).subscribe({ next: () => this.cargarHorarios() });
+    this.svc.deleteSchedule(id).subscribe({ next: () => this.cargarHorarios() });
   }
 
   etiqueta(c: Appointment) {
@@ -428,7 +428,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
 
   private subirAudio(audio: Blob) {
     this.transcribiendoAudio.set(true);
-    this.ai.transcribir(audio).subscribe({
+    this.ai.transcribe(audio).subscribe({
       next: result => {
         const texto = result.texto.trim() || this.transcripcionEnVivo().trim();
         if (texto) {
@@ -456,7 +456,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     this.preciosReq.precioReportado = !isNaN(precio) && precio > 0 ? precio : undefined;
     this.error.set('');
     this.preciosLoading.set(true);
-    this.ai.precios(this.preciosReq).subscribe({
+    this.ai.estimatePrices(this.preciosReq).subscribe({
       next: r => this.preciosRsp.set(r),
       error: () => this.error.set('No se pudo estimar el precio. Inténtalo otra vez.'),
       complete: () => this.preciosLoading.set(false)
@@ -514,7 +514,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     const texto = pregunta.trim();
     if (texto) this.dialogo = [...this.dialogo, { quien: 'medico', texto }];
     this.consultaLoading.set(true);
-    this.ai.consulta({
+    this.ai.simulateVisit({
       nombrePaciente: this.soapReq.nombrePaciente,
       motivo: this.soapReq.motivoInicial,
       contexto: this.soapReq.transcripcion,
@@ -557,7 +557,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     this.error.set('');
     this.avisoOk.set('');
     this.avisoEnviando.set(true);
-    this.svc.enviarIndicacion(cita.id, {
+    this.svc.sendPrescription(cita.id, {
       resumen: this.resumenEnvio || this.soapRsp()?.resumenParaMedico || this.soapReq.motivoInicial,
       medicamentos,
       cuidados: this.cuidadosEnvio

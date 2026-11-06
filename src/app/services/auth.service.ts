@@ -29,21 +29,21 @@ export class AuthService {
   }
 
   logout() {
-    this.cerrarSesionLocal();
+    this.clearLocalSession();
     this.router.navigate(['/']);
   }
 
-  logoutPorInactividad(_role: 'ADMIN' | 'MEDICO') {
-    this.cerrarSesionLocal();
+  logoutForInactivity(_role: 'ADMIN' | 'MEDICO') {
+    this.clearLocalSession();
     this.router.navigate(['/'], { queryParams: { sessionExpired: '1' } });
   }
 
   /** Al abrir la portada no se reutiliza la cuenta anterior. */
-  cerrarSesionAlAbrirPortal() {
-    this.cerrarSesionLocal();
+  clearSessionWhenOpeningPortal() {
+    this.clearLocalSession();
   }
 
-  private cerrarSesionLocal() {
+  private clearLocalSession() {
     this.stopInactivityMonitor();
     sessionStorage.removeItem(SESSION_KEY);
     localStorage.removeItem(SESSION_KEY);

@@ -29,13 +29,13 @@ export class AiService {
 
   triage(req: AiTriageRequest) {
     return this.http.post<AiTriageResponse>(`${BASE}/triage`, req).pipe(
-      catchError(() => of(this.triageLocal(req)))
+      catchError(() => of(this.localTriage(req)))
     );
   }
 
-  dermatologia(req: AiDermatologyRequest) {
+  dermatology(req: AiDermatologyRequest) {
     return this.http.post<AiDermatologyResponse>(`${BASE}/dermatology`, req).pipe(
-      catchError(() => of(this.dermLocal(req)))
+      catchError(() => of(this.localDermatology(req)))
     );
   }
 
@@ -45,18 +45,18 @@ export class AiService {
     payload.transcripcionConsulta = tx;
     payload.transcripcion = tx;
     return this.http.post<AiSoapResponse>(`${BASE}/soap`, payload).pipe(
-      map(r => this.completarSoap(r, tx, payload.motivoInicial)),
-      catchError(() => of(this.soapLocal(tx, payload.nombrePaciente, payload.motivoInicial)))
+      map(r => this.completeSoap(r, tx, payload.motivoInicial)),
+      catchError(() => of(this.localSoap(tx, payload.nombrePaciente, payload.motivoInicial)))
     );
   }
 
-  consulta(req: AiConsultaSimRequest) {
+  simulateVisit(req: AiConsultaSimRequest) {
     return this.http.post<AiConsultaSimResponse>(`${BASE}/consulta`, req).pipe(
-      catchError(() => of(this.consultaLocal(req)))
+      catchError(() => of(this.localConsult(req)))
     );
   }
 
-  transcribir(audio: Blob) {
+  transcribe(audio: Blob) {
     const form = new FormData();
     form.append('audio', audio, 'consulta.webm');
     return this.http.post<AiTranscriptionResponse>(`${BASE}/transcribe`, form).pipe(
@@ -68,24 +68,24 @@ export class AiService {
     );
   }
 
-  interacciones(req: AiInteractionRequest) {
+  interactions(req: AiInteractionRequest) {
     return this.http.post<AiInteractionResponse>(`${BASE}/interactions`, req).pipe(
-      catchError(() => of(this.interLocal(req)))
+      catchError(() => of(this.localInteractions(req)))
     );
   }
 
-  adminOperacion(req: AiAdminOperationRequest) {
+  runAdminOperation(req: AiAdminOperationRequest) {
     return this.http.post<AiAdminOperationResponse>(`${BASE}/admin-operacion`, req);
   }
 
-  precios(req: AiPricesRequest) {
+  estimatePrices(req: AiPricesRequest) {
     return this.http.post<AiPricesResponse>(`${BASE}/prices`, req).pipe(
-      map(r => this.ubicarPrecios(r, req)),
-      catchError(() => of(this.preciosLocal(req)))
+      map(r => this.placePrices(r, req)),
+      catchError(() => of(this.localPrices(req)))
     );
   }
 
-  private triageLocal(req: AiTriageRequest): AiTriageResponse {
+  private localTriage(req: AiTriageRequest): AiTriageResponse {
     const s = (req.sintomas || '').toLowerCase();
     let severidad = 'Verde', nivelEsi = 4, prioridad = 4, especialidadRecomendada = 'Medicina General';
     const hallazgos = ['Orientación local por palabras clave'];
@@ -112,7 +112,7 @@ export class AiService {
     };
   }
 
-  private dermLocal(req: AiDermatologyRequest): AiDermatologyResponse {
+  private localDermatology(req: AiDermatologyRequest): AiDermatologyResponse {
     const d = (req.descripcion || '').toLowerCase();
     let nivelRiesgo = 'BAJO', scoreRiesgo = 0.18;
     let diagnosticosDiferenciales = ['Dermatitis', 'Picadura'];
@@ -142,9 +142,9 @@ export class AiService {
     };
   }
 
-  private completarSoap(r: AiSoapResponse, tx: string, motivo?: string): AiSoapResponse {
+  private completeSoap(r: AiSoapResponse, tx: string, motivo?: string): AiSoapResponse {
     if (r.resumenParaMedico?.trim()) return r;
-    const local = this.soapLocal(tx, '', motivo);
+    const local = this.localSoap(tx, '', motivo);
     return {
       ...r,
       resumenParaMedico: r.apreciacion || local.resumenParaMedico,
@@ -155,7 +155,7 @@ export class AiService {
     };
   }
 
-  private soapLocal(tx: string, nombre?: string, motivo?: string): AiSoapResponse {
+  private localSoap(tx: string, nombre?: string, motivo?: string): AiSoapResponse {
     const corte = tx.length > 280 ? tx.slice(0, 280) + '…' : tx;
     return {
       resumenParaMedico: `${nombre || 'El paciente'} consulta por ${motivo || 'un malestar'}. ${corte ? 'En el relato: ' + corte : 'Aún no hay más detalle.'}`,
@@ -173,7 +173,7 @@ export class AiService {
     };
   }
 
-  private consultaLocal(req: AiConsultaSimRequest): AiConsultaSimResponse {
+  private localConsult(req: AiConsultaSimRequest): AiConsultaSimResponse {
     const motivo = req.motivo?.trim() || 'el malestar que le conté';
     const texto = `${req.motivo || ''} ${req.contexto || ''}`.toLowerCase();
     const pregunta = (req.pregunta || '').toLowerCase();
@@ -206,7 +206,7 @@ export class AiService {
     };
   }
 
-  private interLocal(req: AiInteractionRequest): AiInteractionResponse {
+  private localInteractions(req: AiInteractionRequest): AiInteractionResponse {
     const meds = (req.medicamentos || []).join(', ') || 'ninguno';
     return {
       nivelRiesgoGlobal: 'BAJO',
@@ -224,7 +224,7 @@ export class AiService {
     };
   }
 
-  private preciosLocal(req: AiPricesRequest): AiPricesResponse {
+  private localPrices(req: AiPricesRequest): AiPricesResponse {
     const med = (req.medicamento || '').toLowerCase();
     let base = 30000;
     if (/acetamin|paracetamol|ibuprofeno/.test(med)) base = 7500;
@@ -235,7 +235,7 @@ export class AiService {
     if (desv > 45) evaluacionSobreprecio = 'SOBREPRECIO_ALTO';
     else if (desv > 15) evaluacionSobreprecio = 'SOBREPRECIO_BAJO';
     const presentacion = req.presentacion?.trim() || 'caja de tabletas, presentación habitual';
-    const puntos = this.puntosDeVenta(req.ciudad);
+    const puntos = this.salesPoints(req.ciudad);
     return {
       presentacionEstimada: presentacion,
       precioEsperadoMin: Math.round(base * 0.78),
@@ -257,9 +257,9 @@ export class AiService {
     };
   }
 
-  private ubicarPrecios(r: AiPricesResponse, req: AiPricesRequest): AiPricesResponse {
+  private placePrices(r: AiPricesResponse, req: AiPricesRequest): AiPricesResponse {
     const presentacion = r.presentacionEstimada || req.presentacion?.trim() || 'caja de tabletas, presentación habitual';
-    const puntos = this.puntosDeVenta(req.ciudad);
+    const puntos = this.salesPoints(req.ciudad);
     const base = r.precioPromedio || r.precioEsperadoMin || 20000;
     const lista = (r.comparativa?.length ? r.comparativa : puntos.map((p, i): ComparativaFarmacia => ({
       nombre: p.nombre,
@@ -276,7 +276,7 @@ export class AiService {
     return { ...r, presentacionEstimada: presentacion, comparativa: lista };
   }
 
-  private puntosDeVenta(ciudad?: string): { nombre: string; lugar: string }[] {
+  private salesPoints(ciudad?: string): { nombre: string; lugar: string }[] {
     const c = (ciudad || '').toLowerCase().normalize('NFD').replace(/\p{M}/gu, '');
     if (c.includes('pasto')) return [
       { nombre: 'La Rebaja', lugar: 'Valle de Atriz' },

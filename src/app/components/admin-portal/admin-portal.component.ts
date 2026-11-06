@@ -14,9 +14,9 @@ import { AiAdminOperationResponse, AiPricesRequest, AiPricesResponse } from '../
 import { AiMetrics } from '../../models/ai.model';
 import { HOSPITAL_SPECIALTIES } from '../../data/specialties';
 import {
-  CEDULA_MAX, CLAVE_MAX, CLAVE_MIN, GENEROS, TIPOS_SANGRE,
-  mensajeTelefono, normalizarGenero, normalizarSangre, soloCedula, soloDigitos, telefonoColombiano
-} from '../../data/datos-persona';
+  ID_MAX, PASSWORD_MAX, PASSWORD_MIN, GENDERS, BLOOD_TYPES,
+  phoneMessage, normalizeGender, normalizeBloodType, idDigitsOnly, digitsOnly, isColombianPhone
+} from '../../data/person-data';
 
 type AdminTab = 'inicio' | 'usuarios' | 'medicos' | 'citas' | 'reportes' | 'iasuperv' | 'preciosauditoria' | 'asistente';
 type AdminSub = '' | 'lista' | 'crear' | 'editar' | 'claves' | 'supervision' | 'resumen' | 'mensual';
@@ -141,10 +141,10 @@ export class AdminPortalComponent implements OnInit {
   preciosRsp = signal<AiPricesResponse | null>(null);
   preciosLoading = signal(false);
   readonly especialidades = HOSPITAL_SPECIALTIES;
-  readonly generos = GENEROS;
-  readonly tiposSangre = TIPOS_SANGRE;
-  readonly soloDigitos = soloDigitos;
-  readonly soloCedula = soloCedula;
+  readonly generos = GENDERS;
+  readonly tiposSangre = BLOOD_TYPES;
+  readonly digitsOnly = digitsOnly;
+  readonly idDigitsOnly = idDigitsOnly;
   asistenteTexto = '';
   asistenteLoading = signal(false);
   asistenteRsp = signal<AiAdminOperationResponse | null>(null);
@@ -173,7 +173,7 @@ export class AdminPortalComponent implements OnInit {
   }
 
   cargarAiMetricas() {
-    this.adminService.aiMetricas().subscribe({ next: m => this.aiMetricas.set(m) });
+    this.adminService.aiMetrics().subscribe({ next: m => this.aiMetricas.set(m) });
   }
 
   onNavigate(item: SidebarItem) {
@@ -219,15 +219,15 @@ export class AdminPortalComponent implements OnInit {
   }
 
   cargarUsuarios() {
-    this.adminService.listarUsuarios().subscribe({ next: u => this.usuarios.set(u) });
+    this.adminService.listUsers().subscribe({ next: u => this.usuarios.set(u) });
   }
 
   cargarMedicos() {
-    this.adminService.listarMedicos().subscribe({ next: m => this.medicos.set(m) });
+    this.adminService.listDoctors().subscribe({ next: m => this.medicos.set(m) });
   }
 
   cargarCitas() {
-    this.adminService.supervisarCitas().subscribe({ next: c => this.citas.set(c) });
+    this.adminService.superviseAppointments().subscribe({ next: c => this.citas.set(c) });
   }
 
   citasFiltradas(): Appointment[] {
@@ -266,7 +266,7 @@ export class AdminPortalComponent implements OnInit {
     }
     this.error.set('');
     this.guardandoCambio.set(true);
-    this.adminService.reprogramarCita(cita.id, `${this.nuevaFechaHora}:00`, this.motivoReprogramacion.trim()).subscribe({
+    this.adminService.rescheduleAppointment(cita.id, `${this.nuevaFechaHora}:00`, this.motivoReprogramacion.trim()).subscribe({
       next: result => {
         this.guardandoCambio.set(false);
         this.mensajeCambio.set(result.mensaje);
@@ -281,7 +281,7 @@ export class AdminPortalComponent implements OnInit {
   }
 
   cargarReportes() {
-    this.adminService.reportes().subscribe({ next: r => this.reporte.set(r) });
+    this.adminService.reports().subscribe({ next: r => this.reporte.set(r) });
   }
 
   desactivar(id: number) {
@@ -289,7 +289,7 @@ export class AdminPortalComponent implements OnInit {
   }
 
   cambiarEstado(id: number, activo: boolean) {
-    this.adminService.cambiarEstado(id, activo).subscribe({
+    this.adminService.setActive(id, activo).subscribe({
       next: () => { this.cargarUsuarios(); this.cargarMedicos(); this.okAdmin.set(activo ? 'Cuenta activada' : 'Cuenta desactivada'); },
       error: (e) => this.error.set(e.error?.error ?? 'No se pudo cambiar el estado')
     });
@@ -300,11 +300,11 @@ export class AdminPortalComponent implements OnInit {
     this.claveVisible = u.clave || '';
     this.form = {
       nombre: u.nombre, email: u.email, password: '', rol: u.rol,
-      telefono: soloDigitos(u.telefono || ''), documento: this.documentoVisible(u.documento || ''),
-      fechaNacimiento: u.fechaNacimiento || '', genero: normalizarGenero(u.genero || ''),
-      tipoSangre: normalizarSangre(u.tipoSangre || ''), direccion: u.direccion || '', ciudad: u.ciudad || '',
+      telefono: digitsOnly(u.telefono || ''), documento: this.documentoVisible(u.documento || ''),
+      fechaNacimiento: u.fechaNacimiento || '', genero: normalizeGender(u.genero || ''),
+      tipoSangre: normalizeBloodType(u.tipoSangre || ''), direccion: u.direccion || '', ciudad: u.ciudad || '',
       alergias: u.alergias || '', contactoEmergencia: u.contactoEmergencia || '',
-      telefonoEmergencia: soloDigitos(u.telefonoEmergencia || ''), observaciones: u.observaciones || '',
+      telefonoEmergencia: digitsOnly(u.telefonoEmergencia || ''), observaciones: u.observaciones || '',
       especialidad: u.especialidad || '', numeroLicencia: u.numeroLicencia || '',
       consultorio: u.consultorio || '', anosExperiencia: u.anosExperiencia, biografia: u.biografia || '',
       diasAtencion: u.diasAtencion || '', horaInicio: u.horaInicio || '', horaFin: u.horaFin || '',
@@ -327,76 +327,76 @@ export class AdminPortalComponent implements OnInit {
   }
 
   telefonoValido(valor?: string) {
-    return telefonoColombiano(valor || '');
+    return isColombianPhone(valor || '');
   }
 
   documentoVisible(valor: string) {
     const texto = (valor || '').trim();
-    return /^\d+$/.test(texto) ? texto.slice(0, CEDULA_MAX) : texto;
+    return /^\d+$/.test(texto) ? texto.slice(0, ID_MAX) : texto;
   }
 
   alEscribirCedula(valor: string) {
     const texto = valor ?? '';
     if (/[A-Za-z]/.test(texto) && !/\d/.test(texto)) return texto.slice(0, 20);
-    return soloCedula(texto);
+    return idDigitsOnly(texto);
   }
 
   cedulaLarga() {
-    return (this.form.documento || '').replace(/\D/g, '').length > CEDULA_MAX;
+    return (this.form.documento || '').replace(/\D/g, '').length > ID_MAX;
   }
 
   private telefonoCompleto(valor?: string) {
-    const d = soloDigitos(valor || '');
-    return !!d && telefonoColombiano(d);
+    const d = digitsOnly(valor || '');
+    return !!d && isColombianPhone(d);
   }
 
   claveCorta() {
     const n = (this.form.password || '').length;
-    return n > 0 && n < CLAVE_MIN;
+    return n > 0 && n < PASSWORD_MIN;
   }
 
   textoClave() {
     const n = (this.form.password || '').length;
-    if (!n) return `Mínimo ${CLAVE_MIN} caracteres. Vacía = no cambiar la clave.`;
-    if (n < CLAVE_MIN) return `${n} de ${CLAVE_MIN} caracteres como mínimo.`;
-    return `${n} caracteres. Máximo ${CLAVE_MAX}.`;
+    if (!n) return `Mínimo ${PASSWORD_MIN} caracteres. Vacía = no cambiar la clave.`;
+    if (n < PASSWORD_MIN) return `${n} de ${PASSWORD_MIN} caracteres como mínimo.`;
+    return `${n} caracteres. Máximo ${PASSWORD_MAX}.`;
   }
 
   guardarEdicion() {
     const id = this.editandoId();
     if (!id) return;
     const clave = this.form.password?.trim() || '';
-    this.form.telefono = soloDigitos(this.form.telefono || '');
-    this.form.telefonoEmergencia = soloDigitos(this.form.telefonoEmergencia || '');
-    if (clave && (clave.length < CLAVE_MIN || clave.length > CLAVE_MAX)) {
-      this.error.set(`La nueva clave debe tener entre ${CLAVE_MIN} y ${CLAVE_MAX} caracteres.`);
+    this.form.telefono = digitsOnly(this.form.telefono || '');
+    this.form.telefonoEmergencia = digitsOnly(this.form.telefonoEmergencia || '');
+    if (clave && (clave.length < PASSWORD_MIN || clave.length > PASSWORD_MAX)) {
+      this.error.set(`La nueva clave debe tener entre ${PASSWORD_MIN} y ${PASSWORD_MAX} caracteres.`);
       return;
     }
-    if (!telefonoColombiano(this.form.telefono)) {
-      this.error.set(mensajeTelefono('El teléfono'));
+    if (!isColombianPhone(this.form.telefono)) {
+      this.error.set(phoneMessage('El teléfono'));
       return;
     }
-    if (this.form.rol === 'PACIENTE' && !telefonoColombiano(this.form.telefonoEmergencia || '')) {
-      this.error.set(mensajeTelefono('El teléfono de emergencia'));
+    if (this.form.rol === 'PACIENTE' && !isColombianPhone(this.form.telefonoEmergencia || '')) {
+      this.error.set(phoneMessage('El teléfono de emergencia'));
       return;
     }
     if (this.form.rol === 'PACIENTE') {
       const doc = (this.form.documento || '').trim();
-      if (doc && /^\d+$/.test(doc) && doc.length > CEDULA_MAX) {
-        this.error.set(`La cédula tiene máximo ${CEDULA_MAX} dígitos.`);
+      if (doc && /^\d+$/.test(doc) && doc.length > ID_MAX) {
+        this.error.set(`La cédula tiene máximo ${ID_MAX} dígitos.`);
         return;
       }
       if (doc && !/^\d+$/.test(doc)) {
-        const digitos = soloCedula(doc);
+        const digitos = idDigitsOnly(doc);
         if (digitos.length >= 6) this.form.documento = digitos;
         else if (/\d/.test(doc)) {
-          this.error.set(`La cédula solo lleva números, máximo ${CEDULA_MAX}.`);
+          this.error.set(`La cédula solo lleva números, máximo ${ID_MAX}.`);
           return;
         }
       }
     }
     const datos: UserRequest = { ...this.form, password: clave || undefined };
-    this.adminService.actualizarUsuario(id, datos).subscribe({
+    this.adminService.updateUser(id, datos).subscribe({
       next: (guardado) => {
         this.okAdmin.set('Datos guardados. Si vuelves a editar, vas a ver esta misma ficha.');
         this.claveVisible = guardado.clave || clave || this.claveVisible;
@@ -431,7 +431,7 @@ export class AdminPortalComponent implements OnInit {
       return;
     }
     this.error.set('');
-    this.adminService.restablecerClave(this.idUsuario(u), clave, confirmacion).subscribe({
+    this.adminService.resetPassword(this.idUsuario(u), clave, confirmacion).subscribe({
       next: () => {
         this.claveEntregada.set({ nombre: u.nombre, email: u.email, password: clave });
         this.okAdmin.set('');
@@ -485,7 +485,7 @@ export class AdminPortalComponent implements OnInit {
   probarGemini() {
     this.iaProbando.set(true);
     this.iaPrueba.set('');
-    this.adminService.probarGemini().subscribe({
+    this.adminService.pingAssistant().subscribe({
       next: r => {
         this.iaProbando.set(false);
         const detalle = (r.detalle || '').toLowerCase();
@@ -516,7 +516,7 @@ export class AdminPortalComponent implements OnInit {
     this.asistenteTexto = '';
     this.asistenteLoading.set(true);
     const historial = this.asistenteBorrador ? [...this.asistenteHistorial] : [];
-    this.ai.adminOperacion({ instruccion: texto, borrador: this.asistenteBorrador || undefined, historial }).subscribe({
+    this.ai.runAdminOperation({ instruccion: texto, borrador: this.asistenteBorrador || undefined, historial }).subscribe({
       next: r => {
         this.asistenteRsp.set(r);
         const sigue = !(r.accion === 'INFO' && !r.nombre);
@@ -547,8 +547,8 @@ export class AdminPortalComponent implements OnInit {
     const faltan: string[] = [];
     if (!r.nombre?.trim()) faltan.push('el nombre completo');
     if (!r.email?.includes('@')) faltan.push('el correo');
-    if (!r.passwordSugerida || r.passwordSugerida.length < CLAVE_MIN || r.passwordSugerida.length > CLAVE_MAX) {
-      faltan.push(`la contraseña (entre ${CLAVE_MIN} y ${CLAVE_MAX} caracteres)`);
+    if (!r.passwordSugerida || r.passwordSugerida.length < PASSWORD_MIN || r.passwordSugerida.length > PASSWORD_MAX) {
+      faltan.push(`la contraseña (entre ${PASSWORD_MIN} y ${PASSWORD_MAX} caracteres)`);
     }
     if (medico) {
       if (!r.especialidad?.trim()) faltan.push('la especialidad');
@@ -560,8 +560,8 @@ export class AdminPortalComponent implements OnInit {
       if (!r.documento?.trim()) faltan.push('el documento de identidad');
       if (!this.telefonoCompleto(r.telefono)) faltan.push('un teléfono de 10 dígitos (celular empieza por 3, fijo por 60)');
       if (!r.fechaNacimiento || !/^\d{4}-\d{2}-\d{2}$/.test(r.fechaNacimiento)) faltan.push('la fecha de nacimiento');
-      if (!normalizarGenero(r.genero || '')) faltan.push('el género (masculino, femenino u otro)');
-      if (!normalizarSangre(r.tipoSangre || '')) faltan.push('el tipo de sangre (O+, O-, A+, A-, B+, B-, AB+ o AB-)');
+      if (!normalizeGender(r.genero || '')) faltan.push('el género (masculino, femenino u otro)');
+      if (!normalizeBloodType(r.tipoSangre || '')) faltan.push('el tipo de sangre (O+, O-, A+, A-, B+, B-, AB+ o AB-)');
       if (!r.direccion?.trim()) faltan.push('la dirección');
       if (!r.ciudad?.trim()) faltan.push('la ciudad');
       if (!r.alergias?.trim()) faltan.push('las alergias (o «ninguna»)');
@@ -582,14 +582,14 @@ export class AdminPortalComponent implements OnInit {
       nombre: r.nombre || '',
       email: r.email || '',
       password: clave,
-      telefono: soloDigitos(r.telefono || ''),
+      telefono: digitsOnly(r.telefono || ''),
       ciudad: r.ciudad || '',
-      genero: normalizarGenero(r.genero || ''),
+      genero: normalizeGender(r.genero || ''),
       alergias: r.alergias || '',
       fechaNacimiento: r.fechaNacimiento || ''
     };
     const alta = r.accion === 'CREAR_MEDICO'
-      ? this.adminService.crearMedico({
+      ? this.adminService.createDoctor({
           ...comun,
           rol: 'MEDICO',
           especialidad: r.especialidad || '',
@@ -603,14 +603,14 @@ export class AdminPortalComponent implements OnInit {
           horaInicio2: r.horaInicio2 || '',
           horaFin2: r.horaFin2 || ''
         })
-      : this.adminService.crearUsuario({
+      : this.adminService.createUser({
           ...comun,
           rol: 'PACIENTE',
           documento: r.documento || '',
-          tipoSangre: normalizarSangre(r.tipoSangre || ''),
+          tipoSangre: normalizeBloodType(r.tipoSangre || ''),
           direccion: r.direccion || '',
           contactoEmergencia: r.contactoEmergencia || '',
-          telefonoEmergencia: soloDigitos(r.telefonoEmergencia || ''),
+          telefonoEmergencia: digitsOnly(r.telefonoEmergencia || ''),
           observaciones: r.observaciones || ''
         });
     alta.subscribe({
@@ -736,7 +736,7 @@ export class AdminPortalComponent implements OnInit {
       return;
     }
     this.asistenteTranscribiendo.set(true);
-    this.ai.transcribir(audio).subscribe({
+    this.ai.transcribe(audio).subscribe({
       next: result => enviar(result.texto.trim() || enVivo, result.mensaje),
       error: () => enviar(enVivo)
     });
@@ -795,7 +795,7 @@ export class AdminPortalComponent implements OnInit {
     this.error.set('');
     this.preciosReq.precioReportado = precio;
     this.preciosLoading.set(true);
-    this.ai.precios(this.preciosReq).subscribe({
+    this.ai.estimatePrices(this.preciosReq).subscribe({
       next: r => this.preciosRsp.set(r),
       complete: () => this.preciosLoading.set(false)
     });

@@ -8,19 +8,19 @@ export class NotificationService {
   private http = inject(HttpClient);
   private readonly api = `${environment.apiUrl}/notifications`;
 
-  listar() {
+  list() {
     return this.http.get<Notification[]>(this.api);
   }
 
-  noLeidas() {
+  unreadCount() {
     return this.http.get<{ total: number }>(`${this.api}/unread`);
   }
 
-  leer(id: number) {
+  markRead(id: number) {
     return this.http.patch<void>(`${this.api}/${id}/read`, {});
   }
 
-  leerTodas() {
+  markAllRead() {
     return this.http.patch<void>(`${this.api}/read-all`, {});
   }
 }

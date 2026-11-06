@@ -71,7 +71,7 @@ export class InactivityService {
     if (idle >= this.durationMs) {
       const rol = this.rol;
       this.stop();
-      this.injector.get(AuthService).logoutPorInactividad(rol);
+      this.injector.get(AuthService).logoutForInactivity(rol);
     }
   }
 }

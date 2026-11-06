@@ -38,11 +38,11 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
   };
 
   cargar() {
-    this.svc.listar().subscribe({
+    this.svc.list().subscribe({
       next: n => this.items.set(n),
       error: () => this.items.set([])
     });
-    this.svc.noLeidas().subscribe({
+    this.svc.unreadCount().subscribe({
       next: r => this.noLeidas.set(r.total),
       error: () => this.noLeidas.set(0)
     });
@@ -55,10 +55,10 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
 
   leer(n: Notification) {
     if (n.leida) return;
-    this.svc.leer(n.id).subscribe({ next: () => this.cargar() });
+    this.svc.markRead(n.id).subscribe({ next: () => this.cargar() });
   }
 
   leerTodas() {
-    this.svc.leerTodas().subscribe({ next: () => this.cargar() });
+    this.svc.markAllRead().subscribe({ next: () => this.cargar() });
   }
 }
