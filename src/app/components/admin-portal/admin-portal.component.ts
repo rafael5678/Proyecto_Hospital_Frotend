@@ -4,7 +4,7 @@ import { DatePipe, DecimalPipe } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { AdminService } from '../../services/admin.service';
 import { User, UserRequest } from '../../models/user.model';
-import { Appointment } from '../../models/appointment.model';
+import { Appointment, etiquetaCita } from '../../models/appointment.model';
 import { Report } from '../../models/report.model';
 import { PortalSidebarComponent, SidebarItem } from '../portal-sidebar/portal-sidebar.component';
 import { SessionTimeoutComponent } from '../session-timeout/session-timeout.component';
@@ -750,6 +750,10 @@ export class AdminPortalComponent implements OnInit {
       numeroLicencia: '', consultorio: '', anosExperiencia: undefined, biografia: ''
     };
     this.error.set('');
+  }
+
+  etiqueta(c: Appointment) {
+    return etiquetaCita(c);
   }
 
   badgeClass(estado: string): string {

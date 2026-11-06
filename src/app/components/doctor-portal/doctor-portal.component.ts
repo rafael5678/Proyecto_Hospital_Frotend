@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { DoctorService, DoctorDashboard, DoctorProfile } from '../../services/doctor.service';
-import { Appointment } from '../../models/appointment.model';
+import { Appointment, etiquetaCita } from '../../models/appointment.model';
 import { Schedule } from '../../models/schedule.model';
 import { PatientProfile } from '../../models/patient-profile.model';
 import { PortalSidebarComponent, SidebarItem } from '../portal-sidebar/portal-sidebar.component';
@@ -278,6 +278,10 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
 
   eliminarHorario(id: number) {
     this.svc.eliminarHorario(id).subscribe({ next: () => this.cargarHorarios() });
+  }
+
+  etiqueta(c: Appointment) {
+    return etiquetaCita(c);
   }
 
   badgeClass(estado: string): string {

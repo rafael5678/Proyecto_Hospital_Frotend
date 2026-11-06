@@ -133,7 +133,7 @@
               @if (c.dermatologiaScoreRiesgo != null) { <small>Orientación de piel: riesgo {{ c.dermatologiaScoreRiesgo
                 }}</small> }
             </td>
-            <td><span [class]="badgeClass(c.estado)">{{ c.estado }}</span></td>
+            <td><span [class]="badgeClass(c.estado)">{{ etiqueta(c) }}</span></td>
             <td class="actions">
               @if (c.estado === 'PENDIENTE') {
               <button type="button" class="btn-sm ok" (click)="aceptar(c.id)">Aceptar</button>

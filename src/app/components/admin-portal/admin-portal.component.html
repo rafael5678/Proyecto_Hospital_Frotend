@@ -369,7 +369,7 @@
                 <td>@if (c.triageSeveridad) { {{ c.triageSeveridad }} · ESI {{ c.triageNivelEsi ?? '—' }} · {{ c.triagePrioridad ?? '—' }}/10 } @else { Sin triage }</td>
                 <td>{{ c.triageEspecialidadSugerida || '—' }}</td>
                 <td>{{ c.fechaHora | date:'medium' }}</td>
-                <td><span [class]="badgeClass(c.estado)">{{ c.estado }}</span></td>
+                <td><span [class]="badgeClass(c.estado)">{{ etiqueta(c) }}</span></td>
                 <td>@if (c.estado === 'PENDIENTE' || c.estado === 'ACEPTADA') { <button type="button" class="btn-sm info" (click)="abrirReprogramacion(c)">Reprogramar</button> }</td>
               </tr>
             }

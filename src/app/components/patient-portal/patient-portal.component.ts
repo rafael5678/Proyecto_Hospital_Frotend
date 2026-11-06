@@ -4,7 +4,8 @@ import { DatePipe } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { PatientService } from '../../services/patient.service';
 import { AiService } from '../../services/ai.service';
-import { Appointment } from '../../models/appointment.model';
+import { Appointment, etiquetaCita } from '../../models/appointment.model';
+import { Notification } from '../../models/notification.model';
 import { User } from '../../models/user.model';
 import { CupoDisponible, Schedule } from '../../models/schedule.model';
 import { PatientDashboard, PatientProfile } from '../../models/patient-profile.model';
@@ -37,6 +38,8 @@ export class PatientPortalComponent implements OnInit {
   auth = inject(AuthService);
   private avisos = inject(NotificationService);
   private avisosReales = signal<{ titulo: string; detalle: string }[]>([]);
+  private avisosInbox = signal<Notification[]>([]);
+  recetaVisible = signal('');
   private svc = inject(PatientService);
   private ai = inject(AiService);
 
@@ -153,6 +156,7 @@ export class PatientPortalComponent implements OnInit {
     this.error.set('');
     this.ok.set('');
     if (item.tab === 'perfil' || item.tab === 'agendar') this.cargarPerfilYAntecedentes();
+    if (item.tab === 'interacciones' || item.tab === 'precios') this.aplicarReceta();
     if (item.tab === 'proximas') this.svc.proximas().subscribe({ next: c => this.proximas.set(c) });
     const group = this.menuItems.find(m => m.children?.some(c => c.id === item.id));
     if (group && !this.expandedMenus().includes(group.id)) {
@@ -188,7 +192,11 @@ export class PatientPortalComponent implements OnInit {
     this.svc.dashboard().subscribe({ next: d => this.dashboard.set(d) });
     this.svc.proximas().subscribe({ next: c => this.proximas.set(c) });
     this.avisos.listar().subscribe({
-      next: n => this.avisosReales.set(n.slice(0, 4).map(a => ({ titulo: a.titulo, detalle: a.mensaje })))
+      next: n => {
+        this.avisosInbox.set(n);
+        this.avisosReales.set(n.slice(0, 4).map(a => ({ titulo: a.titulo, detalle: a.mensaje })));
+        this.aplicarReceta();
+      }
     });
   }
 
@@ -395,7 +403,12 @@ export class PatientPortalComponent implements OnInit {
   }
 
   cargarHistorial() {
-    this.svc.historial().subscribe({ next: c => this.citas.set(c) });
+    this.svc.historial().subscribe({
+      next: c => {
+        this.citas.set(c);
+        this.aplicarReceta();
+      }
+    });
   }
 
   agendar() {
@@ -683,16 +696,66 @@ export class PatientPortalComponent implements OnInit {
     return parts.slice(0, 2).map(p => p[0]?.toUpperCase() ?? '').join('');
   }
 
+  etiqueta(c: Appointment) {
+    if (this.consultaCerrada(c) && (c.estado || '').toUpperCase() !== 'COMPLETADA') {
+      return this.seAdelanto(c) ? 'Aceptada · se adelantó' : 'Aceptada · concluida';
+    }
+    return etiquetaCita(c);
+  }
+
+  consultaCerrada(c: Appointment) {
+    if ((c.estado || '').toUpperCase() === 'COMPLETADA') return true;
+    return this.avisosInbox().some(a => a.citaId === c.id && (a.tipo === 'INDICACION' || a.tipo === 'CONSULTA_CONCLUIDA' || /consulta concluida|indicaciones de tu consulta/i.test(a.titulo)));
+  }
+
+  seAdelanto(c: Appointment) {
+    const fecha = new Date(c.fechaHora).getTime();
+    const hecha = c.concluidaEn ? new Date(c.concluidaEn).getTime() : 0;
+    return !!c.adelantada || (hecha > 0 && fecha > hecha) || (this.consultaCerrada(c) && fecha > Date.now());
+  }
+
+  citaConcluida(): Appointment | null {
+    const todas = new Map<number, Appointment>();
+    [...this.citas(), ...this.proximas()].forEach(c => todas.set(c.id, c));
+    return [...todas.values()]
+      .filter(c => this.consultaCerrada(c))
+      .sort((a, b) => new Date(b.fechaHora).getTime() - new Date(a.fechaHora).getTime())[0] ?? null;
+  }
+
   proximaCita(): Appointment | null {
     const ahora = Date.now();
     return this.proximas()
-      .filter(c => !['CANCELADA', 'RECHAZADA'].includes((c.estado || '').toUpperCase()))
+      .filter(c => !this.consultaCerrada(c))
+      .filter(c => !['CANCELADA', 'RECHAZADA', 'COMPLETADA'].includes((c.estado || '').toUpperCase()))
       .filter(c => {
         const t = new Date(c.fechaHora).getTime();
         return !Number.isNaN(t) && t >= ahora;
       })
       .slice()
       .sort((a, b) => new Date(a.fechaHora).getTime() - new Date(b.fechaHora).getTime())[0] ?? null;
+  }
+
+  private aplicarReceta() {
+    const deCita = this.citaConcluida()?.receta || '';
+    const aviso = this.avisosInbox().find(a => /Medicamentos:/i.test(a.mensaje || ''));
+    const texto = deCita || this.extraerMeds(aviso?.mensaje || '');
+    if (!texto) return;
+    const nombres = texto.split(/;|\n/).map(p => p.split('·')[0].trim()).filter(Boolean);
+    if (!nombres.length) return;
+    this.recetaVisible.set(nombres.join(', '));
+    if (!this.interMed.trim()) this.interMed = nombres.join(', ');
+    if (!this.preciosReq.medicamento.trim()) {
+      const presentacion = texto.split('·')[1]?.split(/;|\n/)[0]?.trim() || '';
+      this.preciosReq = { ...this.preciosReq, medicamento: nombres[0], presentacion };
+    }
+  }
+
+  private extraerMeds(mensaje: string) {
+    const inicio = mensaje.indexOf('Medicamentos:');
+    if (inicio < 0) return '';
+    const resto = mensaje.slice(inicio + 'Medicamentos:'.length).trim();
+    const corte = resto.indexOf('\n\n');
+    return (corte >= 0 ? resto.slice(0, corte) : resto).trim();
   }
 
   irA(tab: PacienteTab, sub: PacienteSub = '') {

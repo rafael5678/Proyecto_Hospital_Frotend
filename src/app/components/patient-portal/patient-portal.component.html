@@ -47,6 +47,13 @@
               }
               <p class="doctor-name">{{ c.medicoNombre }}</p>
               <button type="button" class="btn-pill" (click)="irA('proximas', 'proximas')">Ver detalles</button>
+            } @else if (citaConcluida(); as hecha) {
+              <p class="eyebrow">Consulta concluida</p>
+              <h3>Ya se hizo</h3>
+              <p>Estaba para el {{ formatFechaCita(hecha.fechaHora) }} con {{ hecha.medicoNombre }}.</p>
+              <p>{{ seAdelanto(hecha) ? 'Se adelantó: te atendieron antes de esa fecha. Quedó aceptada y concluida.' : 'Quedó aceptada y concluida.' }}</p>
+              @if (recetaVisible()) { <p>Medicamentos: {{ recetaVisible() }}</p> }
+              <button type="button" class="btn-pill" (click)="irA('interacciones', 'inter')">Ver medicamentos</button>
             } @else {
               <p class="eyebrow">Próxima cita</p>
               <h3>No tienes citas agendadas</h3>
@@ -244,9 +251,9 @@
                   <td>{{ c.medicoNombre }}</td>
                   <td>{{ c.medicoEspecialidad }}</td>
                   <td>{{ c.fechaHora | date:'medium' }}</td>
-                  <td><span [class]="badgeClass(c.estado)">{{ c.estado }}</span></td>
+                  <td><span [class]="badgeClass(c.estado)">{{ etiqueta(c) }}</span></td>
                   <td>
-                    @if (c.estado === 'PENDIENTE' || c.estado === 'ACEPTADA') {
+                    @if ((c.estado === 'PENDIENTE' || c.estado === 'ACEPTADA') && !consultaCerrada(c)) {
                       <button type="button" class="btn-sm cancel" (click)="cancelar(c.id)">Cancelar</button>
                     }
                   </td>
@@ -269,10 +276,12 @@
                 <tr>
                   <td>{{ c.medicoNombre }}</td>
                   <td>{{ c.fechaHora | date:'medium' }}</td>
-                  <td><span [class]="badgeClass(c.estado)">{{ c.estado }}</span></td>
+                  <td><span [class]="badgeClass(c.estado)">{{ etiqueta(c) }}</span></td>
                   <td>
-                    @if (c.estado === 'PENDIENTE' || c.estado === 'ACEPTADA') {
+                    @if ((c.estado === 'PENDIENTE' || c.estado === 'ACEPTADA') && !consultaCerrada(c)) {
                       <button type="button" class="btn-sm cancel" (click)="cancelar(c.id)">Cancelar</button>
+                    } @else if (consultaCerrada(c)) {
+                      <small>{{ seAdelanto(c) ? 'La consulta se adelantó y ya terminó.' : 'La consulta ya terminó.' }}</small>
                     }
                   </td>
                 </tr>
@@ -348,7 +357,8 @@
         <div class="card section form-grid ai-panel">
           <h2 class="section-title">💊 Revisión orientativa de medicamentos</h2>
           <p class="info-msg">Un modelo de lenguaje puede señalar preguntas para tu médico o farmacéutico; no consulta un catálogo farmacológico validado ni confirma que la lista esté libre de interacciones. No cambies tu tratamiento con esta respuesta.</p>
-          <div class="full"><label>Medicamentos que consumes (separados por coma) *</label><textarea class="input" rows="3" [(ngModel)]="interMed" placeholder="Atorvastatina 20mg, Warfarina 5mg, Omeprazol..."></textarea></div>
+          @if (recetaVisible()) { <p class="info-msg">De tu consulta: {{ recetaVisible() }}</p> }
+          <div class="full"><label>Medicamentos que consumes (separados por coma) *</label><textarea class="input" rows="3" [(ngModel)]="interMed" placeholder="Se llenan con lo que te recetaron"></textarea></div>
           <div class="full"><label>Dieta habitual / alimentos que consumes frecuentemente</label><textarea class="input" rows="3" [(ngModel)]="interDieta" placeholder="Jugo de toronja, espinaca, brócoli, lácteos, alcohol..."></textarea></div>
           <div class="full"><label>Suplementos o vitaminas</label><textarea class="input" rows="2" [(ngModel)]="interSuplem" placeholder="Vitamina K, Omega 3, Magnesio..."></textarea></div>
           <div class="full">
@@ -385,7 +395,8 @@
         <div class="card section form-grid ai-panel">
           <h2 class="section-title">💊 Estimación orientativa de precios</h2>
           <p class="info-msg">La aplicación no consulta precios de farmacias ni series históricas. Las comparativas y estimaciones pueden ser demostrativas; verifica precios directamente con el establecimiento.</p>
-          <div><label>Medicamento *</label><input class="input" [(ngModel)]="preciosReq.medicamento" placeholder="Ej: Acetaminofén 500mg x 20 tabletas" /></div>
+          @if (recetaVisible()) { <p class="info-msg">De tu consulta: {{ recetaVisible() }}. El precio es aproximado.</p> }
+          <div><label>Medicamento *</label><input class="input" [(ngModel)]="preciosReq.medicamento" placeholder="Se llena con lo que te recetaron" /></div>
           <div><label>Presentación</label><input class="input" [(ngModel)]="preciosReq.presentacion" placeholder="Tabletas, cápsulas, ampollas..." /></div>
           <div><label>Precio que te cobraron (COP)</label><input class="input" type="number" [(ngModel)]="preciosPrecioTxt" placeholder="45000" /></div>
           <div><label>Ciudad</label><input class="input" [(ngModel)]="preciosReq.ciudad" placeholder="Pasto, Bogotá, Cali..." /></div>
