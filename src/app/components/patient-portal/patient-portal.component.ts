@@ -744,18 +744,35 @@ export class PatientPortalComponent implements OnInit {
     if (!nombres.length) return;
     this.recetaVisible.set(nombres.join(', '));
     if (!this.interMed.trim()) this.interMed = nombres.join(', ');
+    const cuidados = this.extraerBloque(aviso?.mensaje || '', 'Qué hacer:');
+    if (cuidados && !this.interDieta.trim()) this.interDieta = cuidados;
+    if (!this.interSuplem.trim()) this.interSuplem = this.suplementosDe(`${texto} ${cuidados}`);
     if (!this.preciosReq.medicamento.trim()) {
       const presentacion = texto.split('·')[1]?.split(/;|\n/)[0]?.trim() || '';
       this.preciosReq = { ...this.preciosReq, medicamento: nombres[0], presentacion };
     }
   }
 
-  private extraerMeds(mensaje: string) {
-    const inicio = mensaje.indexOf('Medicamentos:');
+  private extraerBloque(mensaje: string, marca: string) {
+    const inicio = mensaje.indexOf(marca);
     if (inicio < 0) return '';
-    const resto = mensaje.slice(inicio + 'Medicamentos:'.length).trim();
-    const corte = resto.indexOf('\n\n');
+    const resto = mensaje.slice(inicio + marca.length).trim();
+    const corte = resto.search(/\n\n(?! )/);
     return (corte >= 0 ? resto.slice(0, corte) : resto).trim();
+  }
+
+  private suplementosDe(texto: string) {
+    const hallados = texto.match(/vitamina [^,.;\n]+|omega[^,.;\n]*|magnesio|calcio|hierro|zinc|suplemento[^,.;\n]*/gi) || [];
+    const unicos = [...new Set(hallados.map(s => s.trim()))];
+    return unicos.length ? unicos.join(', ') : 'Ninguno indicado en la consulta';
+  }
+
+  proximasVisibles(): Appointment[] {
+    return this.proximas().filter(c => !this.consultaCerrada(c));
+  }
+
+  private extraerMeds(mensaje: string) {
+    return this.extraerBloque(mensaje, 'Medicamentos:');
   }
 
   irA(tab: PacienteTab, sub: PacienteSub = '') {

@@ -102,7 +102,7 @@
             </div>
             <div>
               <small>Próximas citas</small>
-              <strong>{{ d.proximasCitas }}</strong>
+              <strong>{{ proximasVisibles().length }}</strong>
               <em>Agendadas</em>
             </div>
           </div>
@@ -266,13 +266,13 @@
 
       @if (tab() === 'proximas') {
         <h2 class="section-title">Próximas citas</h2>
-        @if (proximas().length === 0) {
-          <p class="empty">No hay citas próximas.</p>
+        @if (proximasVisibles().length === 0) {
+          <p class="empty">{{ citaConcluida() ? 'No hay citas próximas. La que estaba agendada ya se hizo.' : 'No hay citas próximas.' }}</p>
         } @else {
           <table>
             <thead><tr><th>Médico</th><th>Fecha</th><th>Estado</th><th></th></tr></thead>
             <tbody>
-              @for (c of proximas(); track c.id) {
+              @for (c of proximasVisibles(); track c.id) {
                 <tr>
                   <td>{{ c.medicoNombre }}</td>
                   <td>{{ c.fechaHora | date:'medium' }}</td>
@@ -355,12 +355,12 @@
 
       @if (tab() === 'interacciones') {
         <div class="card section form-grid ai-panel">
-          <h2 class="section-title">💊 Revisión orientativa de medicamentos</h2>
-          <p class="info-msg">Un modelo de lenguaje puede señalar preguntas para tu médico o farmacéutico; no consulta un catálogo farmacológico validado ni confirma que la lista esté libre de interacciones. No cambies tu tratamiento con esta respuesta.</p>
-          @if (recetaVisible()) { <p class="info-msg">De tu consulta: {{ recetaVisible() }}</p> }
-          <div class="full"><label>Medicamentos que consumes (separados por coma) *</label><textarea class="input" rows="3" [(ngModel)]="interMed" placeholder="Se llenan con lo que te recetaron"></textarea></div>
-          <div class="full"><label>Dieta habitual / alimentos que consumes frecuentemente</label><textarea class="input" rows="3" [(ngModel)]="interDieta" placeholder="Jugo de toronja, espinaca, brócoli, lácteos, alcohol..."></textarea></div>
-          <div class="full"><label>Suplementos o vitaminas</label><textarea class="input" rows="2" [(ngModel)]="interSuplem" placeholder="Vitamina K, Omega 3, Magnesio..."></textarea></div>
+          <h2 class="section-title full">Revisión orientativa de medicamentos</h2>
+          <p class="info-msg full">Revisa lo que te dejó la consulta. No cambia el tratamiento por esta orientación.</p>
+          @if (recetaVisible()) { <p class="info-msg full">De tu consulta: {{ recetaVisible() }}</p> }
+          <div class="full"><label>Medicamentos de la consulta *</label><textarea class="input" rows="3" [(ngModel)]="interMed" placeholder="Se llenan con lo que te recetaron"></textarea></div>
+          <div class="full"><label>Qué te recomendaron hacer</label><textarea class="input" rows="3" [(ngModel)]="interDieta" placeholder="Reposo, cuidados y lo que debes hacer en casa"></textarea></div>
+          <div class="full"><label>Suplementos o vitaminas de la consulta</label><textarea class="input" rows="2" [(ngModel)]="interSuplem" placeholder="Solo si te los indicaron"></textarea></div>
           <div class="full">
             <button type="button" class="btn btn-green full" (click)="interAnalizar()" [disabled]="interLoading()">
               {{ interLoading() ? 'Revisando...' : 'Revisar con IA' }}
@@ -393,9 +393,9 @@
 
       @if (tab() === 'precios') {
         <div class="card section form-grid ai-panel">
-          <h2 class="section-title">💊 Estimación orientativa de precios</h2>
-          <p class="info-msg">La aplicación no consulta precios de farmacias ni series históricas. Las comparativas y estimaciones pueden ser demostrativas; verifica precios directamente con el establecimiento.</p>
-          @if (recetaVisible()) { <p class="info-msg">De tu consulta: {{ recetaVisible() }}. El precio es aproximado.</p> }
+          <h2 class="section-title full">Estimación orientativa de precios</h2>
+          <p class="info-msg full">La aplicación no consulta precios de farmacias ni series históricas. Las comparativas son orientativas; verifica el valor en el establecimiento.</p>
+          @if (recetaVisible()) { <p class="info-msg full">De tu consulta: {{ recetaVisible() }}. El precio es aproximado.</p> }
           <div><label>Medicamento *</label><input class="input" [(ngModel)]="preciosReq.medicamento" placeholder="Se llena con lo que te recetaron" /></div>
           <div><label>Presentación</label><input class="input" [(ngModel)]="preciosReq.presentacion" placeholder="Tabletas, cápsulas, ampollas..." /></div>
           <div><label>Precio que te cobraron (COP)</label><input class="input" type="number" [(ngModel)]="preciosPrecioTxt" placeholder="45000" /></div>
@@ -407,7 +407,7 @@
           </div>
 
           @if (preciosRsp(); as p) {
-            <div class="ai-result">
+            <div class="ai-result full precio-ancho">
               <div class="severity-row">
                 <span class="severity-chip" [class]="severidadColor(p.evaluacionSobreprecio)">{{ p.evaluacionSobreprecio.replace('_',' ') }}</span>
                 @if (p.porcentajeDesviacion !== 0) { <span class="chip-outline">Desviación vs promedio: {{ p.porcentajeDesviacion > 0 ? '+' : '' }}{{ p.porcentajeDesviacion.toFixed(1) }}%</span> }
