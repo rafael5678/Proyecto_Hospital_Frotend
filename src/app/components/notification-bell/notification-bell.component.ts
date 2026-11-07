@@ -1,6 +1,7 @@
 import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { NotificationService } from '../../services/notification.service';
+import { LiveService } from '../../services/live.service';
 import { Notification } from '../../models/notification.model';
 
 @Component({
@@ -13,20 +14,24 @@ import { Notification } from '../../models/notification.model';
 export class NotificationBellComponent implements OnInit, OnDestroy {
   theme = input<'paciente' | 'medico'>('paciente');
   private svc = inject(NotificationService);
+  private live = inject(LiveService);
   abierta = signal(false);
   items = signal<Notification[]>([]);
   noLeidas = signal(0);
   private timer: ReturnType<typeof setInterval> | null = null;
+  private dejarAviso: (() => void) | null = null;
 
   ngOnInit() {
     this.cargar();
     this.timer = setInterval(() => this.cargar(), 25000);
+    this.dejarAviso = this.live.watch(() => this.cargar());
     if (typeof document !== 'undefined') {
       document.addEventListener('click', this.cerrarSiAfuera);
     }
   }
 
   ngOnDestroy() {
+    this.dejarAviso?.();
     if (this.timer) clearInterval(this.timer);
     if (typeof document !== 'undefined') {
       document.removeEventListener('click', this.cerrarSiAfuera);
