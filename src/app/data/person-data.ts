@@ -6,6 +6,15 @@ export const PHONE_DIGITS = 10;
 /** Registraduría NUIP: 10 digits. Older IDs may be shorter. */
 export const ID_MAX = 10;
 
+export function withoutSpaces(value: string): string {
+  return (value || '').replace(/\s/g, '');
+}
+
+export function blockSpace(event: Event) {
+  const input = event as InputEvent;
+  if (input.data && /\s/.test(input.data)) event.preventDefault();
+}
+
 export function digitsOnly(value: string, max = PHONE_DIGITS): string {
   return (value || '').replace(/\D/g, '').slice(0, max);
 }

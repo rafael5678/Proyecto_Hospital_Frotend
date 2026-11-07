@@ -225,11 +225,11 @@
                   <small class="campo-ayuda" [class.campo-mal]="!!form.telefono && !telefonoValido(form.telefono)">{{ form.telefono?.length || 0 }}/10 · celular empieza por 3, fijo por 60</small>
                 </label>
                 <label>Correo
-                  <input class="input" type="email" name="username" autocomplete="username" [(ngModel)]="form.email" />
+                  <input class="input" type="email" name="username" autocomplete="username" [ngModel]="form.email" (ngModelChange)="form.email = withoutSpaces($event)" (beforeinput)="blockSpace($event)" />
                   <small class="campo-ayuda">Con este correo entra. No uses el teléfono.</small>
                 </label>
                 <label>Nueva clave
-                  <input class="input" type="password" autocomplete="new-password" name="new-password" maxlength="11" [(ngModel)]="form.password" placeholder="Vacía = conservar la actual" />
+                  <input class="input" type="password" autocomplete="new-password" name="new-password" maxlength="11" [ngModel]="form.password" (ngModelChange)="form.password = withoutSpaces($event)" (beforeinput)="blockSpace($event)" placeholder="Vacía = conservar la actual" />
                   <small class="campo-ayuda" [class.campo-mal]="claveCorta()">{{ textoClave() }}</small>
                 </label>
                 <p class="clave-actual span-2">Clave actual: <strong>{{ claveVisible || 'Aún no registrada. Escríbela arriba.' }}</strong></p>

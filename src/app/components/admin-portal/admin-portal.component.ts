@@ -15,7 +15,7 @@ import { AiMetrics } from '../../models/ai.model';
 import { HOSPITAL_SPECIALTIES } from '../../data/specialties';
 import {
   ID_MAX, PASSWORD_MAX, PASSWORD_MIN, GENDERS, BLOOD_TYPES,
-  phoneMessage, normalizeGender, normalizeBloodType, idDigitsOnly, digitsOnly, isColombianPhone
+  phoneMessage, normalizeGender, normalizeBloodType, idDigitsOnly, digitsOnly, isColombianPhone, withoutSpaces, blockSpace
 } from '../../data/person-data';
 
 type AdminTab = 'inicio' | 'usuarios' | 'medicos' | 'citas' | 'reportes' | 'iasuperv' | 'preciosauditoria' | 'asistente';
@@ -145,6 +145,8 @@ export class AdminPortalComponent implements OnInit {
   readonly tiposSangre = BLOOD_TYPES;
   readonly digitsOnly = digitsOnly;
   readonly idDigitsOnly = idDigitsOnly;
+  readonly withoutSpaces = withoutSpaces;
+  readonly blockSpace = blockSpace;
   asistenteTexto = '';
   asistenteLoading = signal(false);
   asistenteRsp = signal<AiAdminOperationResponse | null>(null);

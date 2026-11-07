@@ -5,6 +5,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { timeout } from 'rxjs';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
+import { blockSpace, withoutSpaces } from '../../data/person-data';
 
 const REMEMBERED_EMAIL_KEY = 'hospy_remembered_email';
 
@@ -30,6 +31,8 @@ export class LandingComponent implements OnInit {
 
   email = '';
   password = '';
+  readonly blockSpace = blockSpace;
+  readonly withoutSpaces = withoutSpaces;
   rememberMe = false;
   showPassword = false;
   errorMessage = signal('');
@@ -105,13 +108,21 @@ export class LandingComponent implements OnInit {
     this.errorMessage.set('');
     this.successMessage.set('');
 
+    this.email = withoutSpaces(this.email);
+    this.password = withoutSpaces(this.password);
+    if (!this.email || !this.password) {
+      this.loading.set(false);
+      this.errorMessage.set('Escribe el correo y la contraseña, sin espacios.');
+      return;
+    }
+
     if (this.rememberMe) {
-      localStorage.setItem(REMEMBERED_EMAIL_KEY, this.email.trim());
+      localStorage.setItem(REMEMBERED_EMAIL_KEY, this.email);
     } else {
       localStorage.removeItem(REMEMBERED_EMAIL_KEY);
     }
 
-    this.auth.login({ email: this.email.trim(), password: this.password }).pipe(
+    this.auth.login({ email: this.email, password: this.password }).pipe(
       timeout(120000)
     ).subscribe({
       next: () => {

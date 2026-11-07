@@ -115,7 +115,9 @@
             class="input"
             type="text"
             name="email"
-            [(ngModel)]="email"
+            [ngModel]="email"
+            (ngModelChange)="email = withoutSpaces($event)"
+            (beforeinput)="blockSpace($event)"
             placeholder="tucorreo@ejemplo.com"
             autocomplete="username"
             required
@@ -130,7 +132,10 @@
             class="input"
             [type]="showPassword ? 'text' : 'password'"
             name="password"
-            [(ngModel)]="password"
+            maxlength="11"
+            [ngModel]="password"
+            (ngModelChange)="password = withoutSpaces($event)"
+            (beforeinput)="blockSpace($event)"
             placeholder="••••••••"
             autocomplete="current-password"
             required

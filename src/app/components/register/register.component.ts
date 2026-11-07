@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
-import { ID_MAX, PASSWORD_MAX, PASSWORD_MIN, phoneMessage, idDigitsOnly, digitsOnly, isColombianPhone } from '../../data/person-data';
+import { ID_MAX, PASSWORD_MAX, PASSWORD_MIN, blockSpace, phoneMessage, idDigitsOnly, digitsOnly, isColombianPhone, withoutSpaces } from '../../data/person-data';
 
 @Component({
   selector: 'app-register',
@@ -33,6 +33,8 @@ export class RegisterComponent implements OnInit {
   observaciones = '';
   readonly digitsOnly = digitsOnly;
   readonly idDigitsOnly = idDigitsOnly;
+  readonly withoutSpaces = withoutSpaces;
+  readonly blockSpace = blockSpace;
   error = signal('');
   loading = signal(false);
   wakingServer = signal(false);
