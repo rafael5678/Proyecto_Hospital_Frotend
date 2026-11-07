@@ -1,4 +1,4 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
+import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
@@ -21,6 +21,7 @@ import {
 } from '../../data/person-data';
 import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 import { NotificationService } from '../../services/notification.service';
+import { LiveService } from '../../services/live.service';
 
 type PacienteTab = 'inicio' | 'agendar' | 'historial' | 'proximas' | 'medicos' | 'perfil'
   | 'triage' | 'dermatologia' | 'interacciones' | 'precios';
@@ -34,9 +35,11 @@ type PacienteSub = '' | 'agendar' | 'historial' | 'proximas' | 'directorio' | 'e
   templateUrl: './patient-portal.component.html',
   styleUrl: './patient-portal.component.css'
 })
-export class PatientPortalComponent implements OnInit {
+export class PatientPortalComponent implements OnInit, OnDestroy {
   auth = inject(AuthService);
   private avisos = inject(NotificationService);
+  private live = inject(LiveService);
+  private stopLive: (() => void) | null = null;
   private avisosReales = signal<{ titulo: string; detalle: string }[]>([]);
   private avisosInbox = signal<Notification[]>([]);
   recetaVisible = signal('');
@@ -147,6 +150,11 @@ export class PatientPortalComponent implements OnInit {
     this.cargarMedicos();
     this.cargarHistorial();
     this.cargarPerfilYAntecedentes();
+    this.stopLive = this.live.watch(() => this.cargarReceta());
+  }
+
+  ngOnDestroy() {
+    this.stopLive?.();
   }
 
   onNavigate(item: SidebarItem) {
@@ -156,7 +164,7 @@ export class PatientPortalComponent implements OnInit {
     this.error.set('');
     this.ok.set('');
     if (item.tab === 'perfil' || item.tab === 'agendar') this.cargarPerfilYAntecedentes();
-    if (item.tab === 'interacciones' || item.tab === 'precios') this.aplicarReceta();
+    if (item.tab === 'interacciones' || item.tab === 'precios') this.cargarReceta();
     if (item.tab === 'proximas') this.svc.upcoming().subscribe({ next: c => this.proximas.set(c) });
     const group = this.menuItems.find(m => m.children?.some(c => c.id === item.id));
     if (group && !this.expandedMenus().includes(group.id)) {
@@ -735,30 +743,62 @@ export class PatientPortalComponent implements OnInit {
       .sort((a, b) => new Date(a.fechaHora).getTime() - new Date(b.fechaHora).getTime())[0] ?? null;
   }
 
+  private cargarReceta() {
+    this.avisos.list().subscribe({
+      next: n => {
+        this.avisosInbox.set(n);
+        this.aplicarReceta();
+      },
+      error: () => this.aplicarReceta()
+    });
+    this.svc.history().subscribe({
+      next: c => {
+        this.citas.set(c);
+        this.aplicarReceta();
+      }
+    });
+  }
+
   private aplicarReceta() {
-    const deCita = this.citaConcluida()?.receta || '';
-    const aviso = this.avisosInbox().find(a => /Medicamentos:/i.test(a.mensaje || ''));
-    const texto = deCita || this.extraerMeds(aviso?.mensaje || '');
-    if (!texto) return;
-    const nombres = texto.split(/;|\n/).map(p => p.split('·')[0].trim()).filter(Boolean);
-    if (!nombres.length) return;
-    this.recetaVisible.set(nombres.join(', '));
-    if (!this.interMed.trim()) this.interMed = nombres.join(', ');
-    const cuidados = this.extraerBloque(aviso?.mensaje || '', 'Qué hacer:');
+    const aviso = this.avisoDeConsulta();
+    const mensaje = aviso?.mensaje || '';
+    const medsTexto = this.extraerBloque(mensaje, 'Medicamentos:') || this.citaConcluida()?.receta || '';
+    const nombres = this.nombresDe(medsTexto);
+    const cuidados = this.extraerBloque(mensaje, 'Qué hacer:');
+    if (nombres.length) {
+      this.recetaVisible.set(nombres.join(', '));
+      if (!this.interMed.trim()) this.interMed = nombres.join(', ');
+      if (!this.preciosReq.medicamento.trim()) {
+        const presentacion = medsTexto.split('·')[1]?.split(/[;\n]/)[0]?.trim() || '';
+        this.preciosReq = { ...this.preciosReq, medicamento: nombres[0], presentacion };
+      }
+    }
     if (cuidados && !this.interDieta.trim()) this.interDieta = cuidados;
-    if (!this.interSuplem.trim()) this.interSuplem = this.suplementosDe(`${texto} ${cuidados}`);
-    if (!this.preciosReq.medicamento.trim()) {
-      const presentacion = texto.split('·')[1]?.split(/;|\n/)[0]?.trim() || '';
-      this.preciosReq = { ...this.preciosReq, medicamento: nombres[0], presentacion };
+    if (!this.interSuplem.trim() && (nombres.length || cuidados)) {
+      this.interSuplem = this.suplementosDe(`${medsTexto} ${cuidados}`);
     }
   }
 
+  private avisoDeConsulta(): Notification | undefined {
+    return this.avisosInbox()
+      .filter(a => a.tipo === 'CONSULTA_CONCLUIDA' || a.tipo === 'INDICACION' || /consulta concluida|indicaciones de tu consulta/i.test(a.titulo || ''))
+      .sort((a, b) => new Date(b.creadaEn).getTime() - new Date(a.creadaEn).getTime())[0];
+  }
+
+  private nombresDe(texto: string): string[] {
+    if (!texto.trim()) return [];
+    return texto.split(/[;\n]/)
+      .map(p => p.split('·')[0].replace(/^[\-\d\.\)\s]+/, '').trim())
+      .filter(p => p.length > 1);
+  }
+
   private extraerBloque(mensaje: string, marca: string) {
-    const inicio = mensaje.indexOf(marca);
+    const inicio = mensaje.toLowerCase().indexOf(marca.toLowerCase());
     if (inicio < 0) return '';
-    const resto = mensaje.slice(inicio + marca.length).trim();
-    const corte = resto.search(/\n\n(?! )/);
-    return (corte >= 0 ? resto.slice(0, corte) : resto).trim();
+    let resto = mensaje.slice(inicio + marca.length).trim();
+    const corte = resto.search(/\n\n|\n(?=Qué |Medicamentos:|Si algo empeora|—)/i);
+    if (corte >= 0) resto = resto.slice(0, corte);
+    return resto.trim();
   }
 
   private suplementosDe(texto: string) {
@@ -769,10 +809,6 @@ export class PatientPortalComponent implements OnInit {
 
   proximasVisibles(): Appointment[] {
     return this.proximas().filter(c => !this.consultaCerrada(c));
-  }
-
-  private extraerMeds(mensaje: string) {
-    return this.extraerBloque(mensaje, 'Medicamentos:');
   }
 
   irA(tab: PacienteTab, sub: PacienteSub = '') {
