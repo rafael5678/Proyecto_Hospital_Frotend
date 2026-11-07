@@ -110,7 +110,7 @@
         <h2 class="section-title">{{ filtroEstado === 'HISTORIAL' ? 'Historial de pacientes' : 'Citas asignadas' }}</h2>
       </div>
       @if (citasFiltradas().length === 0) {
-      <p class="empty">{{ filtroEstado === 'HISTORIAL' ? 'Todavía no hay consultas terminadas.' : 'No hay citas pendientes en esta categoría.' }}</p>
+      <p class="empty">{{ filtroEstado === 'HISTORIAL' ? 'Todavía no hay consultas terminadas.' : 'No hay citas en esta categoría.' }}</p>
       } @else {
       <table>
         <thead>

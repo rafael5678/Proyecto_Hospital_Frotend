@@ -216,9 +216,9 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     if (this.filtroEstado === 'HISTORIAL') {
       return this.citas().filter(c => this.citaTerminada(c));
     }
-    const abiertas = this.citas().filter(c => !this.citaTerminada(c) && !['CANCELADA', 'RECHAZADA'].includes(c.estado));
-    if (!this.filtroEstado) return abiertas;
-    return abiertas.filter(c => c.estado === this.filtroEstado);
+    const vigentes = this.citas().filter(c => !['CANCELADA', 'RECHAZADA'].includes(c.estado));
+    if (!this.filtroEstado) return vigentes;
+    return vigentes.filter(c => !this.citaTerminada(c) && c.estado === this.filtroEstado);
   }
 
   cargarCitas() {
