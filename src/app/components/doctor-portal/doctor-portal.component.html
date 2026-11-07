@@ -6,7 +6,7 @@
     <header class="portal-header medico-header">
       <div class="header-main">
         <h1>{{ pageTitle() }}</h1>
-        @if (perfil(); as pr) {
+        @if (profile(); as pr) {
         <span class="sub">{{ pr.especialidad }} @if (pr.consultorio) { · {{ pr.consultorio }} }</span>
         }
         <app-session-timeout rol="MEDICO" theme="medico" />
@@ -14,7 +14,7 @@
       <div class="header-user">
         <app-notification-bell theme="medico" />
         <span class="user-chip">
-          <span class="user-avatar">{{ iniciales(auth.user()?.nombre) }}</span>
+          <span class="user-avatar">{{ initials(auth.user()?.nombre) }}</span>
           {{ auth.user()?.nombre }}
         </span>
         <button type="button" class="btn logout" (click)="auth.logout()">Cerrar sesión</button>
@@ -25,7 +25,7 @@
       @if (tab() === 'inicio' && dashboard(); as d) {
       <section class="hero-row">
         <div>
-          <h2>{{ saludo() }}</h2>
+          <h2>{{ greeting() }}</h2>
           <p>Aquí tienes un resumen de tu jornada con datos reales de tus citas.</p>
         </div>
         <img
@@ -39,7 +39,7 @@
         <div class="stat-card">
           <span>Pacientes hoy</span>
           <strong>{{ d.citasHoy }}</strong>
-          <small>{{ especialidadHoy() }}</small>
+          <small>{{ specialtyToday() }}</small>
         </div>
         <div class="stat-card warn">
           <span>En espera</span>
@@ -48,7 +48,7 @@
         </div>
         <div class="stat-card">
           <span>Atenciones</span>
-          <strong>{{ atendidas() }}</strong>
+          <strong>{{ completedCount() }}</strong>
           <small>Consultas ya terminadas</small>
         </div>
       </div>
@@ -57,16 +57,16 @@
         <section class="panel-card">
           <header>
             <h3>Triage y prioridad</h3>
-            <button type="button" class="linkish" (click)="irA('citas', 'todas')">Ver todos</button>
+            <button type="button" class="linkish" (click)="goTo('citas', 'todas')">Ver todos</button>
           </header>
-          @for (c of triagePrioritario(); track c.id) {
+          @for (c of priorityTriage(); track c.id) {
           <article class="triage-row">
-            <span [class]="prioridadChip(c)">{{ etiquetaPrioridad(c) }}</span>
+            <span [class]="priorityChip(c)">{{ priorityLabel(c) }}</span>
             <div>
               <strong>{{ c.pacienteNombre }}</strong>
               <small>{{ c.triageResumen || c.motivo || 'Sin motivo registrado' }}</small>
             </div>
-            <em>{{ horaCorta(c.fechaHora) }} · {{ c.medicoEspecialidad || 'Consulta' }}</em>
+            <em>{{ shortTime(c.fechaHora) }} · {{ c.medicoEspecialidad || 'Consulta' }}</em>
           </article>
           } @empty {
           <p class="empty">No hay triages registrados en tus citas activas.</p>
@@ -89,12 +89,12 @@
       <section class="panel-card patients-card">
         <header>
           <h3>Tus pacientes</h3>
-          <button type="button" class="linkish" (click)="irA('citas', 'historial')">Ver todos</button>
+          <button type="button" class="linkish" (click)="goTo('citas', 'historial')">Ver todos</button>
         </header>
         <div class="patient-strip">
-          @for (p of pacientesRecientes(); track p.nombre + p.hora) {
+          @for (p of recentPatients(); track p.nombre + p.hora) {
           <article>
-            <span>{{ p.iniciales }}</span>
+            <span>{{ p.initials }}</span>
             <strong>{{ p.nombre }}</strong>
             <small>{{ p.estado }} · {{ p.hora }}</small>
           </article>
@@ -109,7 +109,7 @@
       <div class="toolbar">
         <h2 class="section-title">{{ filtroEstado === 'HISTORIAL' ? 'Historial de pacientes' : 'Citas asignadas' }}</h2>
       </div>
-      @if (citasFiltradas().length === 0) {
+      @if (filteredAppointments().length === 0) {
       <p class="empty">{{ filtroEstado === 'HISTORIAL' ? 'Todavía no hay consultas terminadas.' : 'No hay citas en esta categoría.' }}</p>
       } @else {
       <table>
@@ -123,7 +123,7 @@
           </tr>
         </thead>
         <tbody>
-          @for (c of citasFiltradas(); track c.id) {
+          @for (c of filteredAppointments(); track c.id) {
           <tr>
             <td>{{ c.pacienteNombre }}</td>
             <td>{{ c.fechaHora | date:'medium' }}</td>
@@ -133,13 +133,13 @@
               @if (c.dermatologiaScoreRiesgo != null) { <small>Orientación de piel: riesgo {{ c.dermatologiaScoreRiesgo
                 }}</small> }
             </td>
-            <td><span [class]="badgeClass(c.estado)">{{ etiqueta(c) }}</span></td>
+            <td><span [class]="badgeClass(c.estado)">{{ statusLabel(c) }}</span></td>
             <td class="actions">
               @if (c.estado === 'PENDIENTE') {
-              <button type="button" class="btn-sm ok" (click)="aceptar(c.id)">Aceptar</button>
-              <button type="button" class="btn-sm no" (click)="rechazar(c.id)">Rechazar</button>
+              <button type="button" class="btn-sm ok" (click)="accept(c.id)">Aceptar</button>
+              <button type="button" class="btn-sm no" (click)="reject(c.id)">Rechazar</button>
               }
-              <button type="button" class="btn-sm info" (click)="verPaciente(c.id)">Ver ficha</button>
+              <button type="button" class="btn-sm info" (click)="viewPatient(c.id)">Ver ficha</button>
             </td>
           </tr>
           }
@@ -154,7 +154,7 @@
         @for (h of horarios(); track h.id) {
         <li>
           Día {{ h.diaSemana }}: {{ h.horaInicio }} - {{ h.horaFin }}
-          <button type="button" class="btn-sm no" (click)="eliminarHorario(h.id)">Eliminar</button>
+          <button type="button" class="btn-sm no" (click)="deleteSchedule(h.id)">Eliminar</button>
         </li>
         }
       </ul>
@@ -171,7 +171,7 @@
           </div>
           <div><label>Inicio</label><input class="input" type="time" [(ngModel)]="horaInicio" /></div>
           <div><label>Fin</label><input class="input" type="time" [(ngModel)]="horaFin" /></div>
-          <button type="button" class="btn btn-blue" (click)="agregarHorario()">Agregar horario</button>
+          <button type="button" class="btn btn-blue" (click)="addSchedule()">Agregar horario</button>
         </div>
       </div>
       }
@@ -195,7 +195,7 @@
           }
         </div>
         @if (citaEnRevision(); as cita) {
-        @if (!citaYaConsultada()) {
+        @if (!visitAlreadyDone()) {
         <h3>Lo que trae a la consulta</h3>
         <p><strong>Motivo:</strong> {{ cita.motivo || 'No informado' }}</p>
         @if (cita.triageSintomas) { <p><strong>Qué le está pasando:</strong> {{ cita.triageSintomas }}</p> }
@@ -206,7 +206,7 @@
         }
         }
         <h3>Consultas de este médico</h3>
-        @if (consultasDeEsteMedico().length) {
+        @if (visitsForThisDoctor().length) {
         <table>
           <thead>
             <tr>
@@ -217,36 +217,36 @@
             </tr>
           </thead>
           <tbody>
-            @for (anterior of consultasDeEsteMedico(); track anterior.id) {
+            @for (anterior of visitsForThisDoctor(); track anterior.id) {
             <tr>
               <td>{{ anterior.fechaHora | date:'mediumDate' }}</td>
               <td>{{ anterior.medicoNombre }} · {{ anterior.medicoEspecialidad }}</td>
               <td>{{ anterior.motivo || '—' }} @if (anterior.triageResumen) { <small>{{ anterior.triageResumen
                   }}</small> }</td>
-              <td>{{ etiqueta(anterior) }}</td>
+              <td>{{ statusLabel(anterior) }}</td>
             </tr>
             }
           </tbody>
         </table>
         } @else { <p class="empty">Este médico no tiene consultas registradas con este paciente.</p> }
-        @if (citaYaConsultada()) {
+        @if (visitAlreadyDone()) {
         <p class="empty">Ya se consultó. No hay más consulta pendiente.</p>
         } @else {
         <div class="actions-bar" style="margin-top: 1.5rem;">
-          <button type="button" class="btn btn-blue" (click)="irAConsulta()">Preparar la consulta</button>
+          <button type="button" class="btn btn-blue" (click)="goToConsult()">Preparar la consulta</button>
         </div>
         }
       </div>
       }
 
-      @if (tab() === 'soap' && citaYaConsultada()) {
+      @if (tab() === 'soap' && visitAlreadyDone()) {
       <section class="card section">
         <h2 class="section-title">Consulta</h2>
         <p class="empty">Ya se consultó. No hay más consulta pendiente.</p>
       </section>
       }
 
-      @if (tab() === 'soap' && !citaYaConsultada()) {
+      @if (tab() === 'soap' && !visitAlreadyDone()) {
       <section class="card section ai-panel">
         <header class="section-head">
           <h2 class="section-title">Consulta</h2>
@@ -260,7 +260,7 @@
           <button type="button" class="btn btn-blue" (click)="iniciarGrabacion()"
             [disabled]="transcribiendoAudio()">Iniciar grabación</button>
           } @else {
-          <button type="button" class="btn-sm no" (click)="detenerGrabacion()">Detener grabación</button>
+          <button type="button" class="btn-sm no" (click)="stopRecording()">Detener grabación</button>
           }
           @if (transcribiendoAudio()) { <span>Transcribiendo el audio…</span> }
           @if (vozError()) { <span class="warn-big">{{ vozError() }}</span> }
@@ -294,7 +294,7 @@
             {{ soapLoading() ? 'Preparando…' : 'Preparar resumen' }}
           </button>
           <button type="button" class="btn btn-blue" [disabled]="consultaLoading() || !consentimientoSoapAi"
-            (click)="iniciarConsulta()">Iniciar consulta</button>
+            (click)="startConsult()">Iniciar consulta</button>
           @if (error()) { <span class="warn-big">{{ error() }}</span> }
         </div>
 
@@ -302,24 +302,24 @@
         <div class="brief-medico">
           <div class="severity-row">
             <h3>Para ti, en el consultorio</h3>
-            <button type="button" class="btn btn-blue" (click)="hablarResumenSoap(r)">Escuchar</button>
-            <button type="button" class="btn logout" (click)="detenerVozSoap()">Detener</button>
+            <button type="button" class="btn btn-blue" (click)="speakSoapSummary(r)">Escuchar</button>
+            <button type="button" class="btn logout" (click)="stopSoapSpeech()">Detener</button>
           </div>
           <p>{{ r.resumenParaMedico }}</p>
           @if (r.enfoqueEnConsulta) {
           <h4>Qué revisar ahora</h4>
           <p>{{ r.enfoqueEnConsulta }}</p>
           }
-          @if (lineas(r.preguntasSugeridas).length) {
+          @if (linesOf(r.preguntasSugeridas).length) {
           <h4>Pregúntale</h4>
           <ul>
-            @for (q of lineas(r.preguntasSugeridas); track q) { <li>{{ q }}</li> }
+            @for (q of linesOf(r.preguntasSugeridas); track q) { <li>{{ q }}</li> }
           </ul>
           }
-          @if (lineas(r.medicamentosSugeridos).length) {
+          @if (linesOf(r.medicamentosSugeridos).length) {
           <h4>Medicamentos que puedes considerar</h4>
           <ul>
-            @for (m of lineas(r.medicamentosSugeridos); track m) { <li>{{ m }}</li> }
+            @for (m of linesOf(r.medicamentosSugeridos); track m) { <li>{{ m }}</li> }
           </ul>
           }
           @if (r.cuidados) {
@@ -364,8 +364,8 @@
           </div>
           <div class="sim-pregunta">
             <input class="input" type="text" [(ngModel)]="preguntaSim" placeholder="Pregúntale algo de la consulta"
-              (keyup.enter)="enviarPregunta()" />
-            <button type="button" class="btn btn-blue" [disabled]="consultaLoading()" (click)="enviarPregunta()">
+              (keyup.enter)="sendQuestion()" />
+            <button type="button" class="btn btn-blue" [disabled]="consultaLoading()" (click)="sendQuestion()">
               {{ consultaLoading() ? 'Respondiendo…' : 'Preguntar' }}
             </button>
           </div>
@@ -374,7 +374,7 @@
           <h4>Elige lo que le vas a mandar</h4>
           @for (m of sugeridos; track m) {
           <label class="med-elige">
-            <input type="checkbox" [checked]="elegida(m)" (change)="alternarMed(m)" />
+            <input type="checkbox" [checked]="chosen(m)" (change)="toggleMedication(m)" />
             <span>{{ m }}</span>
           </label>
           }
@@ -386,7 +386,7 @@
             <textarea class="input" rows="2" [(ngModel)]="resumenEnvio" placeholder="Qué le está pasando, en una frase"></textarea>
           </label>
           <div class="actions-bar">
-            <button type="button" class="btn btn-blue" [disabled]="avisoEnviando()" (click)="avisarPaciente()">
+            <button type="button" class="btn btn-blue" [disabled]="avisoEnviando()" (click)="notifyPatient()">
               {{ avisoEnviando() ? 'Enviando…' : 'Avisar al paciente' }}
             </button>
             @if (avisoOk()) { <span class="hint">{{ avisoOk() }}</span> }
@@ -422,7 +422,7 @@
         </div>
 
         <div class="actions-bar">
-          <button type="button" class="btn btn-blue" [disabled]="preciosLoading()" (click)="preciosAnalizar()">
+          <button type="button" class="btn btn-blue" [disabled]="preciosLoading()" (click)="estimatePrices()">
             {{ preciosLoading() ? 'Buscando…' : 'Ver precio aproximado' }}
           </button>
           @if (error()) { <span class="warn-big">{{ error() }}</span> }

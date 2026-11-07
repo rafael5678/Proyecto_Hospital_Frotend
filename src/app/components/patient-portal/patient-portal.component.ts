@@ -96,7 +96,7 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
   dashboard = signal<PatientDashboard | null>({
     totalCitas: 0, citasPendientes: 0, citasAceptadas: 0, citasCanceladas: 0, proximasCitas: 0
   });
-  perfil = signal<PatientProfile | null>(null);
+  profile = signal<PatientProfile | null>(null);
   medicos = signal<User[]>([]);
   medicoDetalle = signal<User | null>(null);
   horarios = signal<Schedule[]>([]);
@@ -146,11 +146,11 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
   preciosLoading = signal(false);
 
   ngOnInit() {
-    this.cargarInicio();
-    this.cargarMedicos();
-    this.cargarHistorial();
-    this.cargarPerfilYAntecedentes();
-    this.stopLive = this.live.watch(() => this.cargarReceta());
+    this.loadHome();
+    this.loadDoctors();
+    this.loadHistory();
+    this.loadProfileAndBackground();
+    this.stopLive = this.live.watch(() => this.loadPrescription());
   }
 
   ngOnDestroy() {
@@ -163,8 +163,8 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     this.sub.set((item.sub ?? '') as PacienteSub);
     this.error.set('');
     this.ok.set('');
-    if (item.tab === 'perfil' || item.tab === 'agendar') this.cargarPerfilYAntecedentes();
-    if (item.tab === 'interacciones' || item.tab === 'precios') this.cargarReceta();
+    if (item.tab === 'perfil' || item.tab === 'agendar') this.loadProfileAndBackground();
+    if (item.tab === 'interacciones' || item.tab === 'precios') this.loadPrescription();
     if (item.tab === 'proximas') this.svc.upcoming().subscribe({ next: c => this.proximas.set(c) });
     const group = this.menuItems.find(m => m.children?.some(c => c.id === item.id));
     if (group && !this.expandedMenus().includes(group.id)) {
@@ -184,7 +184,7 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
   pageTitle(): string {
     const map: Record<string, string> = {
       inicio: 'Panel del paciente',
-      agendar: 'Agendar cita (triage + piel + médico)',
+      book: 'Agendar cita (triage + piel + médico)',
       historial: 'Historial de citas',
       proximas: 'Próximas citas',
       'medicos-directorio': 'Directorio de médicos',
@@ -196,26 +196,26 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     return map[key] ?? map[this.tab()] ?? 'Portal del paciente';
   }
 
-  cargarInicio() {
+  loadHome() {
     this.svc.dashboard().subscribe({ next: d => this.dashboard.set(d) });
     this.svc.upcoming().subscribe({ next: c => this.proximas.set(c) });
     this.avisos.list().subscribe({
       next: n => {
         this.avisosInbox.set(n);
         this.avisosReales.set(n.slice(0, 4).map(a => ({ titulo: a.titulo, detalle: a.mensaje })));
-        this.aplicarReceta();
+        this.applyPrescription();
       }
     });
   }
 
-  cargarPerfil() {
-    this.cargarPerfilYAntecedentes();
+  loadProfile() {
+    this.loadProfileAndBackground();
   }
 
-  cargarPerfilYAntecedentes() {
-    this.svc.perfil().subscribe({
+  loadProfileAndBackground() {
+    this.svc.profile().subscribe({
       next: p => {
-        this.perfil.set({
+        this.profile.set({
           ...p,
           telefono: digitsOnly(p.telefono || ''),
           telefonoEmergencia: digitsOnly(p.telefonoEmergencia || ''),
@@ -230,11 +230,11 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     });
   }
 
-  cargarMedicos() {
+  loadDoctors() {
     this.svc.listDoctors().subscribe({ next: m => this.medicos.set(m) });
   }
 
-  medicosFiltrados(): User[] {
+  filteredDoctors(): User[] {
     const lista = this.medicos();
     const sugerida = (this.triageRsp()?.especialidadRecomendada || this.filtroEspecialidad).toLowerCase();
     if (!sugerida) return lista;
@@ -245,26 +245,26 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     });
   }
 
-  puedeAgendar(): boolean {
+  canBook(): boolean {
     if (this.loading() || this.triageLoading() || this.dermLoading()) return false;
     if (!this.sintomas.trim() || !this.consentimientoTriage || !this.medicoId || !this.fechaHora) return false;
-    if (this.tieneLesionPiel && !this.puedeAnalizarPiel()) return false;
+    if (this.tieneLesionPiel && !this.canAnalyzeSkin()) return false;
     return true;
   }
 
-  puedeAnalizarPiel(): boolean {
+  canAnalyzeSkin(): boolean {
     return !!(this.dermReq.descripcion?.trim() || this.dermReq.imagenBase64 || this.sintomas.trim());
   }
 
-  onPielToggle() {
+  onSkinToggle() {
     if (!this.tieneLesionPiel) {
       this.dermReq.descripcion = '';
-      this.quitarFotoPiel();
+      this.clearSkinPhoto();
       this.dermRsp.set(null);
     }
   }
 
-  onFotoPiel(ev: Event) {
+  onSkinPhoto(ev: Event) {
     const file = (ev.target as HTMLInputElement).files?.[0];
     if (!file) return;
     if (!file.type.startsWith('image/') || /\.html?$/i.test(file.name)) {
@@ -303,13 +303,13 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     reader.readAsDataURL(file);
   }
 
-  quitarFotoPiel() {
+  clearSkinPhoto() {
     this.dermReq.imagenBase64 = undefined;
     this.dermFotoPreview.set(null);
     this.dermFotoNombre = '';
   }
 
-  especialidadObjetivo(): string {
+  targetSpecialty(): string {
     const triageEsp = this.triageRsp()?.especialidadRecomendada || this.filtroEspecialidad || '';
     if (this.tieneLesionPiel && this.dermRsp()) {
       const riesgo = (this.dermRsp()!.nivelRiesgo || '').toUpperCase();
@@ -322,12 +322,12 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     return triageEsp;
   }
 
-  medicoAsignado(): User | null {
+  assignedDoctor(): User | null {
     return this.medicos().find(m => m.id === this.medicoId) ?? null;
   }
 
-  asignarMedicoSegunAnalisis() {
-    const esp = this.especialidadObjetivo();
+  assignDoctorFromAnalysis() {
+    const esp = this.targetSpecialty();
     if (!esp) return;
     const lista = this.medicos();
     const n = (s?: string) => (s || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
@@ -340,7 +340,7 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     if (match) {
       this.medicoId = match.id;
       this.avisoMedico.set(`Médico asignado según el análisis: ${match.nombre} — ${match.especialidad}.`);
-      this.onMedicoChange();
+      this.onDoctorChange();
       return;
     }
     this.avisoMedico.set(
@@ -348,20 +348,20 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     );
   }
 
-  private fechaParaApi(): string {
+  private dateForApi(): string {
     const f = this.fechaHora;
     if (!f) return '';
     return f.length === 16 ? `${f}:00` : f;
   }
 
-  verMedico(m: User) {
+  viewDoctor(m: User) {
     this.medicoDetalle.set(m);
     this.tab.set('medicos');
     this.sub.set('directorio');
     this.svc.doctorSchedules(m.id).subscribe({ next: h => this.horarios.set(h) });
   }
 
-  onMedicoChange() {
+  onDoctorChange() {
     this.fechaHora = '';
     this.cupos.set([]);
     this.avisoCita.set('');
@@ -375,7 +375,7 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
       next: c => {
         this.cupos.set(c);
         if (c.length) {
-          this.elegirCupo(c[0]);
+          this.chooseSlot(c[0]);
           this.avisoCita.set('Cupo asignado: ' + c[0].etiqueta + '.');
         } else {
           this.avisoCita.set('Este médico no tiene cupos en las próximas semanas.');
@@ -388,39 +388,39 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     });
   }
 
-  elegirCupo(c: CupoDisponible) {
-    this.fechaHora = this.aDatetimeLocal(c.fechaHora);
+  chooseSlot(c: CupoDisponible) {
+    this.fechaHora = this.toDatetimeLocal(c.fechaHora);
   }
 
-  cupoActivo(c: CupoDisponible): boolean {
-    return this.aDatetimeLocal(c.fechaHora) === this.fechaHora;
+  slotSelected(c: CupoDisponible): boolean {
+    return this.toDatetimeLocal(c.fechaHora) === this.fechaHora;
   }
 
-  aDatetimeLocal(iso: string): string {
+  toDatetimeLocal(iso: string): string {
     const d = new Date(iso);
     const p = (n: number) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
   }
 
-  nombreDia(n: number): string {
+  dayName(n: number): string {
     return ['', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'][n] || `Día ${n}`;
   }
 
-  horaCorta(h: string): string {
+  shortTime(h: string): string {
     return (h || '').slice(0, 5);
   }
 
-  cargarHistorial() {
+  loadHistory() {
     this.svc.history().subscribe({
       next: c => {
         this.citas.set(c);
-        this.aplicarReceta();
+        this.applyPrescription();
       }
     });
   }
 
-  agendar() {
-    if (!this.puedeAgendar()) {
+  book() {
+    if (!this.canBook()) {
       this.error.set('Completa los campos obligatorios (*). La piel solo es obligatoria si marcaste que tienes una lesión.');
       return;
     }
@@ -431,7 +431,7 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
       const dermatologia = this.tieneLesionPiel ? this.dermRsp() : null;
       this.svc.bookAppointment({
         medicoId: this.medicoId!,
-        fechaHora: this.fechaParaApi(),
+        fechaHora: this.dateForApi(),
         motivo: this.motivo || this.sintomas,
         triageSeveridad: triage?.severidad,
         triageNivelEsi: triage?.nivelEsi,
@@ -461,10 +461,10 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
           this.triageRsp.set(null);
           this.dermRsp.set(null);
           this.tieneLesionPiel = false;
-          this.quitarFotoPiel();
+          this.clearSkinPhoto();
           this.avisoMedico.set('');
-          this.cargarInicio();
-          this.cargarHistorial();
+          this.loadHome();
+          this.loadHistory();
           this.tab.set('historial');
           this.sub.set('historial');
         },
@@ -476,11 +476,11 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     };
 
     const despuesTriage = () => {
-      if (this.tieneLesionPiel && this.puedeAnalizarPiel() && !this.dermRsp()) {
-        this.ai.dermatology(this.payloadDerm()).subscribe({
+      if (this.tieneLesionPiel && this.canAnalyzeSkin() && !this.dermRsp()) {
+        this.ai.dermatology(this.dermatologyPayload()).subscribe({
           next: r => {
             this.dermRsp.set(r);
-            this.asignarMedicoSegunAnalisis();
+            this.assignDoctorFromAnalysis();
             enviar();
           },
           error: () => enviar()
@@ -491,7 +491,7 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     };
 
     if (!this.triageRsp()) {
-      this.triageReq = this.payloadTriage();
+      this.triageReq = this.triagePayload();
       this.ai.triage({ ...this.triageReq }).subscribe({
         next: r => { this.triageRsp.set(r); despuesTriage(); },
         error: () => despuesTriage()
@@ -501,8 +501,8 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     despuesTriage();
   }
 
-  guardarPerfil() {
-    const actual = this.perfil();
+  saveProfile() {
+    const actual = this.profile();
     if (!actual) return;
     const p = {
       ...actual,
@@ -510,7 +510,7 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
       telefonoEmergencia: digitsOnly(actual.telefonoEmergencia || ''),
       documento: idDigitsOnly(actual.documento || '') || actual.documento || ''
     };
-    this.perfil.set(p);
+    this.profile.set(p);
     if (!isColombianPhone(p.telefono || '')) {
       this.error.set(phoneMessage('El teléfono'));
       return;
@@ -523,7 +523,7 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     this.guardandoPerfil.set(true);
     this.svc.updateProfile(p).subscribe({
       next: (res) => {
-        this.perfil.set({
+        this.profile.set({
           ...res,
           telefono: digitsOnly(res.telefono || ''),
           telefonoEmergencia: digitsOnly(res.telefonoEmergencia || ''),
@@ -540,24 +540,24 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     });
   }
 
-  cancelar(id: number) {
+  cancelVisit(id: number) {
     if (!confirm('¿Cancelar esta cita?')) return;
     this.svc.cancelAppointment(id).subscribe({
-      next: () => { this.cargarHistorial(); this.cargarInicio(); },
+      next: () => { this.loadHistory(); this.loadHome(); },
       error: (e) => this.error.set(e.error?.error ?? 'Error')
     });
   }
 
-  irAgendarConMedico(m: User) {
+  bookWithDoctor(m: User) {
     this.medicoId = m.id;
     this.medicoDetalle.set(null);
     this.tab.set('agendar');
     this.sub.set('agendar');
-    this.onMedicoChange();
+    this.onDoctorChange();
   }
 
   /* ============ Inteligencia Artificial ============ */
-  triageAnalizar() {
+  runTriage() {
     if (!this.consentimientoTriage) {
       this.error.set('Autoriza el envío de tus datos de salud para continuar.');
       return;
@@ -574,12 +574,12 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
 
     /* Sincronizar en ambas direcciones */
     if (this.tab() === 'agendar') {
-      this.triageReq = this.payloadTriage();
+      this.triageReq = this.triagePayload();
     } else {
       this.sintomas = this.triageReq.sintomas || '';
       this.duracionSintomas = this.triageReq.duracion || '';
       this.antecedentesSintomas = this.triageReq.antecedentes || '';
-      this.triageReq = this.payloadTriage();
+      this.triageReq = this.triagePayload();
     }
 
     this.ai.triage({ ...this.triageReq }).subscribe({
@@ -587,30 +587,30 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
         this.triageRsp.set(r);
         this.triageLoading.set(false);
         this.filtroEspecialidad = r.especialidadRecomendada || '';
-        this.asignarMedicoSegunAnalisis();
-        if (this.tieneLesionPiel && this.puedeAnalizarPiel()) this.dermAnalizar();
+        this.assignDoctorFromAnalysis();
+        if (this.tieneLesionPiel && this.canAnalyzeSkin()) this.runDermatology();
       }
     });
   }
 
-  dermAnalizar() {
-    if (!this.puedeAnalizarPiel()) {
+  runDermatology() {
+    if (!this.canAnalyzeSkin()) {
       this.error.set('Describe la lesión o sube una foto de evidencia.');
       return;
     }
     this.dermLoading.set(true);
     this.error.set('');
     this.dermRsp.set(null);
-    this.ai.dermatology(this.payloadDerm()).subscribe({
+    this.ai.dermatology(this.dermatologyPayload()).subscribe({
       next: (r) => {
         this.dermRsp.set(r);
         this.dermLoading.set(false);
-        this.asignarMedicoSegunAnalisis();
+        this.assignDoctorFromAnalysis();
       }
     });
   }
 
-  private payloadTriage(): AiTriageRequest {
+  private triagePayload(): AiTriageRequest {
     const sintomas = (this.tab() === 'agendar' ? this.sintomas : (this.triageReq.sintomas || this.sintomas)).trim();
     const lesion = this.tieneLesionPiel ? (this.dermReq.descripcion || '').trim() : '';
     const sintomasCompletos = lesion ? `${sintomas}\nTambién refiere en la piel: ${lesion}` : sintomas;
@@ -623,7 +623,7 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     };
   }
 
-  private payloadDerm(): AiDermatologyRequest {
+  private dermatologyPayload(): AiDermatologyRequest {
     const sintomas = this.sintomas.trim();
     return {
       ...this.dermReq,
@@ -633,12 +633,12 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     };
   }
 
-  triageCambiar() {
+  changeTriage() {
     this.triageRsp.set(null);
     this.dermRsp.set(null);
   }
 
-  interAnalizar() {
+  runInteractions() {
     const meds = this.commaList(this.interMed);
     if (meds.length === 0) {
       this.error.set('Ingresa al menos 1 medicamento separado por comas.');
@@ -657,7 +657,7 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     });
   }
 
-  preciosAnalizar() {
+  estimatePrices() {
     if (!this.preciosReq.medicamento.trim()) {
       this.error.set('Ingresa el nombre del medicamento a comparar.');
       return;
@@ -680,7 +680,7 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     return s.split(/[,;]/).map(x => x.trim()).filter(Boolean);
   }
 
-  severidadColor(sev: string): string {
+  severityColor(sev: string): string {
     const s = (sev || '').toLowerCase();
     if (s.includes('rojo') || s.includes('critico') || s.includes('critica') || s.includes('severo')) return 'bg-red';
     if (s.includes('naranja') || s.includes('alto')) return 'bg-orange';
@@ -693,47 +693,47 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     return 'badge badge-' + estado.toLowerCase();
   }
 
-  primerNombre(): string {
-    const nombre = this.auth.user()?.nombre || this.perfil()?.nombre || 'paciente';
+  firstName(): string {
+    const nombre = this.auth.user()?.nombre || this.profile()?.nombre || 'paciente';
     return nombre.trim().split(/\s+/)[0];
   }
 
-  iniciales(nombre?: string): string {
+  initials(nombre?: string): string {
     const parts = (nombre || '').trim().split(/\s+/).filter(Boolean);
     if (!parts.length) return 'P';
     return parts.slice(0, 2).map(p => p[0]?.toUpperCase() ?? '').join('');
   }
 
-  etiqueta(c: Appointment) {
-    if (this.consultaCerrada(c) && (c.estado || '').toUpperCase() !== 'COMPLETADA') {
-      return this.seAdelanto(c) ? 'Aceptada · se adelantó' : 'Aceptada · concluida';
+  statusLabel(c: Appointment) {
+    if (this.visitClosed(c) && (c.estado || '').toUpperCase() !== 'COMPLETADA') {
+      return this.wasBroughtForward(c) ? 'Aceptada · se adelantó' : 'Aceptada · concluida';
     }
     return etiquetaCita(c);
   }
 
-  consultaCerrada(c: Appointment) {
+  visitClosed(c: Appointment) {
     if ((c.estado || '').toUpperCase() === 'COMPLETADA') return true;
     return this.avisosInbox().some(a => a.citaId === c.id && (a.tipo === 'INDICACION' || a.tipo === 'CONSULTA_CONCLUIDA' || /consulta concluida|indicaciones de tu consulta/i.test(a.titulo)));
   }
 
-  seAdelanto(c: Appointment) {
+  wasBroughtForward(c: Appointment) {
     const fecha = new Date(c.fechaHora).getTime();
     const hecha = c.concluidaEn ? new Date(c.concluidaEn).getTime() : 0;
-    return !!c.adelantada || (hecha > 0 && fecha > hecha) || (this.consultaCerrada(c) && fecha > Date.now());
+    return !!c.adelantada || (hecha > 0 && fecha > hecha) || (this.visitClosed(c) && fecha > Date.now());
   }
 
-  citaConcluida(): Appointment | null {
+  finishedVisit(): Appointment | null {
     const todas = new Map<number, Appointment>();
     [...this.citas(), ...this.proximas()].forEach(c => todas.set(c.id, c));
     return [...todas.values()]
-      .filter(c => this.consultaCerrada(c))
+      .filter(c => this.visitClosed(c))
       .sort((a, b) => new Date(b.fechaHora).getTime() - new Date(a.fechaHora).getTime())[0] ?? null;
   }
 
-  proximaCita(): Appointment | null {
+  nextVisit(): Appointment | null {
     const ahora = Date.now();
     return this.proximas()
-      .filter(c => !this.consultaCerrada(c))
+      .filter(c => !this.visitClosed(c))
       .filter(c => !['CANCELADA', 'RECHAZADA', 'COMPLETADA'].includes((c.estado || '').toUpperCase()))
       .filter(c => {
         const t = new Date(c.fechaHora).getTime();
@@ -743,28 +743,28 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
       .sort((a, b) => new Date(a.fechaHora).getTime() - new Date(b.fechaHora).getTime())[0] ?? null;
   }
 
-  private cargarReceta() {
+  private loadPrescription() {
     this.avisos.list().subscribe({
       next: n => {
         this.avisosInbox.set(n);
-        this.aplicarReceta();
+        this.applyPrescription();
       },
-      error: () => this.aplicarReceta()
+      error: () => this.applyPrescription()
     });
     this.svc.history().subscribe({
       next: c => {
         this.citas.set(c);
-        this.aplicarReceta();
+        this.applyPrescription();
       }
     });
   }
 
-  private aplicarReceta() {
-    const aviso = this.avisoDeConsulta();
+  private applyPrescription() {
+    const aviso = this.visitNotice();
     const mensaje = aviso?.mensaje || '';
-    const medsTexto = this.extraerBloque(mensaje, 'Medicamentos:') || this.citaConcluida()?.receta || '';
-    const nombres = this.nombresDe(medsTexto);
-    const cuidados = this.extraerBloque(mensaje, 'Qué hacer:');
+    const medsTexto = this.extractBlock(mensaje, 'Medicamentos:') || this.finishedVisit()?.receta || '';
+    const nombres = this.namesFrom(medsTexto);
+    const cuidados = this.extractBlock(mensaje, 'Qué hacer:');
     if (nombres.length) {
       this.recetaVisible.set(nombres.join(', '));
       if (!this.interMed.trim()) this.interMed = nombres.join(', ');
@@ -775,24 +775,24 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     }
     if (cuidados && !this.interDieta.trim()) this.interDieta = cuidados;
     if (!this.interSuplem.trim() && (nombres.length || cuidados)) {
-      this.interSuplem = this.suplementosDe(`${medsTexto} ${cuidados}`);
+      this.interSuplem = this.supplementsFrom(`${medsTexto} ${cuidados}`);
     }
   }
 
-  private avisoDeConsulta(): Notification | undefined {
+  private visitNotice(): Notification | undefined {
     return this.avisosInbox()
       .filter(a => a.tipo === 'CONSULTA_CONCLUIDA' || a.tipo === 'INDICACION' || /consulta concluida|indicaciones de tu consulta/i.test(a.titulo || ''))
       .sort((a, b) => new Date(b.creadaEn).getTime() - new Date(a.creadaEn).getTime())[0];
   }
 
-  private nombresDe(texto: string): string[] {
+  private namesFrom(texto: string): string[] {
     if (!texto.trim()) return [];
     return texto.split(/[;\n]/)
       .map(p => p.split('·')[0].replace(/^[\-\d\.\)\s]+/, '').trim())
       .filter(p => p.length > 1);
   }
 
-  private extraerBloque(mensaje: string, marca: string) {
+  private extractBlock(mensaje: string, marca: string) {
     const inicio = mensaje.toLowerCase().indexOf(marca.toLowerCase());
     if (inicio < 0) return '';
     let resto = mensaje.slice(inicio + marca.length).trim();
@@ -801,21 +801,21 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     return resto.trim();
   }
 
-  private suplementosDe(texto: string) {
+  private supplementsFrom(texto: string) {
     const hallados = texto.match(/vitamina [^,.;\n]+|omega[^,.;\n]*|magnesio|calcio|hierro|zinc|suplemento[^,.;\n]*/gi) || [];
     const unicos = [...new Set(hallados.map(s => s.trim()))];
     return unicos.length ? unicos.join(', ') : 'Ninguno indicado en la consulta';
   }
 
-  proximasVisibles(): Appointment[] {
-    return this.proximas().filter(c => !this.consultaCerrada(c));
+  visibleUpcoming(): Appointment[] {
+    return this.proximas().filter(c => !this.visitClosed(c));
   }
 
-  irA(tab: PacienteTab, sub: PacienteSub = '') {
+  goTo(tab: PacienteTab, sub: PacienteSub = '') {
     this.onNavigate({ id: tab, label: '', tab, sub });
   }
 
-  formatFechaCita(iso: string): string {
+  formatVisitDate(iso: string): string {
     const fecha = new Date(iso);
     if (Number.isNaN(fecha.getTime())) return iso;
     const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
@@ -826,15 +826,15 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     return `${fecha.getDate()} de ${meses[fecha.getMonth()]} de ${fecha.getFullYear()} · ${hora12}:${minutos} ${sufijo}`;
   }
 
-  notificacionesPaciente(): { titulo: string; detalle: string }[] {
+  patientNotices(): { titulo: string; detalle: string }[] {
     const items: { titulo: string; detalle: string }[] = [...this.avisosReales()];
-    const proxima = this.proximaCita();
+    const proxima = this.nextVisit();
     const dash = this.dashboard();
-    const perfil = this.perfil();
+    const profile = this.profile();
     if (proxima) {
       items.push({
         titulo: `Próxima cita con ${proxima.medicoNombre}`,
-        detalle: `${this.formatFechaCita(proxima.fechaHora)} · ${proxima.medicoEspecialidad || 'Consulta'}`
+        detalle: `${this.formatVisitDate(proxima.fechaHora)} · ${proxima.medicoEspecialidad || 'Consulta'}`
       });
     }
     if (dash?.citasPendientes) {
@@ -843,10 +843,10 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
         detalle: 'El médico aún no confirma la solicitud.'
       });
     }
-    if (perfil?.alergias) {
+    if (profile?.alergias) {
       items.push({
         titulo: 'Alergias registradas',
-        detalle: perfil.alergias
+        detalle: profile.alergias
       });
     }
     if (!items.length) {

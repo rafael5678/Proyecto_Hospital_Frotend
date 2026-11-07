@@ -27,7 +27,7 @@
             <li [class.unread]="!n.leida" (click)="markOne(n)">
               <strong>{{ n.titulo }}</strong>
               <p>{{ n.mensaje }}</p>
-              <small>{{ horaColombia(n.creadaEn) }}</small>
+              <small>{{ colombiaTime(n.creadaEn) }}</small>
             </li>
           }
         </ul>

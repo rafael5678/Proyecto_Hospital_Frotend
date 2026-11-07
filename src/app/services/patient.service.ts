@@ -17,7 +17,7 @@ export class PatientService {
     return this.http.get<PatientDashboard>(`${this.api}/dashboard`);
   }
 
-  perfil() {
+  profile() {
     return this.http.get<PatientProfile>(`${this.api}/profile`);
   }
 

@@ -97,7 +97,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   dashboard = signal<DoctorDashboard | null>({
     totalCitas: 0, citasPendientes: 0, citasAceptadas: 0, citasHoy: 0, horariosActivos: 0
   });
-  perfil = signal<DoctorProfile | null>(null);
+  profile = signal<DoctorProfile | null>(null);
   citas = signal<Appointment[]>([]);
   horarios = signal<Schedule[]>([]);
   pacienteSeleccionado = signal<PatientProfile | null>(null);
@@ -140,17 +140,17 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   consultaLoading = signal(false);
   avisoEnviando = signal(false);
   avisoOk = signal('');
-  consultaCerrada = signal(false);
+  visitClosed = signal(false);
   private citasCerradas = signal<number[]>([]);
   preciosPrecioTxt = '';
   preciosRsp = signal<AiPricesResponse | null>(null);
   preciosLoading = signal(false);
 
   ngOnInit() {
-    this.cargarInicio();
-    this.cargarCitas();
-    this.cargarHorarios();
-    this.svc.perfil().subscribe({ next: p => this.perfil.set(p) });
+    this.loadHome();
+    this.loadAppointments();
+    this.loadSchedules();
+    this.svc.profile().subscribe({ next: p => this.profile.set(p) });
   }
 
   ngOnDestroy() {
@@ -162,7 +162,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     if (!item.tab) return;
     this.tab.set(item.tab as MedicoTab);
     this.sub.set((item.sub ?? '') as MedicoSub);
-    if (item.tab === 'citas') this.applyFiltroFromSub(item.sub);
+    if (item.tab === 'citas') this.applyFilterFromSub(item.sub);
     const group = this.baseMenu.find(m => m.children?.some(c => c.id === item.id));
     if (group && !this.expandedMenus().includes(group.id)) {
       this.expandedMenus.set([...this.expandedMenus(), group.id]);
@@ -178,7 +178,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     }
   }
 
-  private applyFiltroFromSub(sub?: string) {
+  private applyFilterFromSub(sub?: string) {
     if (sub === 'pendientes') this.filtroEstado = 'PENDIENTE';
     else if (sub === 'aceptadas') this.filtroEstado = 'ACEPTADA';
     else if (sub === 'historial') this.filtroEstado = 'HISTORIAL';
@@ -204,54 +204,54 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     return map[key] ?? 'Portal médico';
   }
 
-  cargarInicio() {
+  loadHome() {
     this.svc.dashboard().subscribe({ next: d => this.dashboard.set(d) });
   }
 
-  citaTerminada(c: Appointment): boolean {
+  visitFinished(c: Appointment): boolean {
     return c.estado === 'COMPLETADA' || !!c.receta?.trim() || this.citasCerradas().includes(c.id);
   }
 
-  citasFiltradas(): Appointment[] {
+  filteredAppointments(): Appointment[] {
     if (this.filtroEstado === 'HISTORIAL') {
-      return this.citas().filter(c => this.citaTerminada(c));
+      return this.citas().filter(c => this.visitFinished(c));
     }
     const vigentes = this.citas().filter(c => !['CANCELADA', 'RECHAZADA'].includes(c.estado));
     if (!this.filtroEstado) return vigentes;
-    return vigentes.filter(c => !this.citaTerminada(c) && c.estado === this.filtroEstado);
+    return vigentes.filter(c => !this.visitFinished(c) && c.estado === this.filtroEstado);
   }
 
-  cargarCitas() {
+  loadAppointments() {
     this.svc.myAppointments().subscribe({
       next: c => this.citas.set(c),
       error: () => this.error.set('Error al cargar citas')
     });
   }
 
-  cargarHorarios() {
+  loadSchedules() {
     this.svc.mySchedules().subscribe({ next: h => this.horarios.set(h) });
   }
 
-  aceptar(id: number) {
-    this.svc.accept(id).subscribe({ next: () => { this.cargarCitas(); this.cargarInicio(); } });
+  accept(id: number) {
+    this.svc.accept(id).subscribe({ next: () => { this.loadAppointments(); this.loadHome(); } });
   }
 
-  rechazar(id: number) {
-    this.svc.reject(id).subscribe({ next: () => { this.cargarCitas(); this.cargarInicio(); } });
+  reject(id: number) {
+    this.svc.reject(id).subscribe({ next: () => { this.loadAppointments(); this.loadHome(); } });
   }
 
-  verPaciente(citaId: number) {
+  viewPatient(citaId: number) {
     this.historialPaciente.set([]);
     this.svc.myAppointments().subscribe({
       next: lista => {
         this.citas.set(lista);
-        this.abrirFicha(citaId);
+        this.openChart(citaId);
       },
-      error: () => this.abrirFicha(citaId)
+      error: () => this.openChart(citaId)
     });
   }
 
-  private abrirFicha(citaId: number) {
+  private openChart(citaId: number) {
     const encontrada = this.citas().find(c => c.id === citaId) ?? null;
     const cerrada = !!encontrada && (
       encontrada.estado === 'COMPLETADA' || !!encontrada.receta?.trim() || this.citasCerradas().includes(citaId)
@@ -286,7 +286,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     });
   }
 
-  agregarHorario() {
+  addSchedule() {
     this.svc.createSchedule({
       diaSemana: this.diaSemana,
       horaInicio: this.horaInicio,
@@ -294,20 +294,20 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
       disponible: true
     }).subscribe({
       next: () => {
-        this.cargarHorarios();
-        this.cargarInicio();
+        this.loadSchedules();
+        this.loadHome();
         this.sub.set('lista');
         this.tab.set('horarios');
       }
     });
   }
 
-  eliminarHorario(id: number) {
-    this.svc.deleteSchedule(id).subscribe({ next: () => this.cargarHorarios() });
+  deleteSchedule(id: number) {
+    this.svc.deleteSchedule(id).subscribe({ next: () => this.loadSchedules() });
   }
 
-  etiqueta(c: Appointment) {
-    if (this.citaTerminada(c)) return 'Cita ya terminada';
+  statusLabel(c: Appointment) {
+    if (this.visitFinished(c)) return 'Cita ya terminada';
     return etiquetaCita(c);
   }
 
@@ -320,7 +320,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
       this.error.set('Confirma que el paciente autorizó el envío de la transcripción al servicio de IA.');
       return;
     }
-    const tx = this.asegurarRelato();
+    const tx = this.ensureNarrative();
     if (!tx) {
       this.error.set('El cuadro está vacío. El texto gris era solo un ejemplo. Escribe el relato o abre al paciente desde su cita.');
       return;
@@ -334,15 +334,15 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
         this.soapRsp.set(r);
         if (!this.resumenEnvio) this.resumenEnvio = r.resumenParaMedico || '';
         if (!this.cuidadosEnvio) this.cuidadosEnvio = r.cuidados || '';
-        const meds = this.lineas(r.medicamentosSugeridos);
+        const meds = this.linesOf(r.medicamentosSugeridos);
         if (meds.length) this.sugeridos = meds;
-        this.hablarResumenSoap(r);
+        this.speakSoapSummary(r);
       },
       complete: () => this.soapLoading.set(false)
     });
   }
 
-  hablarResumenSoap(r?: AiSoapResponse) {
+  speakSoapSummary(r?: AiSoapResponse) {
     const nota = r ?? this.soapRsp();
     if (!nota || typeof speechSynthesis === 'undefined') return;
     const texto = [
@@ -362,7 +362,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     speechSynthesis.speak(voz);
   }
 
-  private asegurarRelato(): string {
+  private ensureNarrative(): string {
     const escrito = (this.soapReq.transcripcion || this.soapReq.transcripcionConsulta || '').trim();
     if (escrito) {
       this.soapReq.transcripcion = escrito;
@@ -382,7 +382,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     return relato;
   }
 
-  detenerVozSoap() {
+  stopSoapSpeech() {
     if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
   }
 
@@ -407,24 +407,24 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
       this.grabadora.onstop = () => {
         stream.getTracks().forEach(track => track.stop());
         const audio = new Blob(this.audioChunks, { type: this.grabadora?.mimeType || 'audio/webm' });
-        if (audio.size) this.subirAudio(audio);
+        if (audio.size) this.uploadAudio(audio);
       };
       this.grabadora.start();
       this.grabandoConsulta.set(true);
-      this.iniciarReconocimientoNavegador();
+      this.startBrowserRecognition();
     } catch {
       this.vozError.set('No se pudo acceder al micrófono. Revisa permisos del navegador.');
     }
   }
 
-  detenerGrabacion() {
+  stopRecording() {
     this.recognition?.stop();
     this.recognition = null;
     this.grabandoConsulta.set(false);
     if (this.grabadora?.state === 'recording') this.grabadora.stop();
   }
 
-  private iniciarReconocimientoNavegador() {
+  private startBrowserRecognition() {
     const speechWindow = window as Window & {
       SpeechRecognition?: SpeechRecognitionFactory;
       webkitSpeechRecognition?: SpeechRecognitionFactory;
@@ -447,7 +447,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     }
   }
 
-  private subirAudio(audio: Blob) {
+  private uploadAudio(audio: Blob) {
     this.transcribiendoAudio.set(true);
     this.ai.transcribe(audio).subscribe({
       next: result => {
@@ -468,7 +468,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     });
   }
 
-  preciosAnalizar() {
+  estimatePrices() {
     if (!this.preciosReq.medicamento.trim() || !this.preciosReq.ciudad?.trim()) {
       this.error.set('Escribe el medicamento y la ciudad. Con eso basta.');
       return;
@@ -484,32 +484,32 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     });
   }
 
-  lineas(texto?: string): string[] {
+  linesOf(texto?: string): string[] {
     if (!texto) return [];
     return texto.split(/\n|•/).map(s => s.replace(/^[\s\-\d\.\)]+/, '').trim()).filter(Boolean);
   }
 
-  elegida(m: string) {
+  chosen(m: string) {
     return this.elegidos.includes(m);
   }
 
-  alternarMed(m: string) {
-    this.elegidos = this.elegida(m) ? this.elegidos.filter(x => x !== m) : [...this.elegidos, m];
+  toggleMedication(m: string) {
+    this.elegidos = this.chosen(m) ? this.elegidos.filter(x => x !== m) : [...this.elegidos, m];
   }
 
-  irAConsulta() {
-    if (this.citaYaConsultada()) return;
+  goToConsult() {
+    if (this.visitAlreadyDone()) return;
     this.tab.set('soap');
     this.sub.set('');
   }
 
-  citaYaConsultada(): boolean {
+  visitAlreadyDone(): boolean {
     const cita = this.citaEnRevision();
-    return !!cita && this.citaTerminada(cita);
+    return !!cita && this.visitFinished(cita);
   }
 
-  consultasDeEsteMedico(): Appointment[] {
-    const yo = this.perfil()?.id;
+  visitsForThisDoctor(): Appointment[] {
+    const yo = this.profile()?.id;
     const propias = this.historialPaciente().filter(c => yo != null && c.medicoId === yo);
     const actual = this.citaEnRevision();
     if (actual && !propias.some(c => c.id === actual.id)) {
@@ -518,12 +518,12 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     return propias;
   }
 
-  iniciarConsulta() {
+  startConsult() {
     if (!this.consentimientoSoapAi) {
       this.error.set('Marca la autorización antes de iniciar la simulación.');
       return;
     }
-    const ctx = this.asegurarRelato();
+    const ctx = this.ensureNarrative();
     if (!ctx) {
       this.error.set('El cuadro está vacío. Escribe el relato o abre al paciente desde su cita, y luego inicia la consulta.');
       return;
@@ -536,11 +536,11 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     }];
     this.preguntaSim = '';
     this.avisoOk.set('');
-    this.consultaCerrada.set(false);
+    this.visitClosed.set(false);
     this.error.set('');
   }
 
-  preguntarSimulacion(pregunta: string) {
+  askSimulation(pregunta: string) {
     const texto = pregunta.trim();
     if (texto) this.dialogo = [...this.dialogo, { quien: 'medico', texto }];
     this.consultaLoading.set(true);
@@ -555,7 +555,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     }).subscribe({
       next: r => {
         this.dialogo = [...this.dialogo, { quien: 'paciente' as const, texto: r.dicePaciente }];
-        const meds = this.lineas(r.medicamentosSugeridos);
+        const meds = this.linesOf(r.medicamentosSugeridos);
         if (meds.length) this.sugeridos = meds;
         if (!this.cuidadosEnvio && r.cuidados) this.cuidadosEnvio = r.cuidados;
         if (!this.resumenEnvio && this.soapRsp()?.resumenParaMedico) {
@@ -568,12 +568,12 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     });
   }
 
-  enviarPregunta() {
+  sendQuestion() {
     if (!this.preguntaSim.trim() || this.consultaLoading()) return;
-    this.preguntarSimulacion(this.preguntaSim);
+    this.askSimulation(this.preguntaSim);
   }
 
-  avisarPaciente() {
+  notifyPatient() {
     const cita = this.citaEnRevision();
     if (!cita) {
       this.error.set('Abre al paciente desde su cita para poder dejarle el aviso.');
@@ -593,10 +593,10 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
       cuidados: this.cuidadosEnvio
     }).subscribe({
       next: r => {
-        this.consultaCerrada.set(true);
+        this.visitClosed.set(true);
         this.citasCerradas.update(ids => ids.includes(cita.id) ? ids : [...ids, cita.id]);
         this.avisoOk.set('');
-        this.detenerVozSoap();
+        this.stopSoapSpeech();
         this.soapRsp.set(null);
         this.dialogo = [];
         this.sugeridos = [];
@@ -608,14 +608,14 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
         const cerrada = { ...cita, estado: 'COMPLETADA' as const };
         this.citaEnRevision.set(cerrada);
         this.citas.update(lista => lista.map(c => c.id === cita.id ? cerrada : c));
-        this.cargarCitas();
+        this.loadAppointments();
       },
       error: () => this.error.set('No se pudo enviar el aviso. Publica el backend en Render y vuelve a intentarlo.'),
       complete: () => this.avisoEnviando.set(false)
     });
   }
 
-  severidadColor(sev?: string): string {
+  severityColor(sev?: string): string {
     switch ((sev || '').toUpperCase()) {
       case 'ALTO': return 'bg-red';
       case 'MEDIO': return 'bg-orange';
@@ -624,55 +624,55 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     }
   }
 
-  irA(tab: MedicoTab, sub: MedicoSub = '') {
+  goTo(tab: MedicoTab, sub: MedicoSub = '') {
     this.onNavigate({ id: tab, label: '', tab, sub });
   }
 
-  iniciales(nombre?: string): string {
+  initials(nombre?: string): string {
     const parts = (nombre || '').trim().split(/\s+/).filter(Boolean);
     if (!parts.length) return 'M';
     return parts.slice(0, 2).map(p => p[0]?.toUpperCase() ?? '').join('');
   }
 
-  apellido(): string {
-    const parts = (this.auth.user()?.nombre || this.perfil()?.nombre || '').trim().split(/\s+/);
+  lastName(): string {
+    const parts = (this.auth.user()?.nombre || this.profile()?.nombre || '').trim().split(/\s+/);
     return parts.length > 1 ? parts[parts.length - 1] : (parts[0] || 'doctor');
   }
 
-  saludo(): string {
+  greeting(): string {
     const hora = new Date().getHours();
     const momento = hora < 12 ? 'Buenos días' : hora < 19 ? 'Buenas tardes' : 'Buenas noches';
-    return `${momento}, ${this.apellido()}`;
+    return `${momento}, ${this.lastName()}`;
   }
 
-  citasActivas(): Appointment[] {
-    return this.citas().filter(c => !this.citaTerminada(c) && !['CANCELADA', 'RECHAZADA'].includes(c.estado));
+  activeAppointments(): Appointment[] {
+    return this.citas().filter(c => !this.visitFinished(c) && !['CANCELADA', 'RECHAZADA'].includes(c.estado));
   }
 
-  atendidas(): number {
-    return this.citas().filter(c => this.citaTerminada(c)).length;
+  completedCount(): number {
+    return this.citas().filter(c => this.visitFinished(c)).length;
   }
 
-  especialidadHoy(): string {
-    const hoy = this.citasDeHoy();
-    const primera = hoy[0]?.medicoEspecialidad || this.perfil()?.especialidad;
+  specialtyToday(): string {
+    const hoy = this.appointmentsToday();
+    const primera = hoy[0]?.medicoEspecialidad || this.profile()?.especialidad;
     if (!primera) return 'Sin especialidad registrada';
     return hoy.length ? `${hoy.length} en ${primera}` : primera;
   }
 
-  citasDeHoy(): Appointment[] {
+  appointmentsToday(): Appointment[] {
     const hoy = new Date().toDateString();
-    return this.citasActivas().filter(c => new Date(c.fechaHora).toDateString() === hoy);
+    return this.activeAppointments().filter(c => new Date(c.fechaHora).toDateString() === hoy);
   }
 
-  triagePrioritario(): Appointment[] {
-    return this.citasActivas()
+  priorityTriage(): Appointment[] {
+    return this.activeAppointments()
       .filter(c => c.triageSeveridad || c.triagePrioridad)
       .sort((a, b) => (b.triagePrioridad ?? 0) - (a.triagePrioridad ?? 0))
       .slice(0, 4);
   }
 
-  etiquetaPrioridad(c: Appointment): string {
+  priorityLabel(c: Appointment): string {
     const sev = (c.triageSeveridad || '').toUpperCase();
     if (sev.includes('ROJO') || (c.triagePrioridad ?? 0) >= 8) return 'Urgente';
     if (sev.includes('NARANJA') || (c.triagePrioridad ?? 0) >= 6) return 'Alta';
@@ -680,19 +680,19 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     return 'Baja';
   }
 
-  prioridadChip(c: Appointment): string {
-    const etiqueta = this.etiquetaPrioridad(c).toLowerCase();
-    return `prio ${etiqueta}`;
+  priorityChip(c: Appointment): string {
+    const statusLabel = this.priorityLabel(c).toLowerCase();
+    return `prio ${statusLabel}`;
   }
 
-  horaCorta(iso: string): string {
+  shortTime(iso: string): string {
     const fecha = new Date(iso);
     if (Number.isNaN(fecha.getTime())) return '';
     return fecha.toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' });
   }
 
   iaEnAccion(): { label: string; detalle: string }[] {
-    const citas = this.citasActivas();
+    const citas = this.activeAppointments();
     const piel = citas.filter(c => c.dermatologiaScoreRiesgo != null).length;
     const triage = citas.filter(c => !!c.triageSeveridad).length;
     const soapListo = this.soapRsp() ? 1 : 0;
@@ -703,7 +703,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     ];
   }
 
-  pacientesRecientes(): { nombre: string; iniciales: string; estado: string; hora: string }[] {
+  recentPatients(): { nombre: string; initials: string; estado: string; hora: string }[] {
     const vistos = new Set<string>();
     return this.citas()
       .filter(c => !['CANCELADA', 'RECHAZADA'].includes(c.estado))
@@ -717,9 +717,9 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
       })
       .map(c => ({
         nombre: c.pacienteNombre,
-        iniciales: this.iniciales(c.pacienteNombre),
-        estado: this.etiqueta(c),
-        hora: this.horaCorta(c.fechaHora)
+        initials: this.initials(c.pacienteNombre),
+        estado: this.statusLabel(c),
+        hora: this.shortTime(c.fechaHora)
       }));
   }
 

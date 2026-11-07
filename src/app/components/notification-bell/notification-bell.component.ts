@@ -76,7 +76,7 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
     this.notifications.markAllRead().subscribe({ next: () => this.load() });
   }
 
-  horaColombia(iso?: string): string {
+  colombiaTime(iso?: string): string {
     if (!iso) return '';
     const conZona = /[zZ]|[+-]\d{2}:\d{2}$/.test(iso) ? iso : `${iso}Z`;
     const fecha = new Date(conZona);

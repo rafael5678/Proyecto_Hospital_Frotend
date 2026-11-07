@@ -162,19 +162,19 @@ export class AdminPortalComponent implements OnInit {
   private asistenteReconocimiento: SpeechRecognitionLike | null = null;
 
   ngOnInit() {
-    this.cargarUsuarios();
-    this.cargarMedicos();
-    this.cargarCitas();
-    this.cargarReportes();
-    this.cargarAiStatus();
-    this.cargarAiMetricas();
+    this.loadUsers();
+    this.loadDoctors();
+    this.loadAppointments();
+    this.loadReports();
+    this.loadAiStatus();
+    this.loadAiMetrics();
   }
 
-  cargarAiStatus() {
+  loadAiStatus() {
     this.ai.status().subscribe({ next: s => this.aiStatus.set(s) });
   }
 
-  cargarAiMetricas() {
+  loadAiMetrics() {
     this.adminService.aiMetrics().subscribe({ next: m => this.aiMetricas.set(m) });
   }
 
@@ -182,8 +182,8 @@ export class AdminPortalComponent implements OnInit {
     if (!item.tab) return;
     this.tab.set(item.tab as AdminTab);
     this.sub.set((item.sub ?? '') as AdminSub);
-    if (item.tab === 'reportes') this.cargarReportes();
-    if (item.tab === 'iasuperv') this.cargarAiMetricas();
+    if (item.tab === 'reportes') this.loadReports();
+    if (item.tab === 'iasuperv') this.loadAiMetrics();
     const group = this.menuItems.find(m => m.children?.some(c => c.id === item.id));
     if (group && !this.expandedMenus().includes(group.id)) {
       this.expandedMenus.set([...this.expandedMenus(), group.id]);
@@ -220,19 +220,19 @@ export class AdminPortalComponent implements OnInit {
     return map[`${t}-${s}`] ?? map[t] ?? 'Administración';
   }
 
-  cargarUsuarios() {
+  loadUsers() {
     this.adminService.listUsers().subscribe({ next: u => this.usuarios.set(u) });
   }
 
-  cargarMedicos() {
+  loadDoctors() {
     this.adminService.listDoctors().subscribe({ next: m => this.medicos.set(m) });
   }
 
-  cargarCitas() {
+  loadAppointments() {
     this.adminService.superviseAppointments().subscribe({ next: c => this.citas.set(c) });
   }
 
-  citasFiltradas(): Appointment[] {
+  filteredAppointments(): Appointment[] {
     const consulta = this.buscarCita.trim().toLocaleLowerCase();
     return this.citas().filter(c => {
       const coincideEstado = !this.estadoCita || c.estado === this.estadoCita;
@@ -241,26 +241,26 @@ export class AdminPortalComponent implements OnInit {
     });
   }
 
-  citasConTriage(): number {
+  appointmentsWithTriage(): number {
     return this.citas().filter(c => c.triageSeveridad).length;
   }
 
-  citasConEvaluacionPiel(): number {
+  appointmentsWithSkinReview(): number {
     return this.citas().filter(c => c.dermatologiaScoreRiesgo != null).length;
   }
 
-  citasUrgentes(): number {
+  urgentAppointments(): number {
     return this.citas().filter(c => (c.triagePrioridad ?? 0) >= 8 || ['ROJO', 'NARANJA'].includes((c.triageSeveridad ?? '').toUpperCase())).length;
   }
 
-  abrirReprogramacion(cita: Appointment) {
+  openReschedule(cita: Appointment) {
     this.citaAReprogramar.set(cita);
     this.nuevaFechaHora = '';
     this.motivoReprogramacion = '';
     this.mensajeCambio.set('');
   }
 
-  reprogramarCita() {
+  rescheduleAppointment() {
     const cita = this.citaAReprogramar();
     if (!cita || !this.nuevaFechaHora || !this.motivoReprogramacion.trim()) {
       this.error.set('Indica la nueva fecha y el motivo del cambio.');
@@ -273,7 +273,7 @@ export class AdminPortalComponent implements OnInit {
         this.guardandoCambio.set(false);
         this.mensajeCambio.set(result.mensaje);
         this.citaAReprogramar.set(null);
-        this.cargarCitas();
+        this.loadAppointments();
       },
       error: e => {
         this.guardandoCambio.set(false);
@@ -282,27 +282,27 @@ export class AdminPortalComponent implements OnInit {
     });
   }
 
-  cargarReportes() {
+  loadReports() {
     this.adminService.reports().subscribe({ next: r => this.reporte.set(r) });
   }
 
-  desactivar(id: number) {
-    this.cambiarEstado(id, false);
+  deactivate(id: number) {
+    this.changeActive(id, false);
   }
 
-  cambiarEstado(id: number, activo: boolean) {
+  changeActive(id: number, activo: boolean) {
     this.adminService.setActive(id, activo).subscribe({
-      next: () => { this.cargarUsuarios(); this.cargarMedicos(); this.okAdmin.set(activo ? 'Cuenta activada' : 'Cuenta desactivada'); },
+      next: () => { this.loadUsers(); this.loadDoctors(); this.okAdmin.set(activo ? 'Cuenta activada' : 'Cuenta desactivada'); },
       error: (e) => this.error.set(e.error?.error ?? 'No se pudo cambiar el estado')
     });
   }
 
-  editar(u: User) {
-    this.editandoId.set(this.idUsuario(u));
+  editUser(u: User) {
+    this.editandoId.set(this.userId(u));
     this.claveVisible = u.clave || '';
     this.form = {
       nombre: u.nombre, email: u.email, password: '', rol: u.rol,
-      telefono: digitsOnly(u.telefono || ''), documento: this.documentoVisible(u.documento || ''),
+      telefono: digitsOnly(u.telefono || ''), documento: this.visibleDocument(u.documento || ''),
       fechaNacimiento: u.fechaNacimiento || '', genero: normalizeGender(u.genero || ''),
       tipoSangre: normalizeBloodType(u.tipoSangre || ''), direccion: u.direccion || '', ciudad: u.ciudad || '',
       alergias: u.alergias || '', contactoEmergencia: u.contactoEmergencia || '',
@@ -317,54 +317,54 @@ export class AdminPortalComponent implements OnInit {
     this.error.set('');
   }
 
-  diaMarcado(id: string) {
+  dayChecked(id: string) {
     return (this.form.diasAtencion || '').split(',').map(s => s.trim()).includes(id);
   }
 
-  toggleDia(id: string) {
+  toggleDay(id: string) {
     const set = new Set((this.form.diasAtencion || '').split(',').map(s => s.trim()).filter(Boolean));
     if (set.has(id)) set.delete(id);
     else set.add(id);
     this.form.diasAtencion = [...set].sort().join(',');
   }
 
-  telefonoValido(valor?: string) {
+  phoneValid(valor?: string) {
     return isColombianPhone(valor || '');
   }
 
-  documentoVisible(valor: string) {
+  visibleDocument(valor: string) {
     const texto = (valor || '').trim();
     return /^\d+$/.test(texto) ? texto.slice(0, ID_MAX) : texto;
   }
 
-  alEscribirCedula(valor: string) {
+  onIdTyped(valor: string) {
     const texto = valor ?? '';
     if (/[A-Za-z]/.test(texto) && !/\d/.test(texto)) return texto.slice(0, 20);
     return idDigitsOnly(texto);
   }
 
-  cedulaLarga() {
+  idTooLong() {
     return (this.form.documento || '').replace(/\D/g, '').length > ID_MAX;
   }
 
-  private telefonoCompleto(valor?: string) {
+  private completePhone(valor?: string) {
     const d = digitsOnly(valor || '');
     return !!d && isColombianPhone(d);
   }
 
-  claveCorta() {
+  passwordTooShort() {
     const n = (this.form.password || '').length;
     return n > 0 && n < PASSWORD_MIN;
   }
 
-  textoClave() {
+  passwordText() {
     const n = (this.form.password || '').length;
     if (!n) return `Mínimo ${PASSWORD_MIN} caracteres. Vacía = no cambiar la clave.`;
     if (n < PASSWORD_MIN) return `${n} de ${PASSWORD_MIN} caracteres como mínimo.`;
     return `${n} caracteres. Máximo ${PASSWORD_MAX}.`;
   }
 
-  guardarEdicion() {
+  saveEdit() {
     const id = this.editandoId();
     if (!id) return;
     const clave = this.form.password?.trim() || '';
@@ -402,18 +402,18 @@ export class AdminPortalComponent implements OnInit {
       next: (guardado) => {
         this.okAdmin.set('Datos guardados. Si vuelves a editar, vas a ver esta misma ficha.');
         this.claveVisible = guardado.clave || clave || this.claveVisible;
-        this.usuarios.update(lista => lista.map(u => this.idUsuario(u) === id ? { ...u, ...guardado, clave: guardado.clave || clave || u.clave } : u));
+        this.usuarios.update(lista => lista.map(u => this.userId(u) === id ? { ...u, ...guardado, clave: guardado.clave || clave || u.clave } : u));
         this.resetForm();
         this.editandoId.set(null);
-        this.cargarUsuarios();
-        this.cargarMedicos();
+        this.loadUsers();
+        this.loadDoctors();
         this.sub.set('lista');
       },
       error: (e) => this.error.set(e.error?.error ?? 'No se pudo actualizar')
     });
   }
 
-  generarClave() {
+  generatePassword() {
     const alfabeto = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
     const bytes = new Uint32Array(8);
     crypto.getRandomValues(bytes);
@@ -421,7 +421,7 @@ export class AdminPortalComponent implements OnInit {
     this.error.set('');
   }
 
-  restablecerClave(u: User) {
+  resetPassword(u: User) {
     const clave = this.nuevaClave.trim();
     const confirmacion = this.claveAdmin;
     if (clave.length < 6) {
@@ -433,19 +433,19 @@ export class AdminPortalComponent implements OnInit {
       return;
     }
     this.error.set('');
-    this.adminService.resetPassword(this.idUsuario(u), clave, confirmacion).subscribe({
+    this.adminService.resetPassword(this.userId(u), clave, confirmacion).subscribe({
       next: () => {
         this.claveEntregada.set({ nombre: u.nombre, email: u.email, password: clave });
         this.okAdmin.set('');
         this.nuevaClave = '';
         this.claveAdmin = '';
-        this.cargarUsuarios();
+        this.loadUsers();
       },
       error: (e) => this.error.set(e.error?.error ?? 'No se pudo restablecer')
     });
   }
 
-  textoVisible(texto?: string) {
+  visibleText(texto?: string) {
     return (texto || '')
       .replace(/Gemini\/LLM/gi, 'el asistente')
       .replace(/Gemini visión \+ clasificador local/gi, 'revisión de imagen')
@@ -459,7 +459,7 @@ export class AdminPortalComponent implements OnInit {
       .trim();
   }
 
-  resultadosBusqueda(): User[] {
+  searchResults(): User[] {
     const frase = this.busquedaPersona.trim().toLowerCase();
     if (frase.length < 2) return [];
     const digitos = frase.replace(/\D/g, '');
@@ -484,7 +484,7 @@ export class AdminPortalComponent implements OnInit {
     }).slice(0, 8);
   }
 
-  probarGemini() {
+  pingAssistant() {
     this.iaProbando.set(true);
     this.iaPrueba.set('');
     this.adminService.pingAssistant().subscribe({
@@ -502,11 +502,11 @@ export class AdminPortalComponent implements OnInit {
     });
   }
 
-  idUsuario(u: User): number {
+  userId(u: User): number {
     return u.usuarioId ?? u.id;
   }
 
-  consultarAsistente() {
+  askAssistant() {
     const texto = this.asistenteTexto.trim();
     if (!texto) {
       this.error.set('Escribe el médico o el paciente que quieres crear.');
@@ -525,17 +525,17 @@ export class AdminPortalComponent implements OnInit {
         this.asistenteBorrador = sigue ? JSON.stringify(r) : '';
         this.asistenteHistorial = sigue ? [...historial, texto] : [];
         if (r.accion === 'CREAR_MEDICO' || r.accion === 'CREAR_PACIENTE') {
-          const falta = this.preguntaSiFalta(r);
+          const falta = this.questionIfMissing(r);
           if (falta) {
             this.asistenteLoading.set(false);
-            this.responderAsistente(falta);
+            this.replyToAssistant(falta);
             return;
           }
-          this.crearDesdeAsistente(r);
+          this.createFromAssistant(r);
           return;
         }
         this.asistenteLoading.set(false);
-        this.responderAsistente(r.mensaje);
+        this.replyToAssistant(r.mensaje);
       },
       error: e => {
         this.asistenteLoading.set(false);
@@ -544,7 +544,7 @@ export class AdminPortalComponent implements OnInit {
     });
   }
 
-  private preguntaSiFalta(r: AiAdminOperationResponse): string | null {
+  private questionIfMissing(r: AiAdminOperationResponse): string | null {
     const medico = r.accion === 'CREAR_MEDICO';
     const faltan: string[] = [];
     if (!r.nombre?.trim()) faltan.push('el nombre completo');
@@ -556,11 +556,11 @@ export class AdminPortalComponent implements OnInit {
       if (!r.especialidad?.trim()) faltan.push('la especialidad');
       if (r.anosExperiencia == null) faltan.push('los años de experiencia');
       if (!r.numeroLicencia?.trim()) faltan.push('el número de licencia');
-      if (!this.telefonoCompleto(r.telefono)) faltan.push('un teléfono de 10 dígitos (celular empieza por 3, fijo por 60)');
+      if (!this.completePhone(r.telefono)) faltan.push('un teléfono de 10 dígitos (celular empieza por 3, fijo por 60)');
       if (!r.diasAtencion || !r.horaInicio || !r.horaFin) faltan.push('el horario de atención, con los días y las horas');
     } else {
       if (!r.documento?.trim()) faltan.push('el documento de identidad');
-      if (!this.telefonoCompleto(r.telefono)) faltan.push('un teléfono de 10 dígitos (celular empieza por 3, fijo por 60)');
+      if (!this.completePhone(r.telefono)) faltan.push('un teléfono de 10 dígitos (celular empieza por 3, fijo por 60)');
       if (!r.fechaNacimiento || !/^\d{4}-\d{2}-\d{2}$/.test(r.fechaNacimiento)) faltan.push('la fecha de nacimiento');
       if (!normalizeGender(r.genero || '')) faltan.push('el género (masculino, femenino u otro)');
       if (!normalizeBloodType(r.tipoSangre || '')) faltan.push('el tipo de sangre (O+, O-, A+, A-, B+, B-, AB+ o AB-)');
@@ -568,7 +568,7 @@ export class AdminPortalComponent implements OnInit {
       if (!r.ciudad?.trim()) faltan.push('la ciudad');
       if (!r.alergias?.trim()) faltan.push('las alergias (o «ninguna»)');
       if (!r.contactoEmergencia?.trim()) faltan.push('el contacto de emergencia');
-      if (!this.telefonoCompleto(r.telefonoEmergencia)) faltan.push('un teléfono de emergencia de 10 dígitos');
+      if (!this.completePhone(r.telefonoEmergencia)) faltan.push('un teléfono de emergencia de 10 dígitos');
     }
     if (!faltan.length) return null;
     const quien = r.nombre?.trim();
@@ -578,7 +578,7 @@ export class AdminPortalComponent implements OnInit {
       : `Para registrarlo me falta ${lista}. Puedes escribirlos como quieras.`;
   }
 
-  private crearDesdeAsistente(r: AiAdminOperationResponse) {
+  private createFromAssistant(r: AiAdminOperationResponse) {
     const clave = r.passwordSugerida || '';
     const comun = {
       nombre: r.nombre || '',
@@ -626,27 +626,27 @@ export class AdminPortalComponent implements OnInit {
           rol: 'ia',
           texto: `${tipo} creado: ${r.nombre}. ${detalle} Para iniciar sesión: correo ${r.email} y contraseña ${clave}. Entrégaselos; la contraseña no se vuelve a mostrar.`
         }]);
-        this.hablarAsistente(`${tipo} ${r.nombre} registrado. Los datos de acceso están en pantalla.`);
+        this.speakAssistant(`${tipo} ${r.nombre} registrado. Los datos de acceso están en pantalla.`);
         this.asistenteBorrador = '';
         this.asistenteHistorial = [];
         this.asistenteRsp.set(null);
-        this.cargarUsuarios();
-        this.cargarMedicos();
-        this.cargarReportes();
+        this.loadUsers();
+        this.loadDoctors();
+        this.loadReports();
       },
       error: e => {
         this.asistenteLoading.set(false);
-        this.responderAsistente(e.error?.error ?? 'No se pudo crear la cuenta. Corrige el dato y vuelve a enviarlo.');
+        this.replyToAssistant(e.error?.error ?? 'No se pudo crear la cuenta. Corrige el dato y vuelve a enviarlo.');
       }
     });
   }
 
-  private responderAsistente(texto: string) {
+  private replyToAssistant(texto: string) {
     this.asistenteChat.update(c => [...c, { rol: 'ia', texto }]);
-    this.hablarAsistente(texto);
+    this.speakAssistant(texto);
   }
 
-  private hablarAsistente(texto: string) {
+  private speakAssistant(texto: string) {
     if (!this.asistenteResponderVoz || typeof speechSynthesis === 'undefined') return;
     speechSynthesis.cancel();
     const voz = new SpeechSynthesisUtterance(texto.slice(0, 600));
@@ -659,7 +659,7 @@ export class AdminPortalComponent implements OnInit {
 
   async alternarMicrofonoAsistente() {
     if (this.asistenteEscuchando()) {
-      this.detenerMicrofonoAsistente();
+      this.stopAssistantMicrophone();
       return;
     }
     this.error.set('');
@@ -679,24 +679,24 @@ export class AdminPortalComponent implements OnInit {
       this.asistenteGrabadora.onstop = () => {
         stream.getTracks().forEach(track => track.stop());
         const audio = new Blob(this.asistenteAudio, { type: this.asistenteGrabadora?.mimeType || 'audio/webm' });
-        this.enviarVozAsistente(audio);
+        this.sendAssistantAudio(audio);
       };
       this.asistenteGrabadora.start();
       this.asistenteEscuchando.set(true);
-      this.escucharEnVivoAsistente();
+      this.listenLiveAssistant();
     } catch {
       this.error.set('No se pudo acceder al micrófono. Revisa los permisos del navegador.');
     }
   }
 
-  private detenerMicrofonoAsistente() {
+  private stopAssistantMicrophone() {
     this.asistenteReconocimiento?.stop();
     this.asistenteReconocimiento = null;
     this.asistenteEscuchando.set(false);
     if (this.asistenteGrabadora?.state === 'recording') this.asistenteGrabadora.stop();
   }
 
-  private escucharEnVivoAsistente() {
+  private listenLiveAssistant() {
     const speechWindow = window as Window & {
       SpeechRecognition?: SpeechRecognitionFactory;
       webkitSpeechRecognition?: SpeechRecognitionFactory;
@@ -718,20 +718,20 @@ export class AdminPortalComponent implements OnInit {
     }
   }
 
-  private enviarVozAsistente(audio: Blob) {
+  private sendAssistantAudio(audio: Blob) {
     const enVivo = this.asistenteVozEnVivo().trim();
     const enviar = (texto: string, motivo?: string) => {
       this.asistenteTranscribiendo.set(false);
       this.asistenteVozEnVivo.set('');
       if (!texto) {
-        const navegador = this.navegadorSinVoz()
+        const navegador = this.browserHasNoSpeech()
           ? ' Este navegador no reconoce la voz por sí mismo; en Chrome o Edge funciona.'
           : '';
         this.error.set((motivo || 'No se entendió el audio. Habla de nuevo o escribe los datos.') + navegador);
         return;
       }
       this.asistenteTexto = texto;
-      this.consultarAsistente();
+      this.askAssistant();
     };
     if (!audio.size) {
       enviar(enVivo);
@@ -744,7 +744,7 @@ export class AdminPortalComponent implements OnInit {
     });
   }
 
-  private navegadorSinVoz(): boolean {
+  private browserHasNoSpeech(): boolean {
     const w = window as Window & { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown };
     const nav = navigator as Navigator & { brave?: unknown };
     return !(w.SpeechRecognition || w.webkitSpeechRecognition) || !!nav.brave;
@@ -760,7 +760,7 @@ export class AdminPortalComponent implements OnInit {
     this.error.set('');
   }
 
-  etiqueta(c: Appointment) {
+  statusLabel(c: Appointment) {
     return etiquetaCita(c);
   }
 
@@ -768,7 +768,7 @@ export class AdminPortalComponent implements OnInit {
     return 'badge badge-' + estado.toLowerCase();
   }
 
-  severidadSobreprecioColor(eval_: string): string {
+  markupSeverityColor(eval_: string): string {
     switch ((eval_ || '').toUpperCase()) {
       case 'SOBREPRECIO_ALTO':
       case 'DESABASTECIMIENTO_ARTIFICIAL': return 'bg-red';
@@ -778,7 +778,7 @@ export class AdminPortalComponent implements OnInit {
     }
   }
 
-  severidadSobreprecioLabel(eval_: string): string {
+  markupSeverityLabel(eval_: string): string {
     switch ((eval_ || '').toUpperCase()) {
       case 'SOBREPRECIO_ALTO': return 'SOBREPRECIO ALTO';
       case 'DESABASTECIMIENTO_ARTIFICIAL': return 'DESABASTECIMIENTO ARTIFICIAL';
@@ -788,7 +788,7 @@ export class AdminPortalComponent implements OnInit {
     }
   }
 
-  preciosAnalizar() {
+  estimatePrices() {
     const precio = Number(this.preciosPrecioTxt);
     if (!this.preciosReq.medicamento.trim() || isNaN(precio) || precio <= 0) {
       this.error.set('Escriba el medicamento y un precio reportado positivo.');
@@ -803,12 +803,12 @@ export class AdminPortalComponent implements OnInit {
     });
   }
 
-  severidadEntries(dist: { [key: string]: number }): { key: string; value: number }[] {
+  severityEntries(dist: { [key: string]: number }): { key: string; value: number }[] {
     if (!dist) return [];
     return Object.entries(dist).map(([key, value]) => ({ key, value }));
   }
 
-  severidadBarColor(sev: string): string {
+  severityBarColor(sev: string): string {
     const s = sev.toLowerCase();
     if (s.includes('rojo')) return 'bar-red';
     if (s.includes('naranja')) return 'bar-orange';
@@ -817,22 +817,22 @@ export class AdminPortalComponent implements OnInit {
     return 'bar-blue';
   }
 
-  iniciales(nombre?: string): string {
+  initials(nombre?: string): string {
     const parts = (nombre || '').trim().split(/\s+/).filter(Boolean);
     if (!parts.length) return 'A';
     return parts.slice(0, 2).map(p => p[0]?.toUpperCase() ?? '').join('');
   }
 
-  fechaHoy(): string {
+  todayLabel(): string {
     return new Date().toLocaleDateString('es-CO', { day: 'numeric', month: 'long', year: 'numeric' }) + ' · Hoy';
   }
 
-  citasHoy(): number {
+  appointmentsTodayCount(): number {
     const hoy = new Date().toDateString();
     return this.citas().filter(c => new Date(c.fechaHora).toDateString() === hoy).length;
   }
 
-  puntosMensuales(): { label: string; nombre: string; x: number; y: number; total: number }[] {
+  monthlyPoints(): { label: string; nombre: string; x: number; y: number; total: number }[] {
     const meses = this.reporte()?.desgloseMensual ?? [];
     if (!meses.length) return [];
     const max = Math.max(...meses.map(m => m.totalCitas), 1);
@@ -845,27 +845,27 @@ export class AdminPortalComponent implements OnInit {
     }));
   }
 
-  mesVisible(): number | null {
+  visibleMonth(): number | null {
     return this.mesSobre() ?? this.mesFijo();
   }
 
-  tocarMes(indice: number) {
+  selectMonth(indice: number) {
     this.mesFijo.set(this.mesFijo() === indice ? null : indice);
   }
 
-  donutVisible(): string | null {
+  visibleDonut(): string | null {
     return this.donutSobre() ?? this.donutFijo();
   }
 
-  tocarDonut(etiqueta: string) {
-    this.donutFijo.set(this.donutFijo() === etiqueta ? null : etiqueta);
+  selectDonut(statusLabel: string) {
+    this.donutFijo.set(this.donutFijo() === statusLabel ? null : statusLabel);
   }
 
-  lineaMensual(): string {
-    return this.puntosMensuales().map(p => `${p.x},${p.y}`).join(' ');
+  monthlyLine(): string {
+    return this.monthlyPoints().map(p => `${p.x},${p.y}`).join(' ');
   }
 
-  barrasMes(): { nombre: string; total: number; alto: number }[] {
+  monthBars(): { nombre: string; total: number; alto: number }[] {
     const meses = this.reporte()?.desgloseMensual ?? [];
     const max = Math.max(...meses.map(m => m.totalCitas), 1);
     return meses.map(m => ({
@@ -875,7 +875,7 @@ export class AdminPortalComponent implements OnInit {
     }));
   }
 
-  estadosCita(): { label: string; total: number; color: string; ancho: number }[] {
+  appointmentStatuses(): { label: string; total: number; color: string; ancho: number }[] {
     const r = this.reporte();
     if (!r) return [];
     const items = [
@@ -887,7 +887,7 @@ export class AdminPortalComponent implements OnInit {
     return items.map(i => ({ ...i, ancho: (i.total / max) * 100 }));
   }
 
-  donutEspecialidades(): { label: string; color: string; dash: number; gap: number; offset: number; porcentaje: number; total: number }[] {
+  specialtyDonut(): { label: string; color: string; dash: number; gap: number; offset: number; porcentaje: number; total: number }[] {
     const colores = ['#3b82f6', '#22c55e', '#8b5cf6', '#f59e0b', '#06b6d4', '#ef4444'];
     const conteo = new Map<string, number>();
     for (const cita of this.citas()) {
@@ -915,12 +915,12 @@ export class AdminPortalComponent implements OnInit {
     });
   }
 
-  alertasSistema(): { titulo: string; detalle: string }[] {
+  systemAlerts(): { titulo: string; detalle: string }[] {
     const items: { titulo: string; detalle: string }[] = [];
     const m = this.aiMetricas();
-    if (this.citasUrgentes()) {
+    if (this.urgentAppointments()) {
       items.push({
-        titulo: `${this.citasUrgentes()} cita(s) de prioridad alta`,
+        titulo: `${this.urgentAppointments()} cita(s) de prioridad alta`,
         detalle: 'Requieren revisión en supervisión de citas.'
       });
     }
@@ -951,7 +951,7 @@ export class AdminPortalComponent implements OnInit {
     return items.slice(0, 4);
   }
 
-  rendimiento(): { label: string; valor: string; detalle: string }[] {
+  performanceItems(): { label: string; valor: string; detalle: string }[] {
     const r = this.reporte();
     const m = this.aiMetricas();
     const total = r?.totalCitas || 0;

@@ -35,7 +35,7 @@ export class DoctorService {
     return this.http.get<DoctorDashboard>(`${this.api}/dashboard`);
   }
 
-  perfil() {
+  profile() {
     return this.http.get<DoctorProfile>(`${this.api}/profile`);
   }
 

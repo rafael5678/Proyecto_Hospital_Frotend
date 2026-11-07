@@ -17,7 +17,7 @@
       <div class="header-user">
         <app-notification-bell theme="paciente" />
         <span class="user-chip">
-          <span class="user-avatar">{{ iniciales(auth.user()?.nombre) }}</span>
+          <span class="user-avatar">{{ initials(auth.user()?.nombre) }}</span>
           {{ auth.user()?.nombre }}
         </span>
         <button type="button" class="btn logout" (click)="auth.logout()">Cerrar sesión</button>
@@ -30,57 +30,57 @@
 
       @if (tab() === 'inicio' && dashboard(); as d) {
         <section class="dash-welcome">
-          <span class="welcome-avatar">{{ iniciales(auth.user()?.nombre) }}</span>
+          <span class="welcome-avatar">{{ initials(auth.user()?.nombre) }}</span>
           <div>
-            <h2>Hola, {{ primerNombre() }}</h2>
+            <h2>Hola, {{ firstName() }}</h2>
             <p>Tu bienestar es nuestra prioridad.</p>
           </div>
         </section>
 
         <article class="next-card">
           <div class="next-copy">
-            @if (proximaCita(); as c) {
+            @if (nextVisit(); as c) {
               <p class="eyebrow">Próxima cita</p>
-              <h3>{{ formatFechaCita(c.fechaHora) }}</h3>
+              <h3>{{ formatVisitDate(c.fechaHora) }}</h3>
               @if (c.medicoEspecialidad) {
                 <p>{{ c.medicoEspecialidad }}</p>
               }
               <p class="doctor-name">{{ c.medicoNombre }}</p>
-              <button type="button" class="btn-pill" (click)="irA('proximas', 'proximas')">Ver detalles</button>
-            } @else if (citaConcluida(); as hecha) {
+              <button type="button" class="btn-pill" (click)="goTo('proximas', 'proximas')">Ver detalles</button>
+            } @else if (finishedVisit(); as hecha) {
               <p class="eyebrow">Consulta concluida</p>
               <h3>Ya se hizo</h3>
-              <p>Estaba para el {{ formatFechaCita(hecha.fechaHora) }} con {{ hecha.medicoNombre }}.</p>
-              <p>{{ seAdelanto(hecha) ? 'Se adelantó: te atendieron antes de esa fecha. Quedó aceptada y concluida.' : 'Quedó aceptada y concluida.' }}</p>
+              <p>Estaba para el {{ formatVisitDate(hecha.fechaHora) }} con {{ hecha.medicoNombre }}.</p>
+              <p>{{ wasBroughtForward(hecha) ? 'Se adelantó: te atendieron antes de esa fecha. Quedó aceptada y concluida.' : 'Quedó aceptada y concluida.' }}</p>
               @if (recetaVisible()) { <p>Medicamentos: {{ recetaVisible() }}</p> }
-              <button type="button" class="btn-pill" (click)="irA('interacciones', 'inter')">Ver medicamentos</button>
+              <button type="button" class="btn-pill" (click)="goTo('interacciones', 'inter')">Ver medicamentos</button>
             } @else {
               <p class="eyebrow">Próxima cita</p>
               <h3>No tienes citas agendadas</h3>
               <p>Cuando reserves una, aquí aparecerán la fecha y el médico reales.</p>
-              <button type="button" class="btn-pill" (click)="irA('agendar', 'agendar')">Agendar cita</button>
+              <button type="button" class="btn-pill" (click)="goTo('agendar', 'agendar')">Agendar cita</button>
             }
           </div>
           <img src="assets/doctora-proxima.jpg" alt="" />
         </article>
 
         <div class="quick-grid">
-          <button type="button" class="quick-card" (click)="irA('agendar', 'agendar')">
+          <button type="button" class="quick-card" (click)="goTo('agendar', 'agendar')">
             <span>♡</span>
             <strong>Agendar cita</strong>
             <small>Encuentra la especialidad que necesitas</small>
           </button>
-          <button type="button" class="quick-card" (click)="irA('historial', 'historial')">
+          <button type="button" class="quick-card" (click)="goTo('historial', 'historial')">
             <span>▤</span>
             <strong>Ver historial</strong>
             <small>Tus exámenes y consultas</small>
           </button>
-          <button type="button" class="quick-card" (click)="irA('interacciones', 'inter')">
+          <button type="button" class="quick-card" (click)="goTo('interacciones', 'inter')">
             <span>✚</span>
             <strong>Medicamentos</strong>
             <small>Revisión de interacciones</small>
           </button>
-          <button type="button" class="quick-card" (click)="irA('precios', 'precios')">
+          <button type="button" class="quick-card" (click)="goTo('precios', 'precios')">
             <span>◎</span>
             <strong>Precios</strong>
             <small>Estimación orientativa de farmacias</small>
@@ -102,7 +102,7 @@
             </div>
             <div>
               <small>Próximas citas</small>
-              <strong>{{ proximasVisibles().length }}</strong>
+              <strong>{{ visibleUpcoming().length }}</strong>
               <em>Agendadas</em>
             </div>
           </div>
@@ -111,7 +111,7 @@
         <div class="bottom-grid">
           <section class="notify-card">
             <h3>Últimas notificaciones</h3>
-            @for (n of notificacionesPaciente(); track n.titulo) {
+            @for (n of patientNotices(); track n.titulo) {
               <article>
                 <strong>{{ n.titulo }}</strong>
                 <small>{{ n.detalle }}</small>
@@ -122,7 +122,7 @@
             <img src="assets/cuida-salud.jpg" alt="Cuida tu salud con pequeños hábitos" />
             <div>
               <p>Cuida tu salud con pequeños hábitos</p>
-              <button type="button" class="btn-pill light" (click)="irA('perfil', 'editar')">Ver mi perfil</button>
+              <button type="button" class="btn-pill light" (click)="goTo('perfil', 'editar')">Ver mi perfil</button>
             </div>
           </aside>
         </div>
@@ -144,24 +144,24 @@
               <input class="input" [(ngModel)]="antecedentesSintomas" placeholder="Ej. asma, alergia a penicilina" />
             </div>
           </div>
-          <label class="check-row"><input type="checkbox" [(ngModel)]="tieneLesionPiel" (ngModelChange)="onPielToggle()" /> Tengo un problema de piel o una lesión (opcional)</label>
+          <label class="check-row"><input type="checkbox" [(ngModel)]="tieneLesionPiel" (ngModelChange)="onSkinToggle()" /> Tengo un problema de piel o una lesión (opcional)</label>
           @if (tieneLesionPiel) {
             <label>Describe la lesión o cambio en la piel (opcional si subes foto)</label>
             <textarea class="input" rows="3" [(ngModel)]="dermReq.descripcion" placeholder="Ubicación, aspecto, evolución, dolor o sangrado..."></textarea>
             <label>Foto de evidencia</label>
-            <input class="input" type="file" accept="image/*" (change)="onFotoPiel($event)" />
+            <input class="input" type="file" accept="image/*" (change)="onSkinPhoto($event)" />
             @if (dermFotoPreview(); as foto) {
               <div class="skin-preview">
                 <img [src]="foto" alt="Vista previa de la lesión" />
                 <div>
                   <p class="hint">{{ dermFotoNombre || 'Foto lista para analizar' }}</p>
-                  <button type="button" class="btn-sm cancel" (click)="quitarFotoPiel()">Quitar foto</button>
+                  <button type="button" class="btn-sm cancel" (click)="clearSkinPhoto()">Quitar foto</button>
                 </div>
               </div>
             }
           }
           <label class="check-row"><input type="checkbox" [(ngModel)]="consentimientoTriage" /> Autorizo enviar mis síntomas para la orientación clínica *</label>
-          <button type="button" class="btn btn-green" (click)="triageAnalizar()" [disabled]="triageLoading() || !sintomas.trim() || !consentimientoTriage">
+          <button type="button" class="btn btn-green" (click)="runTriage()" [disabled]="triageLoading() || !sintomas.trim() || !consentimientoTriage">
             {{ triageLoading() ? 'Analizando...' : 'Analizar síntomas' }}
           </button>
           @if (triageRsp(); as triage) {
@@ -192,7 +192,7 @@
             </div>
           }
           @if (tieneLesionPiel) {
-            <button type="button" class="btn btn-green" (click)="dermAnalizar()" [disabled]="dermLoading() || !puedeAnalizarPiel() || !consentimientoTriage">
+            <button type="button" class="btn btn-green" (click)="runDermatology()" [disabled]="dermLoading() || !canAnalyzeSkin() || !consentimientoTriage">
               {{ dermLoading() ? 'Analizando piel...' : 'Analizar lesión de piel' }}
             </button>
           }
@@ -200,20 +200,20 @@
           @if (avisoMedico()) {
             <p class="hint medico-asignado">{{ avisoMedico() }}</p>
           }
-          <select class="input" [(ngModel)]="medicoId" (ngModelChange)="onMedicoChange()">
+          <select class="input" [(ngModel)]="medicoId" (ngModelChange)="onDoctorChange()">
             <option [ngValue]="null">Selecciona un médico</option>
-            @for (m of medicosFiltrados(); track m.id) {
-              <option [ngValue]="m.id">{{ m.nombre }} — {{ m.especialidad }}{{ especialidadObjetivo() === m.especialidad ? ' (asignado por IA)' : '' }}</option>
+            @for (m of filteredDoctors(); track m.id) {
+              <option [ngValue]="m.id">{{ m.nombre }} — {{ m.especialidad }}{{ targetSpecialty() === m.especialidad ? ' (asignado por IA)' : '' }}</option>
             }
           </select>
-          @if (medicoAsignado(); as med) {
+          @if (assignedDoctor(); as med) {
             <p class="hint">Appointment con <strong>{{ med.nombre }}</strong> ({{ med.especialidad }}).</p>
           }
           @if (horarios().length) {
             <p class="hint"><strong>Días en que trabaja:</strong></p>
             <ul class="horario-lista">
               @for (h of horarios(); track h.id) {
-                <li>{{ h.diaNombre || nombreDia(h.diaSemana) }}: {{ horaCorta(h.horaInicio) }} – {{ horaCorta(h.horaFin) }}</li>
+                <li>{{ h.diaNombre || dayName(h.diaSemana) }}: {{ shortTime(h.horaInicio) }} – {{ shortTime(h.horaFin) }}</li>
               }
             </ul>
           }
@@ -224,7 +224,7 @@
           @if (cupos().length) {
             <div class="slot-grid">
               @for (c of cupos(); track c.fechaHora) {
-                <button type="button" class="slot-chip" [class.active]="cupoActivo(c)" (click)="elegirCupo(c)">
+                <button type="button" class="slot-chip" [class.active]="slotSelected(c)" (click)="chooseSlot(c)">
                   {{ c.etiqueta }}
                 </button>
               }
@@ -234,7 +234,7 @@
           }
           <label>Nota adicional para el médico (opcional)</label>
           <input class="input" [(ngModel)]="motivo" placeholder="Información adicional" />
-          <button type="button" class="btn btn-green" (click)="agendar()" [disabled]="!puedeAgendar()">{{ loading() ? 'Agendando...' : 'Agendar cita' }}</button>
+          <button type="button" class="btn btn-green" (click)="book()" [disabled]="!canBook()">{{ loading() ? 'Agendando...' : 'Agendar cita' }}</button>
         </div>
       }
 
@@ -251,10 +251,10 @@
                   <td>{{ c.medicoNombre }}</td>
                   <td>{{ c.medicoEspecialidad }}</td>
                   <td>{{ c.fechaHora | date:'medium' }}</td>
-                  <td><span [class]="badgeClass(c.estado)">{{ etiqueta(c) }}</span></td>
+                  <td><span [class]="badgeClass(c.estado)">{{ statusLabel(c) }}</span></td>
                   <td>
-                    @if ((c.estado === 'PENDIENTE' || c.estado === 'ACEPTADA') && !consultaCerrada(c)) {
-                      <button type="button" class="btn-sm cancel" (click)="cancelar(c.id)">Cancelar</button>
+                    @if ((c.estado === 'PENDIENTE' || c.estado === 'ACEPTADA') && !visitClosed(c)) {
+                      <button type="button" class="btn-sm cancel" (click)="cancelVisit(c.id)">Cancelar</button>
                     }
                   </td>
                 </tr>
@@ -266,22 +266,22 @@
 
       @if (tab() === 'proximas') {
         <h2 class="section-title">Próximas citas</h2>
-        @if (proximasVisibles().length === 0) {
-          <p class="empty">{{ citaConcluida() ? 'No hay citas próximas. La que estaba agendada ya se hizo.' : 'No hay citas próximas.' }}</p>
+        @if (visibleUpcoming().length === 0) {
+          <p class="empty">{{ finishedVisit() ? 'No hay citas próximas. La que estaba agendada ya se hizo.' : 'No hay citas próximas.' }}</p>
         } @else {
           <table>
             <thead><tr><th>Médico</th><th>Fecha</th><th>Estado</th><th></th></tr></thead>
             <tbody>
-              @for (c of proximasVisibles(); track c.id) {
+              @for (c of visibleUpcoming(); track c.id) {
                 <tr>
                   <td>{{ c.medicoNombre }}</td>
                   <td>{{ c.fechaHora | date:'medium' }}</td>
-                  <td><span [class]="badgeClass(c.estado)">{{ etiqueta(c) }}</span></td>
+                  <td><span [class]="badgeClass(c.estado)">{{ statusLabel(c) }}</span></td>
                   <td>
-                    @if ((c.estado === 'PENDIENTE' || c.estado === 'ACEPTADA') && !consultaCerrada(c)) {
-                      <button type="button" class="btn-sm cancel" (click)="cancelar(c.id)">Cancelar</button>
-                    } @else if (consultaCerrada(c)) {
-                      <small>{{ seAdelanto(c) ? 'La consulta se adelantó y ya terminó.' : 'La consulta ya terminó.' }}</small>
+                    @if ((c.estado === 'PENDIENTE' || c.estado === 'ACEPTADA') && !visitClosed(c)) {
+                      <button type="button" class="btn-sm cancel" (click)="cancelVisit(c.id)">Cancelar</button>
+                    } @else if (visitClosed(c)) {
+                      <small>{{ wasBroughtForward(c) ? 'La consulta se adelantó y ya terminó.' : 'La consulta ya terminó.' }}</small>
                     }
                   </td>
                 </tr>
@@ -295,8 +295,8 @@
         <h2 class="section-title">Directorio de médicos</h2>
         <input class="input filter" placeholder="Filtrar por especialidad..." [(ngModel)]="filtroEspecialidad" />
         <div class="medico-cards">
-          @for (m of medicosFiltrados(); track m.id) {
-            <div class="medico-card" (click)="verMedico(m)">
+          @for (m of filteredDoctors(); track m.id) {
+            <div class="medico-card" (click)="viewDoctor(m)">
               <h3>{{ m.nombre }}</h3>
               <p class="esp">{{ m.especialidad }}</p>
               @if (m.consultorio) { <p>📍 {{ m.consultorio }}</p> }
@@ -316,12 +316,12 @@
                 <li>Día {{ h.diaSemana }}: {{ h.horaInicio }} - {{ h.horaFin }}</li>
               }
             </ul>
-            <button type="button" class="btn btn-green" (click)="irAgendarConMedico(md)">Agendar con este médico</button>
+            <button type="button" class="btn btn-green" (click)="bookWithDoctor(md)">Agendar con este médico</button>
           </div>
         }
       }
 
-      @if (tab() === 'perfil' && perfil(); as p) {
+      @if (tab() === 'perfil' && profile(); as p) {
         <div class="card section form-grid">
           <h2 class="section-title">Mi perfil</h2>
           <div><label>Nombre</label><input class="input" [(ngModel)]="p.nombre" /></div>
@@ -347,7 +347,7 @@
           <div><label>Contacto emergencia</label><input class="input" [(ngModel)]="p.contactoEmergencia" /></div>
           <div><label>Tel. emergencia</label><input class="input" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="3001234567" [ngModel]="p.telefonoEmergencia" (ngModelChange)="p.telefonoEmergencia = digitsOnly($event)" /><small class="campo-ayuda">10 dígitos. Celular empieza por 3, fijo por 60.</small></div>
           <div class="full"><label>Observaciones</label><textarea class="input" [(ngModel)]="p.observaciones"></textarea></div>
-          <button type="button" class="btn btn-green full" (click)="guardarPerfil()" [disabled]="guardandoPerfil()">
+          <button type="button" class="btn btn-green full" (click)="saveProfile()" [disabled]="guardandoPerfil()">
             Guardar cambios
           </button>
         </div>
@@ -362,7 +362,7 @@
           <div class="full"><label>Qué te recomendaron hacer</label><textarea class="input" rows="3" [(ngModel)]="interDieta" placeholder="Reposo, cuidados y lo que debes hacer en casa"></textarea></div>
           <div class="full"><label>Suplementos o vitaminas de la consulta</label><textarea class="input" rows="2" [(ngModel)]="interSuplem" placeholder="Solo si te los indicaron"></textarea></div>
           <div class="full">
-            <button type="button" class="btn btn-green full" (click)="interAnalizar()" [disabled]="interLoading()">
+            <button type="button" class="btn btn-green full" (click)="runInteractions()" [disabled]="interLoading()">
               {{ interLoading() ? 'Revisando...' : 'Revisar con IA' }}
             </button>
           </div>
@@ -370,14 +370,14 @@
           @if (interRsp(); as g) {
             <div class="ai-result">
               <div class="severity-row">
-                <span class="severity-chip" [class]="severidadColor(g.nivelRiesgoGlobal)">RIESGO GLOBAL: {{ g.nivelRiesgoGlobal }}</span>
+                <span class="severity-chip" [class]="severityColor(g.nivelRiesgoGlobal)">RIESGO GLOBAL: {{ g.nivelRiesgoGlobal }}</span>
                 <span class="chip-outline">{{ g.alertas.length }} alerta(s)</span>
                 @if (g.modoDemo) { <span class="chip-outline demo">MODO DEMO</span> }
               </div>
               <p><strong>Resumen:</strong> {{ g.resumen }}</p>
               <h3>Alertas:</h3>
               @for (a of g.alertas; track a.elementos + a.severidad) {
-                <div class="alerta-card" [class]="severidadColor(a.severidad)">
+                <div class="alerta-card" [class]="severityColor(a.severidad)">
                   <div class="alerta-head"><strong>{{ a.elementos }}</strong> · <em>{{ a.tipo }}</em> · <span class="sev">{{ a.severidad }}</span></div>
                   <p><strong>Mecanismo:</strong> {{ a.mecanismo }}</p>
                   <p><strong>Consecuencia:</strong> {{ a.consecuencia }}</p>
@@ -401,7 +401,7 @@
           <div><label>Precio que te cobraron (COP)</label><input class="input" type="number" [(ngModel)]="preciosPrecioTxt" placeholder="45000" /></div>
           <div><label>Ciudad</label><input class="input" [(ngModel)]="preciosReq.ciudad" placeholder="Pasto, Bogotá, Cali..." /></div>
           <div class="full">
-            <button type="button" class="btn btn-green full" (click)="preciosAnalizar()" [disabled]="preciosLoading()">
+            <button type="button" class="btn btn-green full" (click)="estimatePrices()" [disabled]="preciosLoading()">
               {{ preciosLoading() ? 'Estimando...' : 'Generar estimación' }}
             </button>
           </div>
@@ -409,7 +409,7 @@
           @if (preciosRsp(); as p) {
             <div class="ai-result full precio-ancho">
               <div class="severity-row">
-                <span class="severity-chip" [class]="severidadColor(p.evaluacionSobreprecio)">{{ p.evaluacionSobreprecio.replace('_',' ') }}</span>
+                <span class="severity-chip" [class]="severityColor(p.evaluacionSobreprecio)">{{ p.evaluacionSobreprecio.replace('_',' ') }}</span>
                 @if (p.porcentajeDesviacion !== 0) { <span class="chip-outline">Desviación vs promedio: {{ p.porcentajeDesviacion > 0 ? '+' : '' }}{{ p.porcentajeDesviacion.toFixed(1) }}%</span> }
                 @if (p.modoDemo) { <span class="chip-outline demo">MODO DEMO</span> }
               </div>
