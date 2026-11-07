@@ -1,10 +1,10 @@
 import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { AdminService } from '../../services/admin.service';
 import { User, UserRequest } from '../../models/user.model';
-import { Appointment, etiquetaCita } from '../../models/appointment.model';
+import { Appointment, etiquetaCita, formatColombia } from '../../models/appointment.model';
 import { Report } from '../../models/report.model';
 import { PortalSidebarComponent, SidebarItem } from '../portal-sidebar/portal-sidebar.component';
 import { SessionTimeoutComponent } from '../session-timeout/session-timeout.component';
@@ -36,7 +36,7 @@ type SpeechRecognitionFactory = new () => SpeechRecognitionLike;
 @Component({
   selector: 'app-admin-portal',
   standalone: true,
-  imports: [FormsModule, DatePipe, DecimalPipe, PortalSidebarComponent, SessionTimeoutComponent, NotificationBellComponent],
+  imports: [FormsModule, DecimalPipe, PortalSidebarComponent, SessionTimeoutComponent, NotificationBellComponent],
   templateUrl: './admin-portal.component.html',
   styleUrl: './admin-portal.component.css'
 })
@@ -44,6 +44,7 @@ export class AdminPortalComponent implements OnInit {
   auth = inject(AuthService);
   private adminService = inject(AdminService);
   private ai = inject(AiService);
+  readonly formatColombia = formatColombia;
 
   tab = signal<AdminTab>('inicio');
   sub = signal<AdminSub>('');

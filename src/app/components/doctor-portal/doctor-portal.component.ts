@@ -1,9 +1,9 @@
 import { Component, inject, OnDestroy, OnInit, signal, computed } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DatePipe, DecimalPipe } from '@angular/common';
+import { DecimalPipe } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { DoctorService, DoctorDashboard, DoctorProfile } from '../../services/doctor.service';
-import { Appointment, etiquetaCita } from '../../models/appointment.model';
+import { Appointment, etiquetaCita, formatColombia } from '../../models/appointment.model';
 import { Schedule } from '../../models/schedule.model';
 import { PatientProfile } from '../../models/patient-profile.model';
 import { PortalSidebarComponent, SidebarItem } from '../portal-sidebar/portal-sidebar.component';
@@ -33,7 +33,7 @@ type SpeechRecognitionFactory = new () => SpeechRecognitionLike;
 @Component({
   selector: 'app-doctor-portal',
   standalone: true,
-  imports: [FormsModule, DatePipe, DecimalPipe, PortalSidebarComponent, SessionTimeoutComponent, NotificationBellComponent],
+  imports: [FormsModule, DecimalPipe, PortalSidebarComponent, SessionTimeoutComponent, NotificationBellComponent],
   templateUrl: './doctor-portal.component.html',
   styleUrl: './doctor-portal.component.css'
 })
@@ -685,10 +685,13 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     return `prio ${statusLabel}`;
   }
 
+  readonly formatColombia = formatColombia;
+
   shortTime(iso: string): string {
-    const fecha = new Date(iso);
-    if (Number.isNaN(fecha.getTime())) return '';
-    return fecha.toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' });
+    const match = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(iso || '');
+    if (!match) return '';
+    const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), Number(match[4]), Number(match[5]));
+    return date.toLocaleTimeString('es-CO', { hour: 'numeric', minute: '2-digit' });
   }
 
   iaEnAccion(): { label: string; detalle: string }[] {

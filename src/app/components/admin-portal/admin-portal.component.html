@@ -407,7 +407,7 @@
                 <td>{{ c.medicoNombre }}<small>{{ c.medicoEspecialidad }}</small></td>
                 <td>@if (c.triageSeveridad) { {{ c.triageSeveridad }} · ESI {{ c.triageNivelEsi ?? '—' }} · {{ c.triagePrioridad ?? '—' }}/10 } @else { Sin triage }</td>
                 <td>{{ c.triageEspecialidadSugerida || '—' }}</td>
-                <td>{{ c.fechaHora | date:'medium' }}</td>
+                <td>{{ formatColombia(c.fechaHora) }}</td>
                 <td><span [class]="badgeClass(c.estado)">{{ statusLabel(c) }}</span></td>
                 <td>@if (c.estado === 'PENDIENTE' || c.estado === 'ACEPTADA') { <button type="button" class="btn-sm info" (click)="openReschedule(c)">Reprogramar</button> }</td>
               </tr>
@@ -418,7 +418,7 @@
         @if (citaAReprogramar(); as cita) {
           <section class="card section">
             <h3>Reprogramar cita de {{ cita.pacienteNombre }}</h3>
-            <p>Actual: {{ cita.fechaHora | date:'medium' }} · {{ cita.medicoNombre }}</p>
+            <p>Actual: {{ formatColombia(cita.fechaHora) }} · {{ cita.medicoNombre }}</p>
             <p class="hint">El cambio requiere revisión administrativa. Se intentará avisar por correo al paciente y al médico; las citas no se desplazan automáticamente por el puntaje de IA.</p>
             <label>Nueva fecha y hora</label>
             <input class="input" type="datetime-local" [(ngModel)]="nuevaFechaHora" />

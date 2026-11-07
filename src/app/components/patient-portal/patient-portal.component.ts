@@ -1,10 +1,9 @@
 import { Component, inject, OnDestroy, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { DatePipe } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { PatientService } from '../../services/patient.service';
 import { AiService } from '../../services/ai.service';
-import { Appointment, etiquetaCita } from '../../models/appointment.model';
+import { Appointment, etiquetaCita, formatColombia } from '../../models/appointment.model';
 import { Notification } from '../../models/notification.model';
 import { User } from '../../models/user.model';
 import { CupoDisponible, Schedule } from '../../models/schedule.model';
@@ -31,7 +30,7 @@ type PacienteSub = '' | 'agendar' | 'historial' | 'proximas' | 'directorio' | 'e
 @Component({
   selector: 'app-patient-portal',
   standalone: true,
-  imports: [FormsModule, DatePipe, PortalSidebarComponent, NotificationBellComponent],
+  imports: [FormsModule, PortalSidebarComponent, NotificationBellComponent],
   templateUrl: './patient-portal.component.html',
   styleUrl: './patient-portal.component.css'
 })
@@ -396,10 +395,11 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     return this.toDatetimeLocal(c.fechaHora) === this.fechaHora;
   }
 
+  readonly formatColombia = formatColombia;
+
   toDatetimeLocal(iso: string): string {
-    const d = new Date(iso);
-    const p = (n: number) => String(n).padStart(2, '0');
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+    const match = /^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2})/.exec(iso || '');
+    return match ? `${match[1]}T${match[2]}` : '';
   }
 
   dayName(n: number): string {
@@ -450,8 +450,8 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
         next: (cita) => {
           this.loading.set(false);
           this.ok.set(cita.avisoAgenda
-            ? `Appointment agendada. ${cita.avisoAgenda}`
-            : 'Appointment agendada. El médico recibe el resumen de IA y tu historial por correo (si SMTP está activo).');
+            ? `Cita agendada. ${cita.avisoAgenda}`
+            : 'Cita agendada. El médico recibe el resumen de IA y tu historial por correo (si SMTP está activo).');
           this.fechaHora = '';
           this.motivo = '';
           this.sintomas = '';
@@ -816,7 +816,10 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
   }
 
   formatVisitDate(iso: string): string {
-    const fecha = new Date(iso);
+    const match = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(iso || '');
+    const fecha = match
+      ? new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), Number(match[4]), Number(match[5]))
+      : new Date(iso);
     if (Number.isNaN(fecha.getTime())) return iso;
     const meses = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
     const hora = fecha.getHours();

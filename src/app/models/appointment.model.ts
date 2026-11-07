@@ -27,6 +27,15 @@ export interface Appointment {
   avisoAgenda?: string;
 }
 
+/** Clock numbers stored for the visit, shown as Colombia wall time without shifting them. */
+export function formatColombia(iso?: string): string {
+  if (!iso) return '';
+  const match = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(iso);
+  if (!match) return iso;
+  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), Number(match[4]), Number(match[5]));
+  return date.toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
+}
+
 export function etiquetaCita(c: { estado?: string; fechaHora?: string; concluidaEn?: string; adelantada?: boolean }): string {
   const estado = (c.estado || '').toUpperCase();
   if (estado !== 'COMPLETADA') return estado || '—';
