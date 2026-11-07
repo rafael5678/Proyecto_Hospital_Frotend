@@ -48,8 +48,8 @@
         </div>
         <div class="stat-card">
           <span>Atenciones</span>
-          <strong>{{ d.citasAceptadas }}</strong>
-          <small>{{ d.horariosActivos }} horarios activos</small>
+          <strong>{{ atendidas() }}</strong>
+          <small>Consultas ya terminadas</small>
         </div>
       </div>
 
@@ -89,7 +89,7 @@
       <section class="panel-card patients-card">
         <header>
           <h3>Tus pacientes</h3>
-          <button type="button" class="linkish" (click)="irA('citas', 'todas')">Ver todos</button>
+          <button type="button" class="linkish" (click)="irA('citas', 'historial')">Ver todos</button>
         </header>
         <div class="patient-strip">
           @for (p of pacientesRecientes(); track p.nombre + p.hora) {
@@ -107,10 +107,10 @@
 
       @if (tab() === 'citas') {
       <div class="toolbar">
-        <h2 class="section-title">Citas asignadas</h2>
+        <h2 class="section-title">{{ filtroEstado === 'HISTORIAL' ? 'Historial de pacientes' : 'Citas asignadas' }}</h2>
       </div>
       @if (citasFiltradas().length === 0) {
-      <p class="empty">No hay citas en esta categoría.</p>
+      <p class="empty">{{ filtroEstado === 'HISTORIAL' ? 'Todavía no hay consultas terminadas.' : 'No hay citas pendientes en esta categoría.' }}</p>
       } @else {
       <table>
         <thead>
@@ -226,7 +226,7 @@
               <td>{{ anterior.medicoNombre }} · {{ anterior.medicoEspecialidad }}</td>
               <td>{{ anterior.motivo || '—' }} @if (anterior.triageResumen) { <small>{{ anterior.triageResumen
                   }}</small> }</td>
-              <td>{{ anterior.estado }}</td>
+              <td>{{ anterior.estado === 'COMPLETADA' ? 'Cita ya terminada' : anterior.estado }}</td>
             </tr>
             }
           </tbody>

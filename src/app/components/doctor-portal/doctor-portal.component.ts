@@ -16,7 +16,7 @@ import {
 } from '../../models/ai.model';
 
 type MedicoTab = 'inicio' | 'citas' | 'horarios' | 'paciente' | 'soap' | 'precios';
-type MedicoSub = '' | 'todas' | 'pendientes' | 'aceptadas' | 'lista' | 'agregar';
+type MedicoSub = '' | 'todas' | 'pendientes' | 'aceptadas' | 'historial' | 'lista' | 'agregar';
 
 interface SpeechRecognitionLike {
   lang: string;
@@ -55,7 +55,8 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
       children: [
         { id: 'c-todas', label: 'Todas las citas', tab: 'citas', sub: 'todas' },
         { id: 'c-pend', label: 'Pendientes', tab: 'citas', sub: 'pendientes' },
-        { id: 'c-acep', label: 'Aceptadas', tab: 'citas', sub: 'aceptadas' }
+        { id: 'c-acep', label: 'Aceptadas', tab: 'citas', sub: 'aceptadas' },
+        { id: 'c-hist', label: 'Historial', tab: 'citas', sub: 'historial' }
       ]
     },
     {
@@ -180,6 +181,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   private applyFiltroFromSub(sub?: string) {
     if (sub === 'pendientes') this.filtroEstado = 'PENDIENTE';
     else if (sub === 'aceptadas') this.filtroEstado = 'ACEPTADA';
+    else if (sub === 'historial') this.filtroEstado = 'HISTORIAL';
     else this.filtroEstado = '';
   }
 
@@ -191,6 +193,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
       'citas-todas': 'Citas — todas',
       'citas-pendientes': 'Citas — pendientes',
       'citas-aceptadas': 'Citas — aceptadas',
+      'citas-historial': 'Historial de pacientes',
       'horarios-lista': 'Horarios — listado',
       'horarios-agregar': 'Horarios — agregar',
       paciente: 'Ficha del paciente',
@@ -205,9 +208,17 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     this.svc.dashboard().subscribe({ next: d => this.dashboard.set(d) });
   }
 
+  citaTerminada(c: Appointment): boolean {
+    return c.estado === 'COMPLETADA' || !!c.receta?.trim() || this.citasCerradas().includes(c.id);
+  }
+
   citasFiltradas(): Appointment[] {
-    if (!this.filtroEstado) return this.citas();
-    return this.citas().filter(c => c.estado === this.filtroEstado);
+    if (this.filtroEstado === 'HISTORIAL') {
+      return this.citas().filter(c => this.citaTerminada(c));
+    }
+    const abiertas = this.citas().filter(c => !this.citaTerminada(c) && !['CANCELADA', 'RECHAZADA'].includes(c.estado));
+    if (!this.filtroEstado) return abiertas;
+    return abiertas.filter(c => c.estado === this.filtroEstado);
   }
 
   cargarCitas() {
@@ -296,6 +307,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   }
 
   etiqueta(c: Appointment) {
+    if (this.citaTerminada(c)) return 'Cita ya terminada';
     return etiquetaCita(c);
   }
 
@@ -493,8 +505,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
 
   citaYaConsultada(): boolean {
     const cita = this.citaEnRevision();
-    if (!cita) return false;
-    return cita.estado === 'COMPLETADA' || !!cita.receta?.trim() || this.citasCerradas().includes(cita.id);
+    return !!cita && this.citaTerminada(cita);
   }
 
   iniciarConsulta() {
@@ -625,7 +636,11 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   }
 
   citasActivas(): Appointment[] {
-    return this.citas().filter(c => !['CANCELADA', 'RECHAZADA'].includes(c.estado));
+    return this.citas().filter(c => !this.citaTerminada(c) && !['CANCELADA', 'RECHAZADA'].includes(c.estado));
+  }
+
+  atendidas(): number {
+    return this.citas().filter(c => this.citaTerminada(c)).length;
   }
 
   especialidadHoy(): string {
@@ -667,7 +682,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   }
 
   iaEnAccion(): { label: string; detalle: string }[] {
-    const citas = this.citas();
+    const citas = this.citasActivas();
     const piel = citas.filter(c => c.dermatologiaScoreRiesgo != null).length;
     const triage = citas.filter(c => !!c.triageSeveridad).length;
     const soapListo = this.soapRsp() ? 1 : 0;
@@ -680,19 +695,20 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
 
   pacientesRecientes(): { nombre: string; iniciales: string; estado: string; hora: string }[] {
     const vistos = new Set<string>();
-    return this.citasActivas()
+    return this.citas()
+      .filter(c => !['CANCELADA', 'RECHAZADA'].includes(c.estado))
       .slice()
-      .sort((a, b) => new Date(a.fechaHora).getTime() - new Date(b.fechaHora).getTime())
+      .sort((a, b) => new Date(b.fechaHora).getTime() - new Date(a.fechaHora).getTime())
       .filter(c => {
-        if (vistos.has(c.pacienteNombre)) return false;
-        vistos.add(c.pacienteNombre);
+        const clave = `${c.pacienteId || c.pacienteNombre}`;
+        if (vistos.has(clave)) return false;
+        vistos.add(clave);
         return true;
       })
-      .slice(0, 4)
       .map(c => ({
         nombre: c.pacienteNombre,
         iniciales: this.iniciales(c.pacienteNombre),
-        estado: c.estado,
+        estado: this.etiqueta(c),
         hora: this.horaCorta(c.fechaHora)
       }));
   }
