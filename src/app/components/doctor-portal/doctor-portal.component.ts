@@ -561,7 +561,6 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
         if (!this.resumenEnvio && this.soapRsp()?.resumenParaMedico) {
           this.resumenEnvio = this.soapRsp()!.resumenParaMedico || '';
         }
-        this.preguntaSim = '';
       },
       error: () => this.error.set('No se pudo continuar la simulación.'),
       complete: () => this.consultaLoading.set(false)
@@ -569,8 +568,10 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   }
 
   sendQuestion() {
-    if (!this.preguntaSim.trim() || this.consultaLoading()) return;
-    this.askSimulation(this.preguntaSim);
+    const texto = this.preguntaSim.trim();
+    if (!texto || this.consultaLoading()) return;
+    this.preguntaSim = '';
+    this.askSimulation(texto);
   }
 
   notifyPatient() {
