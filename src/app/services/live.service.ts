@@ -1,18 +1,23 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
 
 const SESSION_KEY = 'hospy_session';
 
-/** Extra ping for the bell. The 25-second refresh stays, so a closed socket changes nothing. */
+/** Keeps one socket open. If it drops, the bell still refreshes on its own timer. */
 @Injectable({ providedIn: 'root' })
 export class LiveService {
+  readonly connected = signal(false);
   private socket: WebSocket | null = null;
+  private retry: ReturnType<typeof setTimeout> | null = null;
   private readonly listeners = new Set<() => void>();
 
   watch(listener: () => void): () => void {
     this.listeners.add(listener);
     this.connect();
-    return () => this.listeners.delete(listener);
+    return () => {
+      this.listeners.delete(listener);
+      if (this.listeners.size === 0) this.disconnect();
+    };
   }
 
   private connect() {
@@ -24,14 +29,36 @@ export class LiveService {
     try {
       const socket = new WebSocket(`${ws}/api/live?token=${encodeURIComponent(token)}`);
       this.socket = socket;
+      socket.onopen = () => this.connected.set(true);
       socket.onmessage = () => this.listeners.forEach(listener => listener());
       socket.onerror = () => socket.close();
       socket.onclose = () => {
-        if (this.socket === socket) this.socket = null;
+        if (this.socket !== socket) return;
+        this.socket = null;
+        this.connected.set(false);
+        this.schedule();
       };
     } catch {
       this.socket = null;
+      this.connected.set(false);
+      this.schedule();
     }
+  }
+
+  private schedule() {
+    if (this.retry || this.listeners.size === 0) return;
+    this.retry = setTimeout(() => {
+      this.retry = null;
+      this.connect();
+    }, 3000);
+  }
+
+  private disconnect() {
+    if (this.retry) clearTimeout(this.retry);
+    this.retry = null;
+    this.socket?.close();
+    this.socket = null;
+    this.connected.set(false);
   }
 
   private token(): string | null {

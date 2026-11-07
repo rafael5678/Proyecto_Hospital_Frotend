@@ -32,6 +32,31 @@
   width: 1.45rem;
   height: 1.45rem;
   display: block;
+  transform-origin: 50% 0;
+}
+
+.bell-icon.ring {
+  animation: bell-ring 0.8s ease;
+}
+
+@keyframes bell-ring {
+  0%, 100% { transform: rotate(0); }
+  15% { transform: rotate(16deg); }
+  30% { transform: rotate(-14deg); }
+  45% { transform: rotate(10deg); }
+  60% { transform: rotate(-6deg); }
+  75% { transform: rotate(3deg); }
+}
+
+.dot.live {
+  background: #16a34a;
+  transform: scale(1.4);
+}
+
+.live-label {
+  color: #15803d;
+  font-size: 0.75rem;
+  font-weight: 700;
 }
 
 .dot {
@@ -66,9 +91,13 @@
 
 .panel header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 0.5rem;
   margin-bottom: 0.45rem;
+}
+
+.panel header .link {
+  margin-left: auto;
 }
 
 .link, .empty {

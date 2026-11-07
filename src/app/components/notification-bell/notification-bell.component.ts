@@ -13,57 +13,67 @@ import { Notification } from '../../models/notification.model';
 })
 export class NotificationBellComponent implements OnInit, OnDestroy {
   theme = input<'paciente' | 'medico'>('paciente');
-  private svc = inject(NotificationService);
-  private live = inject(LiveService);
-  abierta = signal(false);
+  private notifications = inject(NotificationService);
+  readonly live = inject(LiveService);
+  open = signal(false);
   items = signal<Notification[]>([]);
-  noLeidas = signal(0);
+  unread = signal(0);
+  justArrived = signal(false);
   private timer: ReturnType<typeof setInterval> | null = null;
-  private dejarAviso: (() => void) | null = null;
+  private pulse: ReturnType<typeof setTimeout> | null = null;
+  private stopWatch: (() => void) | null = null;
 
   ngOnInit() {
-    this.cargar();
-    this.timer = setInterval(() => this.cargar(), 25000);
-    this.dejarAviso = this.live.watch(() => this.cargar());
+    this.load();
+    this.timer = setInterval(() => this.load(), 25000);
+    this.stopWatch = this.live.watch(() => this.onLive());
     if (typeof document !== 'undefined') {
-      document.addEventListener('click', this.cerrarSiAfuera);
+      document.addEventListener('click', this.closeWhenClickingOutside);
     }
   }
 
   ngOnDestroy() {
-    this.dejarAviso?.();
+    this.stopWatch?.();
     if (this.timer) clearInterval(this.timer);
+    if (this.pulse) clearTimeout(this.pulse);
     if (typeof document !== 'undefined') {
-      document.removeEventListener('click', this.cerrarSiAfuera);
+      document.removeEventListener('click', this.closeWhenClickingOutside);
     }
   }
 
-  private cerrarSiAfuera = () => {
-    if (this.abierta()) this.abierta.set(false);
+  private closeWhenClickingOutside = () => {
+    if (this.open()) this.open.set(false);
   };
 
-  cargar() {
-    this.svc.list().subscribe({
-      next: n => this.items.set(n),
+  load() {
+    this.notifications.list().subscribe({
+      next: rows => this.items.set(rows),
       error: () => this.items.set([])
     });
-    this.svc.unreadCount().subscribe({
-      next: r => this.noLeidas.set(r.total),
-      error: () => this.noLeidas.set(0)
+    this.notifications.unreadCount().subscribe({
+      next: row => this.unread.set(row.total),
+      error: () => this.unread.set(0)
     });
+  }
+
+  private onLive() {
+    this.justArrived.set(true);
+    this.load();
+    if (this.pulse) clearTimeout(this.pulse);
+    this.pulse = setTimeout(() => this.justArrived.set(false), 1400);
   }
 
   toggle() {
-    this.abierta.set(!this.abierta());
-    if (this.abierta()) this.cargar();
+    this.open.update(value => !value);
+    if (this.open()) this.load();
   }
 
-  leer(n: Notification) {
-    if (n.leida) return;
-    this.svc.markRead(n.id).subscribe({ next: () => this.cargar() });
+  markOne(notice: Notification) {
+    if (notice.leida) return;
+    this.notifications.markRead(notice.id).subscribe({ next: () => this.load() });
   }
 
-  leerTodas() {
-    this.svc.markAllRead().subscribe({ next: () => this.cargar() });
+  markAll() {
+    this.notifications.markAllRead().subscribe({ next: () => this.load() });
   }
 }
