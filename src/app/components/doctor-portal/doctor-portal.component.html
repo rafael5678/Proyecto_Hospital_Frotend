@@ -195,12 +195,8 @@
           }
         </div>
         @if (citaEnRevision(); as cita) {
-        @if (citaYaConsultada()) {
-        <h3>Cita ya terminada</h3>
-        <p><strong>Estado:</strong> {{ etiqueta(cita) }} · {{ cita.fechaHora | date:'mediumDate' }}</p>
-        } @else {
+        @if (!citaYaConsultada()) {
         <h3>Lo que trae a la consulta</h3>
-        }
         <p><strong>Motivo:</strong> {{ cita.motivo || 'No informado' }}</p>
         @if (cita.triageSintomas) { <p><strong>Qué le está pasando:</strong> {{ cita.triageSintomas }}</p> }
         @if (cita.triageDuracion) { <p><strong>Desde hace:</strong> {{ cita.triageDuracion }}</p> }
@@ -208,8 +204,9 @@
         @if (cita.triageResumen) { <p>{{ cita.triageResumen }}</p> }
         @if (cita.dermatologiaReportaIa) { <p><strong>Piel:</strong> {{ cita.dermatologiaReportaIa }}</p> }
         }
-        <h3>Consultas previas</h3>
-        @if (historialPaciente().length) {
+        }
+        <h3>Consultas de este médico</h3>
+        @if (consultasDeEsteMedico().length) {
         <table>
           <thead>
             <tr>
@@ -220,18 +217,18 @@
             </tr>
           </thead>
           <tbody>
-            @for (anterior of historialPaciente(); track anterior.id) {
+            @for (anterior of consultasDeEsteMedico(); track anterior.id) {
             <tr>
               <td>{{ anterior.fechaHora | date:'mediumDate' }}</td>
               <td>{{ anterior.medicoNombre }} · {{ anterior.medicoEspecialidad }}</td>
               <td>{{ anterior.motivo || '—' }} @if (anterior.triageResumen) { <small>{{ anterior.triageResumen
                   }}</small> }</td>
-              <td>{{ anterior.estado === 'COMPLETADA' ? 'Cita ya terminada' : anterior.estado }}</td>
+              <td>{{ etiqueta(anterior) }}</td>
             </tr>
             }
           </tbody>
         </table>
-        } @else { <p class="empty">No hay consultas previas registradas.</p> }
+        } @else { <p class="empty">Este médico no tiene consultas registradas con este paciente.</p> }
         @if (citaYaConsultada()) {
         <p class="empty">Ya se consultó. No hay más consulta pendiente.</p>
         } @else {

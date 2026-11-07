@@ -508,6 +508,16 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     return !!cita && this.citaTerminada(cita);
   }
 
+  consultasDeEsteMedico(): Appointment[] {
+    const yo = this.perfil()?.id;
+    const propias = this.historialPaciente().filter(c => yo != null && c.medicoId === yo);
+    const actual = this.citaEnRevision();
+    if (actual && !propias.some(c => c.id === actual.id)) {
+      return [actual, ...propias];
+    }
+    return propias;
+  }
+
   iniciarConsulta() {
     if (!this.consentimientoSoapAi) {
       this.error.set('Marca la autorización antes de iniciar la simulación.');
