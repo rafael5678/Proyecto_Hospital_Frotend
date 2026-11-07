@@ -230,13 +230,22 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   }
 
   verPaciente(citaId: number) {
-    const encontrada = this.citas().find(c => c.id === citaId) ?? null;
-    this.citaEnRevision.set(
-      encontrada && (encontrada.estado === 'COMPLETADA' || this.citasCerradas().includes(citaId))
-        ? { ...encontrada, estado: 'COMPLETADA' }
-        : encontrada
-    );
     this.historialPaciente.set([]);
+    this.svc.myAppointments().subscribe({
+      next: lista => {
+        this.citas.set(lista);
+        this.abrirFicha(citaId);
+      },
+      error: () => this.abrirFicha(citaId)
+    });
+  }
+
+  private abrirFicha(citaId: number) {
+    const encontrada = this.citas().find(c => c.id === citaId) ?? null;
+    const cerrada = !!encontrada && (
+      encontrada.estado === 'COMPLETADA' || !!encontrada.receta?.trim() || this.citasCerradas().includes(citaId)
+    );
+    this.citaEnRevision.set(cerrada && encontrada ? { ...encontrada, estado: 'COMPLETADA' } : encontrada);
     this.svc.viewPatient(citaId).subscribe({
       next: p => {
         this.pacienteSeleccionado.set(p);
@@ -485,7 +494,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   citaYaConsultada(): boolean {
     const cita = this.citaEnRevision();
     if (!cita) return false;
-    return cita.estado === 'COMPLETADA' || this.citasCerradas().includes(cita.id);
+    return cita.estado === 'COMPLETADA' || !!cita.receta?.trim() || this.citasCerradas().includes(cita.id);
   }
 
   iniciarConsulta() {

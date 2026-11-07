@@ -1,5 +1,4 @@
 import { Component, OnDestroy, OnInit, inject, input, signal } from '@angular/core';
-import { DatePipe } from '@angular/common';
 import { NotificationService } from '../../services/notification.service';
 import { LiveService } from '../../services/live.service';
 import { Notification } from '../../models/notification.model';
@@ -7,7 +6,7 @@ import { Notification } from '../../models/notification.model';
 @Component({
   selector: 'app-notification-bell',
   standalone: true,
-  imports: [DatePipe],
+  imports: [],
   templateUrl: './notification-bell.component.html',
   styleUrl: './notification-bell.component.css'
 })
@@ -75,5 +74,20 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
 
   markAll() {
     this.notifications.markAllRead().subscribe({ next: () => this.load() });
+  }
+
+  horaColombia(iso?: string): string {
+    if (!iso) return '';
+    const conZona = /[zZ]|[+-]\d{2}:\d{2}$/.test(iso) ? iso : `${iso}Z`;
+    const fecha = new Date(conZona);
+    if (Number.isNaN(fecha.getTime())) return iso;
+    return fecha.toLocaleString('es-CO', {
+      timeZone: 'America/Bogota',
+      day: 'numeric',
+      month: 'numeric',
+      year: '2-digit',
+      hour: 'numeric',
+      minute: '2-digit'
+    });
   }
 }
