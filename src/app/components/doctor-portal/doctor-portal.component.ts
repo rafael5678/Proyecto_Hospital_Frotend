@@ -638,6 +638,8 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
         estado: this.statusLabel(c),
         hora: this.shortTime(visitClock(c))
       }));
+
+/** Doctor portal: agenda, consult, and send visit. */
   }
 
 }
