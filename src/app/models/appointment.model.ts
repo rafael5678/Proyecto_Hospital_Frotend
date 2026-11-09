@@ -36,6 +36,23 @@ export function formatColombia(iso?: string): string {
   return date.toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
 }
 
+/** Cupo de agenda: "Lunes 9 de noviembre de 2026 · 14:00" in Colombia wall time. */
+export function formatSlotColombia(iso?: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(iso || '');
+  if (!match) return '';
+  const date = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), Number(match[4]), Number(match[5]));
+  const dia = date.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  const nombre = dia ? dia.charAt(0).toUpperCase() + dia.slice(1) : '';
+  return `${nombre} · ${match[4]}:${match[5]}`;
+}
+
+export function isFutureSlot(iso?: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(iso || '');
+  if (!match) return false;
+  const slot = new Date(Number(match[1]), Number(match[2]) - 1, Number(match[3]), Number(match[4]), Number(match[5]));
+  return slot.getTime() > Date.now();
+}
+
 export function etiquetaCita(c: { estado?: string; fechaHora?: string; concluidaEn?: string; adelantada?: boolean }): string {
   const estado = (c.estado || '').toUpperCase();
   if (estado !== 'COMPLETADA') return estado || '—';
