@@ -1,3 +1,4 @@
+/** Fallback specialty names if the catalog API is empty. */
 export const HOSPITAL_SPECIALTIES = [
   'Medicina General',
   'Cardiología',
