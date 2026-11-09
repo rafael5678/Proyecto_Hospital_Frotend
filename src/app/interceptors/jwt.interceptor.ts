@@ -12,3 +12,5 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
   }
   return next(req);
 };
+
+/** Adds the Bearer token to API calls after login. */
