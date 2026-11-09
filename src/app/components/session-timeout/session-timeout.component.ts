@@ -59,5 +59,7 @@ export class SessionTimeoutComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.inactivity.stop();
+
+/** Idle warning shown before admin or doctor logout. */
   }
 }
