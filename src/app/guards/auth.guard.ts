@@ -9,3 +9,5 @@ export const authGuard: CanActivateFn = () => {
   router.navigate(['/']);
   return false;
 };
+
+/** Sends visitors without a session back to the landing page. */
