@@ -36,6 +36,21 @@ export function phoneMessage(label: string): string {
   return `${label} debe tener 10 dígitos: un celular empieza por 3 y un fijo por 60.`;
 }
 
+/** Latest year a public signup can pick. Not 2022+, not a future day. */
+export const BIRTH_YEAR_LATEST = 2021;
+export const BIRTH_DATE_MIN = '1920-01-01';
+export const BIRTH_DATE_MAX = `${BIRTH_YEAR_LATEST}-12-31`;
+
+export function isAllowedBirthDate(value: string): boolean {
+  if (!value) return true;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  return value >= BIRTH_DATE_MIN && value <= BIRTH_DATE_MAX;
+}
+
+export function birthDateMessage(): string {
+  return `La fecha de nacimiento no puede ser después de ${BIRTH_YEAR_LATEST}.`;
+}
+
 export function normalizeGender(value: string): string {
   const text = (value || '').trim().toLowerCase();
   if (!text) return '';

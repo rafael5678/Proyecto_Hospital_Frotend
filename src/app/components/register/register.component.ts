@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
-import { ID_MAX, PASSWORD_MAX, PASSWORD_MIN, blockSpace, phoneMessage, idDigitsOnly, digitsOnly, isColombianPhone, withoutSpaces } from '../../data/person-data';
+import { ID_MAX, PASSWORD_MAX, PASSWORD_MIN, BIRTH_DATE_MIN, BIRTH_DATE_MAX, blockSpace, phoneMessage, birthDateMessage, idDigitsOnly, digitsOnly, isColombianPhone, isAllowedBirthDate, withoutSpaces } from '../../data/person-data';
 
 /** Public patient sign-up form. */
 @Component({
@@ -36,6 +36,8 @@ export class RegisterComponent implements OnInit {
   readonly idDigitsOnly = idDigitsOnly;
   readonly withoutSpaces = withoutSpaces;
   readonly blockSpace = blockSpace;
+  readonly birthDateMin = BIRTH_DATE_MIN;
+  readonly birthDateMax = BIRTH_DATE_MAX;
   error = signal('');
   loading = signal(false);
   wakingServer = signal(false);
@@ -71,6 +73,11 @@ export class RegisterComponent implements OnInit {
     this.documento = idDigitsOnly(this.documento);
     if (!this.documento) {
       this.error.set(`La cédula solo lleva números, máximo ${ID_MAX}.`);
+      return;
+    }
+    if (!isAllowedBirthDate(this.fechaNacimiento)) {
+      this.error.set(birthDateMessage());
+      this.fechaNacimiento = '';
       return;
     }
     this.loading.set(true);

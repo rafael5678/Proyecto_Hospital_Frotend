@@ -251,7 +251,8 @@
                     <small class="campo-ayuda" [class.campo-mal]="idTooLong()">{{ (form.documento || '').replace(/\D/g, '').length }}/10 · la cédula colombiana tiene máximo 10 números</small>
                   </label>
                   <label>Fecha de nacimiento
-                    <input class="input" type="date" name="fecha-nacimiento" [(ngModel)]="form.fechaNacimiento" />
+                    <input class="input" type="date" name="fecha-nacimiento" [min]="birthDateMin" [max]="birthDateMax" [(ngModel)]="form.fechaNacimiento" />
+                    <small class="campo-ayuda">Hasta 2021. No se puede nacer en el futuro.</small>
                   </label>
                   <label>Género
                     <select class="input" name="genero" [(ngModel)]="form.genero">

@@ -16,7 +16,7 @@ import {
 } from '../../models/ai.model';
 import { PortalSidebarComponent, SidebarItem } from '../portal-sidebar/portal-sidebar.component';
 import {
-  GENDERS, BLOOD_TYPES, phoneMessage, normalizeGender, normalizeBloodType, idDigitsOnly, digitsOnly, isColombianPhone
+  GENDERS, BLOOD_TYPES, BIRTH_DATE_MIN, BIRTH_DATE_MAX, phoneMessage, birthDateMessage, normalizeGender, normalizeBloodType, idDigitsOnly, digitsOnly, isColombianPhone, isAllowedBirthDate
 } from '../../data/person-data';
 import { NotificationBellComponent } from '../notification-bell/notification-bell.component';
 import { NotificationService } from '../../services/notification.service';
@@ -47,6 +47,8 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
   private ai = inject(AiService);
 
   readonly generos = GENDERS;
+  readonly birthDateMin = BIRTH_DATE_MIN;
+  readonly birthDateMax = BIRTH_DATE_MAX;
   readonly tiposSangre = BLOOD_TYPES;
   readonly digitsOnly = digitsOnly;
   readonly idDigitsOnly = idDigitsOnly;
@@ -528,6 +530,10 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     }
     if (!isColombianPhone(p.telefonoEmergencia || '')) {
       this.error.set(phoneMessage('El teléfono de emergencia'));
+      return;
+    }
+    if (!isAllowedBirthDate(p.fechaNacimiento || '')) {
+      this.error.set(birthDateMessage());
       return;
     }
     this.error.set('');

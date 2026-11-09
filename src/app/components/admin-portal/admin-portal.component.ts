@@ -14,8 +14,8 @@ import { AiAdminOperationResponse, AiPricesRequest, AiPricesResponse } from '../
 import { AiMetrics } from '../../models/ai.model';
 import { HOSPITAL_SPECIALTIES } from '../../data/specialties';
 import {
-  ID_MAX, PASSWORD_MAX, PASSWORD_MIN, GENDERS, BLOOD_TYPES,
-  phoneMessage, normalizeGender, normalizeBloodType, idDigitsOnly, digitsOnly, isColombianPhone, withoutSpaces, blockSpace
+  ID_MAX, PASSWORD_MAX, PASSWORD_MIN, BIRTH_DATE_MIN, BIRTH_DATE_MAX, GENDERS, BLOOD_TYPES,
+  phoneMessage, birthDateMessage, normalizeGender, normalizeBloodType, idDigitsOnly, digitsOnly, isColombianPhone, isAllowedBirthDate, withoutSpaces, blockSpace
 } from '../../data/person-data';
 
 /** Administrator portal screens and Registro Hospy. */
@@ -143,6 +143,8 @@ export class AdminPortalComponent implements OnInit {
   preciosRsp = signal<AiPricesResponse | null>(null);
   preciosLoading = signal(false);
   readonly generos = GENDERS;
+  readonly birthDateMin = BIRTH_DATE_MIN;
+  readonly birthDateMax = BIRTH_DATE_MAX;
   readonly tiposSangre = BLOOD_TYPES;
   readonly digitsOnly = digitsOnly;
   readonly idDigitsOnly = idDigitsOnly;
@@ -407,6 +409,10 @@ export class AdminPortalComponent implements OnInit {
       this.error.set(phoneMessage('El teléfono de emergencia'));
       return;
     }
+    if (this.form.rol === 'PACIENTE' && !isAllowedBirthDate(this.form.fechaNacimiento || '')) {
+      this.error.set(birthDateMessage());
+      return;
+    }
     if (this.form.rol === 'PACIENTE') {
       const doc = (this.form.documento || '').trim();
       if (doc && /^\d+$/.test(doc) && doc.length > ID_MAX) {
@@ -623,7 +629,9 @@ export class AdminPortalComponent implements OnInit {
     } else {
       if (!r.documento?.trim()) faltan.push('el documento de identidad');
       if (!this.completePhone(r.telefono)) faltan.push('un teléfono de 10 dígitos (celular empieza por 3, fijo por 60)');
-      if (!r.fechaNacimiento || !/^\d{4}-\d{2}-\d{2}$/.test(r.fechaNacimiento)) faltan.push('la fecha de nacimiento');
+      if (!r.fechaNacimiento || !/^\d{4}-\d{2}-\d{2}$/.test(r.fechaNacimiento) || !isAllowedBirthDate(r.fechaNacimiento)) {
+        faltan.push('la fecha de nacimiento (hasta 2021, no un día futuro)');
+      }
       if (!normalizeGender(r.genero || '')) faltan.push('el género (masculino, femenino u otro)');
       if (!normalizeBloodType(r.tipoSangre || '')) faltan.push('el tipo de sangre (O+, O-, A+, A-, B+, B-, AB+ o AB-)');
       if (!r.direccion?.trim()) faltan.push('la dirección');
