@@ -74,5 +74,7 @@ export class AdminService {
 
   aiMetrics() {
     return this.http.get<AiMetrics>(`${this.api}/ai-metrics`);
+
+/** HTTP calls for the administrator portal. */
   }
 }
