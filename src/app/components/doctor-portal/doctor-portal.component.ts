@@ -18,18 +18,6 @@ import {
 type MedicoTab = 'inicio' | 'citas' | 'horarios' | 'paciente' | 'soap' | 'precios';
 type MedicoSub = '' | 'todas' | 'pendientes' | 'aceptadas' | 'historial' | 'lista' | 'agregar';
 
-interface SpeechRecognitionLike {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  onresult: ((event: { results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => void) | null;
-  onerror: (() => void) | null;
-  start(): void;
-  stop(): void;
-}
-
-type SpeechRecognitionFactory = new () => SpeechRecognitionLike;
-
 @Component({
   selector: 'app-doctor-portal',
   standalone: true,
@@ -116,15 +104,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   };
   soapRsp = signal<AiSoapResponse | null>(null);
   soapLoading = signal(false);
-  grabandoConsulta = signal(false);
-  transcribiendoAudio = signal(false);
-  consentimientoAudio = false;
   consentimientoSoapAi = false;
-  transcripcionEnVivo = signal('');
-  vozError = signal('');
-  private grabadora: MediaRecorder | null = null;
-  private recognition: SpeechRecognitionLike | null = null;
-  private audioChunks: Blob[] = [];
 
   preciosReq: AiPricesRequest = {
     medicamento: '',
@@ -135,6 +115,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   preguntaSim = '';
   sugeridos: string[] = [];
   elegidos: string[] = [];
+  extraMed = '';
   cuidadosEnvio = '';
   resumenEnvio = '';
   consultaLoading = signal(false);
@@ -154,8 +135,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    this.recognition?.stop();
-    if (this.grabadora?.state === 'recording') this.grabadora.stop();
+    this.stopSoapSpeech();
   }
 
   onNavigate(item: SidebarItem) {
@@ -334,8 +314,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
         this.soapRsp.set(r);
         if (!this.resumenEnvio) this.resumenEnvio = r.resumenParaMedico || '';
         if (!this.cuidadosEnvio) this.cuidadosEnvio = r.cuidados || '';
-        const meds = this.linesOf(r.medicamentosSugeridos);
-        if (meds.length) this.sugeridos = meds;
+        this.mergeSuggestions(this.linesOf(r.medicamentosSugeridos));
         this.speakSoapSummary(r);
       },
       complete: () => this.soapLoading.set(false)
@@ -386,88 +365,6 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
   }
 
-  async iniciarGrabacion() {
-    this.vozError.set('');
-    if (!this.consentimientoAudio) {
-      this.vozError.set('Confirma el consentimiento antes de grabar y enviar audio clínico.');
-      return;
-    }
-    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
-      this.vozError.set('Este navegador no permite grabar audio. Puedes escribir la transcripción.');
-      return;
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      this.audioChunks = [];
-      this.transcripcionEnVivo.set('');
-      this.grabadora = new MediaRecorder(stream);
-      this.grabadora.ondataavailable = event => {
-        if (event.data.size) this.audioChunks.push(event.data);
-      };
-      this.grabadora.onstop = () => {
-        stream.getTracks().forEach(track => track.stop());
-        const audio = new Blob(this.audioChunks, { type: this.grabadora?.mimeType || 'audio/webm' });
-        if (audio.size) this.uploadAudio(audio);
-      };
-      this.grabadora.start();
-      this.grabandoConsulta.set(true);
-      this.startBrowserRecognition();
-    } catch {
-      this.vozError.set('No se pudo acceder al micrófono. Revisa permisos del navegador.');
-    }
-  }
-
-  stopRecording() {
-    this.recognition?.stop();
-    this.recognition = null;
-    this.grabandoConsulta.set(false);
-    if (this.grabadora?.state === 'recording') this.grabadora.stop();
-  }
-
-  private startBrowserRecognition() {
-    const speechWindow = window as Window & {
-      SpeechRecognition?: SpeechRecognitionFactory;
-      webkitSpeechRecognition?: SpeechRecognitionFactory;
-    };
-    const Factory = speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
-    if (!Factory) return;
-    this.recognition = new Factory();
-    this.recognition.lang = 'es-CO';
-    this.recognition.continuous = true;
-    this.recognition.interimResults = true;
-    this.recognition.onresult = event => {
-      const text = Array.from(event.results).map(result => result[0].transcript).join(' ');
-      this.transcripcionEnVivo.set(text);
-    };
-    this.recognition.onerror = () => this.vozError.set('La transcripción en vivo del navegador no está disponible. Se intentará transcribir al terminar.');
-    try {
-      this.recognition.start();
-    } catch {
-      this.vozError.set('No se pudo iniciar la transcripción en vivo.');
-    }
-  }
-
-  private uploadAudio(audio: Blob) {
-    this.transcribiendoAudio.set(true);
-    this.ai.transcribe(audio).subscribe({
-      next: result => {
-        const texto = result.texto.trim() || this.transcripcionEnVivo().trim();
-        if (texto) {
-          const previo = this.soapReq.transcripcion?.trim();
-          this.soapReq.transcripcion = [previo, texto].filter(Boolean).join('\n');
-        }
-        this.vozError.set(result.mensaje);
-        this.transcribiendoAudio.set(false);
-      },
-      error: () => {
-        const texto = this.transcripcionEnVivo().trim();
-        if (texto) this.soapReq.transcripcion = [this.soapReq.transcripcion?.trim(), texto].filter(Boolean).join('\n');
-        this.vozError.set('No se pudo enviar el audio a la IA. Se conservó la transcripción del navegador, si estaba disponible.');
-        this.transcribiendoAudio.set(false);
-      }
-    });
-  }
-
   estimatePrices() {
     if (!this.preciosReq.medicamento.trim() || !this.preciosReq.ciudad?.trim()) {
       this.error.set('Escribe el medicamento y la ciudad. Con eso basta.');
@@ -495,6 +392,20 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
 
   toggleMedication(m: string) {
     this.elegidos = this.chosen(m) ? this.elegidos.filter(x => x !== m) : [...this.elegidos, m];
+  }
+
+  addDoctorItem() {
+    const m = this.extraMed.trim();
+    if (!m) return;
+    this.mergeSuggestions([m]);
+    if (!this.elegidos.includes(m)) this.elegidos = [...this.elegidos, m];
+    this.extraMed = '';
+  }
+
+  private mergeSuggestions(meds: string[]) {
+    for (const m of meds) {
+      if (m && !this.sugeridos.includes(m)) this.sugeridos = [...this.sugeridos, m];
+    }
   }
 
   goToConsult() {
@@ -555,8 +466,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     }).subscribe({
       next: r => {
         this.dialogo = [...this.dialogo, { quien: 'paciente' as const, texto: r.dicePaciente }];
-        const meds = this.linesOf(r.medicamentosSugeridos);
-        if (meds.length) this.sugeridos = meds;
+        this.mergeSuggestions(this.linesOf(r.medicamentosSugeridos));
         if (!this.cuidadosEnvio && r.cuidados) this.cuidadosEnvio = r.cuidados;
         if (!this.resumenEnvio && this.soapRsp()?.resumenParaMedico) {
           this.resumenEnvio = this.soapRsp()!.resumenParaMedico || '';
@@ -580,6 +490,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
       this.error.set('Abre al paciente desde su cita para poder dejarle el aviso.');
       return;
     }
+    if (this.extraMed.trim()) this.addDoctorItem();
     const medicamentos = this.elegidos.join('; ');
     if (!medicamentos && !this.cuidadosEnvio.trim()) {
       this.error.set('Elige al menos un medicamento o escribe qué debe hacer.');
@@ -602,6 +513,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
         this.dialogo = [];
         this.sugeridos = [];
         this.elegidos = [];
+        this.extraMed = '';
         this.cuidadosEnvio = '';
         this.preguntaSim = '';
         this.soapReq.transcripcion = '';

@@ -253,21 +253,6 @@
           <span class="chip-outline demo">Resumen para ti, distinto del aviso que vio el paciente.</span>
         </header>
 
-        <div class="actions-bar">
-          <label class="check-row"><input type="checkbox" [(ngModel)]="consentimientoAudio" /> Confirmo que el paciente
-            autorizó grabar y enviar el audio clínico al proveedor configurado para transcripción.</label>
-          @if (!grabandoConsulta()) {
-          <button type="button" class="btn btn-blue" (click)="iniciarGrabacion()"
-            [disabled]="transcribiendoAudio()">Iniciar grabación</button>
-          } @else {
-          <button type="button" class="btn-sm no" (click)="stopRecording()">Detener grabación</button>
-          }
-          @if (transcribiendoAudio()) { <span>Transcribiendo el audio…</span> }
-          @if (vozError()) { <span class="warn-big">{{ vozError() }}</span> }
-        </div>
-        @if (transcripcionEnVivo()) { <p class="hint" aria-live="polite"><strong>Transcripción provisional:</strong> {{
-          transcripcionEnVivo() }}</p> }
-
         <div class="form-grid">
           <div>
             <label>Nombre del paciente</label>
@@ -279,7 +264,7 @@
               placeholder="Ej: Dolor torácico 2 días" />
           </div>
           <div class="full">
-            <label>Transcripción de la consulta (voz o texto libre)</label>
+            <label>Relato de la consulta</label>
             <textarea class="input" rows="8" [(ngModel)]="soapReq.transcripcion"
               placeholder="Escribe o pega aquí lo que cuenta el paciente. El texto gris no cuenta."></textarea>
           </div>
@@ -370,15 +355,19 @@
             </button>
           </div>
           }
-          @if (sugeridos.length) {
           <h4>Elige lo que le vas a mandar</h4>
+          <p class="hint">La consulta te recomienda opciones. No se mandan solas: tú marcas las que sí y, si quieres, agregas otra.</p>
           @for (m of sugeridos; track m) {
           <label class="med-elige">
             <input type="checkbox" [checked]="chosen(m)" (change)="toggleMedication(m)" />
             <span>{{ m }}</span>
           </label>
           }
-          }
+          <div class="sim-pregunta">
+            <input class="input" type="text" [(ngModel)]="extraMed" placeholder="Otro medicamento o indicación"
+              (keyup.enter)="addDoctorItem()" />
+            <button type="button" class="btn btn-blue" (click)="addDoctorItem()">Agregar</button>
+          </div>
           <label>Qué debe hacer en casa
             <textarea class="input" rows="3" [(ngModel)]="cuidadosEnvio" placeholder="Ejercicio suave, reposo, cuándo volver"></textarea>
           </label>
