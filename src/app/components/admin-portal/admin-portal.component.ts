@@ -529,12 +529,16 @@ export class AdminPortalComponent implements OnInit {
     this.okAdmin.set('');
     this.asistenteChat.update(c => [...c, { rol: 'admin', texto }]);
     this.asistenteTexto = '';
+    if (this.esperandoEspecialidad && (this.looksLikePersonForm(texto) || this.isPersonCreateAsk(texto))) {
+      this.esperandoEspecialidad = false;
+    }
     if (this.esperandoEspecialidad) {
-      this.saveSpecialtyFromChat(texto);
+      const nombre = this.extractSpecialtyName(texto);
+      this.saveSpecialtyFromChat(nombre || texto);
       return;
     }
     if (this.isSpecialtyAsk(texto)) {
-      const nombre = this.nameInSpecialtyAsk(texto);
+      const nombre = this.extractSpecialtyName(texto);
       if (nombre) {
         this.saveSpecialtyFromChat(nombre);
         return;
@@ -573,19 +577,38 @@ export class AdminPortalComponent implements OnInit {
     });
   }
 
+  private isPersonCreateAsk(texto: string): boolean {
+    const t = this.withoutAccent(texto);
+    const persona = t.includes('paciente') || t.includes('medico') || t.includes('doctor');
+    const crea = t.includes('crea') || t.includes('registr') || t.includes('quiero') || t.includes('agreg');
+    return persona && crea;
+  }
+
+  private looksLikePersonForm(texto: string): boolean {
+    const t = this.withoutAccent(texto);
+    const pistas = ['correo', 'contrasena', '@', 'licencia', 'telefono', 'horario', 'nombre completo', 'documento', 'experiencia'];
+    return pistas.filter(p => t.includes(p)).length >= 2;
+  }
+
   private isSpecialtyAsk(texto: string): boolean {
     const t = this.withoutAccent(texto);
     const pide = t.includes('especializ') || t.includes('especialidad');
     if (!pide) return false;
-    const persona = (t.includes('paciente') || /\bmedic/.test(t) || t.includes('doctor'))
-      && (t.includes('crea') || t.includes('registr'));
-    return !persona;
+    if (this.looksLikePersonForm(texto) || this.isPersonCreateAsk(texto)) return false;
+    return t.includes('crea') || t.includes('quiero') || t.includes('agreg') || t.includes('nueva')
+      || t.includes('registr') || t.includes('anade') || t.includes('ponme') || t.includes('como se llama');
   }
 
-  private nameInSpecialtyAsk(texto: string): string {
-    const match = texto.match(/(?:especializaci[oó]n|especialidad)\s+(?:se\s+llama\s+|llamada\s+|es\s+|de\s+|:\s*)?([\p{L}][\p{L} .'-]{2,60})/iu);
-    if (!match) return '';
-    return match[1].replace(/\s+(para|del|de)\s+(los\s+|las\s+)?m[eé]dicos.*$/i, '').trim();
+  private extractSpecialtyName(texto: string): string {
+    const match = texto.match(/(?:especializaci[oó]n|especialidad)\s*[:\-–]?\s*(?:se\s+llama\s+|llamada\s+|es\s+|de\s+)?([\p{L}][\p{L} .'-]{2,80})/iu);
+    let hallado = match?.[1]?.replace(/\s+(para|del|de)\s+(los\s+|las\s+)?m[eé]dicos.*$/i, '').trim() || '';
+    if (hallado) return hallado;
+    const limpio = texto.trim()
+      .replace(/^(este es el nombre de (la |el )?)?(la )?(especializaci[oó]n|especialidad)\s*[:\-–]?\s*/i, '')
+      .replace(/^(se llama|llamada|es)\s+/i, '')
+      .replace(/[.。]+$/, '')
+      .trim();
+    return /^[\p{L}][\p{L} .'-]{2,80}$/u.test(limpio) ? limpio : '';
   }
 
   private withoutAccent(texto: string): string {
