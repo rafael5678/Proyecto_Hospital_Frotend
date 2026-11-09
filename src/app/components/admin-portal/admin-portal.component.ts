@@ -126,8 +126,7 @@ export class AdminPortalComponent implements OnInit {
   nuevaClave = '';
   claveAdmin = '';
   claveEntregada = signal<{ nombre: string; email: string; password: string } | null>(null);
-  iaPrueba = signal('');
-  iaProbando = signal(false);
+  especialidades: string[] = [...HOSPITAL_SPECIALTIES];
 
   aiStatus = signal<{ apiKeyActiva: boolean; version: string } | null>(null);
   aiMetricas = signal<AiMetrics | null>(null);
@@ -141,7 +140,6 @@ export class AdminPortalComponent implements OnInit {
   preciosPrecioTxt = '';
   preciosRsp = signal<AiPricesResponse | null>(null);
   preciosLoading = signal(false);
-  readonly especialidades = HOSPITAL_SPECIALTIES;
   readonly generos = GENDERS;
   readonly tiposSangre = BLOOD_TYPES;
   readonly digitsOnly = digitsOnly;
@@ -169,6 +167,23 @@ export class AdminPortalComponent implements OnInit {
     this.loadReports();
     this.loadAiStatus();
     this.loadAiMetrics();
+    this.loadSpecialties();
+  }
+
+  loadSpecialties() {
+    this.adminService.listSpecialties().subscribe({
+      next: lista => {
+        const nombres = lista.map(s => s.nombre).filter(Boolean);
+        if (!nombres.length) return;
+        this.especialidades = nombres;
+        this.rememberSpecialty(this.form.especialidad);
+      }
+    });
+  }
+
+  private rememberSpecialty(nombre?: string) {
+    const n = (nombre || '').trim();
+    if (n && !this.especialidades.includes(n)) this.especialidades = [...this.especialidades, n].sort((a, b) => a.localeCompare(b, 'es'));
   }
 
   loadAiStatus() {
@@ -313,6 +328,7 @@ export class AdminPortalComponent implements OnInit {
       diasAtencion: u.diasAtencion || '', horaInicio: u.horaInicio || '', horaFin: u.horaFin || '',
       horaInicio2: u.horaInicio2 || '', horaFin2: u.horaFin2 || ''
     };
+    this.rememberSpecialty(u.especialidad);
     this.tab.set('usuarios');
     this.sub.set('editar');
     this.error.set('');
@@ -485,24 +501,6 @@ export class AdminPortalComponent implements OnInit {
     }).slice(0, 8);
   }
 
-  pingAssistant() {
-    this.iaProbando.set(true);
-    this.iaPrueba.set('');
-    this.adminService.pingAssistant().subscribe({
-      next: r => {
-        this.iaProbando.set(false);
-        const detalle = (r.detalle || '').toLowerCase();
-        this.iaPrueba.set(detalle.includes('respond')
-          ? 'La prueba respondió bien.'
-          : 'La prueba no obtuvo respuesta. Intenta de nuevo en un momento.');
-      },
-      error: () => {
-        this.iaProbando.set(false);
-        this.iaPrueba.set('No se pudo hacer la prueba. Intenta de nuevo en un momento.');
-      }
-    });
-  }
-
   userId(u: User): number {
     return u.usuarioId ?? u.id;
   }
@@ -510,7 +508,7 @@ export class AdminPortalComponent implements OnInit {
   askAssistant() {
     const texto = this.asistenteTexto.trim();
     if (!texto) {
-      this.error.set('Escribe el médico o el paciente que quieres crear.');
+      this.error.set('Escribe el médico, el paciente o la especialización que quieres crear.');
       return;
     }
     this.error.set('');
@@ -536,6 +534,8 @@ export class AdminPortalComponent implements OnInit {
           return;
         }
         this.asistenteLoading.set(false);
+        if (r.especialidad) this.rememberSpecialty(r.especialidad);
+        this.loadSpecialties();
         this.replyToAssistant(r.mensaje);
       },
       error: e => {
@@ -634,6 +634,7 @@ export class AdminPortalComponent implements OnInit {
         this.loadUsers();
         this.loadDoctors();
         this.loadReports();
+        this.loadSpecialties();
       },
       error: e => {
         this.asistenteLoading.set(false);
@@ -829,8 +830,29 @@ export class AdminPortalComponent implements OnInit {
   }
 
   appointmentsTodayCount(): number {
-    const hoy = new Date().toDateString();
-    return this.citas().filter(c => new Date(c.fechaHora).toDateString() === hoy).length;
+    const hoy = this.colombiaDate();
+    return this.citas().filter(c => this.visitDate(c.fechaHora) === hoy).length;
+  }
+
+  todayPendingCount(): number {
+    const hoy = this.colombiaDate();
+    return this.citas().filter(c => this.visitDate(c.fechaHora) === hoy && (c.estado || '').toUpperCase() === 'PENDIENTE').length;
+  }
+
+  acceptedVisitCount(): number {
+    return this.citas().filter(c => {
+      const e = (c.estado || '').toUpperCase();
+      return e === 'ACEPTADA' || e === 'COMPLETADA';
+    }).length;
+  }
+
+  private colombiaDate(): string {
+    return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
+  }
+
+  private visitDate(iso?: string): string {
+    const match = /^(\d{4}-\d{2}-\d{2})/.exec(iso || '');
+    return match ? match[1] : '';
   }
 
   monthlyPoints(): { label: string; nombre: string; x: number; y: number; total: number }[] {
@@ -953,11 +975,14 @@ export class AdminPortalComponent implements OnInit {
   }
 
   performanceItems(): { label: string; valor: string; detalle: string }[] {
-    const r = this.reporte();
     const m = this.aiMetricas();
-    const total = r?.totalCitas || 0;
-    const aceptadas = r?.citasAceptadas || 0;
-    const triage = m?.citasConTriage || 0;
+    const vigentes = this.citas().filter(c => {
+      const e = (c.estado || '').toUpperCase();
+      return e !== 'CANCELADA' && e !== 'RECHAZADA';
+    });
+    const total = vigentes.length;
+    const aceptadas = this.acceptedVisitCount();
+    const triage = this.citas().filter(c => c.triageSeveridad).length;
     const pct = (n: number) => total ? `${Math.round((n / total) * 100)}%` : '0%';
     return [
       { label: 'Citas aceptadas', valor: pct(aceptadas), detalle: `${aceptadas} de ${total}` },
