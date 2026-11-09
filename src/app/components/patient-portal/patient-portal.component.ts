@@ -138,7 +138,7 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
   interRsp = signal<AiInteractionResponse | null>(null);
   interLoading = signal(false);
 
-  /* ======= IA: Precios / Prophet ======= */
+  /* Assistant: pharmacy prices */
   preciosReq: AiPricesRequest = { medicamento: '', presentacion: '', ciudad: '' };
   preciosPrecioTxt = '';
   preciosRsp = signal<AiPricesResponse | null>(null);
