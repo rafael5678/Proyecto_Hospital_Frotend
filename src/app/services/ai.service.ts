@@ -309,5 +309,7 @@ export class AiService {
       { nombre: 'Droguería de barrio', lugar: `Barrio céntrico de ${sitio}` },
       { nombre: 'Olímpica', lugar: `Zona comercial de ${sitio}` }
     ];
+
+/** HTTP calls for triage, consult, pharmacy, and SOAP. */
   }
 }
