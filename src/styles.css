@@ -93,7 +93,7 @@ a { text-decoration: none; color: inherit; }
   flex-direction: column;
 }
 
-/* Menú lateral: fila (sidebar + contenido) */
+/* Left menu row: sidebar plus scrolling content. */
 .portal-layout.with-sidebar {
   flex-direction: row !important;
   align-items: stretch;
@@ -191,7 +191,7 @@ th { background: #f8fafc; font-weight: 600; font-size: 0.85rem; }
   }
 }
 
-/* ======== AI PANELS (Patient / Médico / Admin) ======== */
+/* Assistant panels shared by patient, doctor, and admin. */
 .ai-panel { display: block; margin-top: 1rem; }
 .ai-panel .input.big { min-height: 120px; }
 .ai-panel h3 { margin: 1.25rem 0 0.5rem; color: #0f172a; font-size: 1.05rem; }
