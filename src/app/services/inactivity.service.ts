@@ -72,6 +72,8 @@ export class InactivityService {
       const rol = this.rol;
       this.stop();
       this.injector.get(AuthService).logoutForInactivity(rol);
+
+/** Closes admin and doctor sessions after idle time. */
     }
   }
 }
