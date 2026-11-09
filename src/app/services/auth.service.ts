@@ -38,7 +38,7 @@ export class AuthService {
     this.router.navigate(['/'], { queryParams: { sessionExpired: '1' } });
   }
 
-  /** Al abrir la portada no se reutiliza la cuenta anterior. */
+  /** Opening the landing page drops the previous session. */
   clearSessionWhenOpeningPortal() {
     this.clearLocalSession();
   }
