@@ -1,3 +1,4 @@
+/** Login request and session JSON. */
 export interface AuthResponse {
   token: string;
   tipo: string;
