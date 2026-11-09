@@ -566,7 +566,7 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     this.onDoctorChange();
   }
 
-  /* ============ Inteligencia Artificial ============ */
+  /* Assistant helpers used from several tabs. */
   runTriage() {
     if (!this.consentimientoTriage) {
       this.error.set('Autoriza el envío de tus datos de salud para continuar.');
