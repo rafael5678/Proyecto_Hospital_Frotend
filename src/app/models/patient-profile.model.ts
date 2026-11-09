@@ -1,3 +1,4 @@
+/** Patient file and dashboard JSON. */
 export interface PatientProfile {
   id: number;
   usuarioId: number;
