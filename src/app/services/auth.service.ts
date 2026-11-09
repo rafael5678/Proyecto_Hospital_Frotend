@@ -97,6 +97,8 @@ export class AuthService {
       return JSON.parse(raw) as SessionUser;
     } catch {
       return null;
+
+/** Login, register, and the session kept in the browser. */
     }
   }
 }
