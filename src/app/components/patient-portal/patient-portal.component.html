@@ -207,7 +207,7 @@
             }
           </select>
           @if (assignedDoctor(); as med) {
-            <p class="hint">Appointment con <strong>{{ med.nombre }}</strong> ({{ med.especialidad }}).</p>
+            <p class="hint">Cita con <strong>{{ med.nombre }}</strong> ({{ med.especialidad }}).</p>
           }
           @if (horarios().length) {
             <p class="hint"><strong>Días en que trabaja:</strong></p>
@@ -225,7 +225,7 @@
             <div class="slot-grid">
               @for (c of cupos(); track c.fechaHora) {
                 <button type="button" class="slot-chip" [class.active]="slotSelected(c)" (click)="chooseSlot(c)">
-                  {{ c.etiqueta }}
+                  {{ slotLabel(c) }}
                 </button>
               }
             </div>

@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { PatientService } from '../../services/patient.service';
 import { AiService } from '../../services/ai.service';
-import { Appointment, etiquetaCita, formatColombia } from '../../models/appointment.model';
+import { Appointment, etiquetaCita, formatColombia, formatSlotColombia, isFutureSlot } from '../../models/appointment.model';
 import { Notification } from '../../models/notification.model';
 import { User } from '../../models/user.model';
 import { CupoDisponible, Schedule } from '../../models/schedule.model';
@@ -247,6 +247,7 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
   canBook(): boolean {
     if (this.loading() || this.triageLoading() || this.dermLoading()) return false;
     if (!this.sintomas.trim() || !this.consentimientoTriage || !this.medicoId || !this.fechaHora) return false;
+    if (!isFutureSlot(this.dateForApi())) return false;
     if (this.tieneLesionPiel && !this.canAnalyzeSkin()) return false;
     return true;
   }
@@ -372,10 +373,11 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     this.svc.doctorSchedules(this.medicoId).subscribe({ next: h => this.horarios.set(h) });
     this.svc.doctorSlots(this.medicoId).subscribe({
       next: c => {
-        this.cupos.set(c);
-        if (c.length) {
-          this.chooseSlot(c[0]);
-          this.avisoCita.set('Cupo asignado: ' + c[0].etiqueta + '.');
+        const futuros = c.filter(slot => isFutureSlot(slot.fechaHora));
+        this.cupos.set(futuros);
+        if (futuros.length) {
+          this.chooseSlot(futuros[0]);
+          this.avisoCita.set('Cupo asignado: ' + this.slotLabel(futuros[0]) + '.');
         } else {
           this.avisoCita.set('Este médico no tiene cupos en las próximas semanas.');
         }
@@ -388,7 +390,12 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
   }
 
   chooseSlot(c: CupoDisponible) {
+    if (!isFutureSlot(c.fechaHora)) return;
     this.fechaHora = this.toDatetimeLocal(c.fechaHora);
+  }
+
+  slotLabel(c: CupoDisponible): string {
+    return formatSlotColombia(c.fechaHora) || c.etiqueta;
   }
 
   slotSelected(c: CupoDisponible): boolean {
@@ -421,7 +428,9 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
 
   book() {
     if (!this.canBook()) {
-      this.error.set('Completa los campos obligatorios (*). La piel solo es obligatoria si marcaste que tienes una lesión.');
+      this.error.set(this.fechaHora && !isFutureSlot(this.dateForApi())
+        ? 'Ese horario ya pasó. Elige un cupo de hoy en adelante.'
+        : 'Completa los campos obligatorios (*). La piel solo es obligatoria si marcaste que tienes una lesión.');
       return;
     }
     this.loading.set(true);
