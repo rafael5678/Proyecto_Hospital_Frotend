@@ -572,7 +572,7 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
       this.error.set('Autoriza el envío de tus datos de salud para continuar.');
       return;
     }
-    /* En la tab de agendar se usan campos sueltos; en standalone se usa triageReq */
+    /* Booking tab uses loose fields; standalone triage uses triageReq. */
     const sintomasVal = this.tab() === 'agendar' ? this.sintomas.trim() : (this.triageReq.sintomas || this.sintomas).trim();
     if (!sintomasVal) {
       this.error.set('Describe tus síntomas para analizar el triage.');
