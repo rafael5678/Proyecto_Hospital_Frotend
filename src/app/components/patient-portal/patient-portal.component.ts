@@ -131,7 +131,7 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
   dermRsp = signal<AiDermatologyResponse | null>(null);
   dermLoading = signal(false);
 
-  /* ======= IA: Interacciones GNN ======= */
+  /* Assistant: drug and food interactions */
   interMed = '';       /* comma list */
   interDieta = '';     /* comma list */
   interSuplem = '';    /* comma list */
