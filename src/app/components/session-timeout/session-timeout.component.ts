@@ -2,6 +2,7 @@ import { Component, computed, inject, input, OnDestroy, OnInit, signal } from '@
 import { InactivityService } from '../../services/inactivity.service';
 import { INACTIVITY_TIMEOUT_MS } from '../../services/inactivity.config';
 
+/** Idle warning shown before admin or doctor logout. */
 @Component({
   selector: 'app-session-timeout',
   standalone: true,
@@ -60,6 +61,5 @@ export class SessionTimeoutComponent implements OnInit, OnDestroy {
   ngOnDestroy(): void {
     this.inactivity.stop();
 
-/** Idle warning shown before admin or doctor logout. */
   }
 }

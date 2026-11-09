@@ -22,6 +22,7 @@ import { NotificationBellComponent } from '../notification-bell/notification-bel
 import { NotificationService } from '../../services/notification.service';
 import { LiveService } from '../../services/live.service';
 
+/** Patient portal: booking, history, pharmacy, and home. */
 type PacienteTab = 'inicio' | 'agendar' | 'historial' | 'proximas' | 'medicos' | 'perfil'
   | 'triage' | 'dermatologia' | 'interacciones' | 'precios';
 type PacienteSub = '' | 'agendar' | 'historial' | 'proximas' | 'directorio' | 'editar'
@@ -870,6 +871,5 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     }
     return items.slice(0, 3);
 
-/** Patient portal: booking, history, pharmacy, and home. */
   }
 }

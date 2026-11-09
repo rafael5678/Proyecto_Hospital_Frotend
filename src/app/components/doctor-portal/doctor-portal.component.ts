@@ -15,6 +15,7 @@ import {
   AiPricesRequest, AiPricesResponse
 } from '../../models/ai.model';
 
+/** Doctor portal: agenda, consult, and send visit. */
 type MedicoTab = 'inicio' | 'citas' | 'horarios' | 'paciente' | 'soap' | 'precios';
 type MedicoSub = '' | 'todas' | 'pendientes' | 'aceptadas' | 'historial' | 'lista' | 'agregar';
 
@@ -639,7 +640,6 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
         hora: this.shortTime(visitClock(c))
       }));
 
-/** Doctor portal: agenda, consult, and send visit. */
   }
 
 }

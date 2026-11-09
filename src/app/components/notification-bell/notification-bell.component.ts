@@ -3,6 +3,7 @@ import { NotificationService } from '../../services/notification.service';
 import { LiveService } from '../../services/live.service';
 import { Notification } from '../../models/notification.model';
 
+/** Bell next to the signed-in name. */
 @Component({
   selector: 'app-notification-bell',
   standalone: true,
@@ -90,6 +91,5 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
       minute: '2-digit'
     });
 
-/** Bell next to the signed-in name. */
   }
 }

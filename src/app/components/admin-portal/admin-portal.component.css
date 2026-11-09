@@ -319,7 +319,7 @@
   margin-bottom: 0.5rem;
 }
 
-/* Grid de supervisión tarjetas */
+/* Supervision card grid. */
 .ai-supervision-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));

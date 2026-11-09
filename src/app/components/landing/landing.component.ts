@@ -7,6 +7,7 @@ import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
 import { blockSpace, withoutSpaces } from '../../data/person-data';
 
+/** Public landing page with the login form. */
 const REMEMBERED_EMAIL_KEY = 'hospy_remembered_email';
 
 interface OrbitCard {
@@ -163,6 +164,5 @@ export class LandingComponent implements OnInit {
     }
     return null;
 
-/** Public landing page with the login form. */
   }
 }

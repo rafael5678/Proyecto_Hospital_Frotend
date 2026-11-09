@@ -18,6 +18,7 @@ import {
   phoneMessage, normalizeGender, normalizeBloodType, idDigitsOnly, digitsOnly, isColombianPhone, withoutSpaces, blockSpace
 } from '../../data/person-data';
 
+/** Administrator portal screens and Registro Hospy. */
 type AdminTab = 'inicio' | 'usuarios' | 'medicos' | 'citas' | 'reportes' | 'iasuperv' | 'preciosauditoria' | 'asistente';
 type AdminSub = '' | 'lista' | 'crear' | 'editar' | 'claves' | 'supervision' | 'resumen' | 'mensual';
 
@@ -1050,7 +1051,6 @@ export class AdminPortalComponent implements OnInit {
       { label: 'Asistente', valor: m?.apiKeyActiva ? 'Activo' : 'En espera', detalle: m?.apiKeyActiva ? 'Listo para usar' : 'Sin conexión' }
     ];
 
-/** Administrator portal screens and Registro Hospy. */
   }
 
 }

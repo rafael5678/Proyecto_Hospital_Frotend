@@ -1,5 +1,6 @@
 import { Component, input, output } from '@angular/core';
 
+/** Shared left menu for admin, doctor, and patient portals. */
 export interface SidebarItem {
   id: string;
   label: string;
@@ -49,6 +50,5 @@ export class PortalSidebarComponent {
     }
     if (item.tab) this.navigate.emit(item);
 
-/** Shared left menu for admin, doctor, and patient portals. */
   }
 }

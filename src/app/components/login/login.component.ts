@@ -1,6 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
+/** Legacy role login routes that reuse the landing form. */
 @Component({
   selector: 'app-login',
   standalone: true,
@@ -22,6 +23,5 @@ export class LoginComponent implements OnInit {
     }
     this.router.navigate(['/'], { queryParams, replaceUrl: true });
 
-/** Legacy role login routes that reuse the landing form. */
   }
 }

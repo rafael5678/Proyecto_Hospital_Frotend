@@ -5,6 +5,7 @@ import { AuthService } from '../../services/auth.service';
 import { environment } from '../../../environments/environment';
 import { ID_MAX, PASSWORD_MAX, PASSWORD_MIN, blockSpace, phoneMessage, idDigitsOnly, digitsOnly, isColombianPhone, withoutSpaces } from '../../data/person-data';
 
+/** Public patient sign-up form. */
 @Component({
   selector: 'app-register',
   standalone: true,
@@ -102,6 +103,5 @@ export class RegisterComponent implements OnInit {
       }
     });
 
-/** Public patient sign-up form. */
   }
 }
