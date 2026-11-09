@@ -1,3 +1,4 @@
+/** Admin report JSON. */
 export interface Report {
   totalCitas: number;
   citasPendientes: number;
