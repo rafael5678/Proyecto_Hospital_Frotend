@@ -36,6 +36,16 @@ export function formatColombia(iso?: string): string {
   return date.toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
 }
 
+/** If the visit already happened, show when it was done, not the future cupo. */
+export function visitClock(c: { fechaHora?: string; concluidaEn?: string; estado?: string }): string {
+  const hecha = (c.estado || '').toUpperCase() === 'COMPLETADA' || !!(c.concluidaEn && String(c.concluidaEn).trim());
+  return hecha && c.concluidaEn ? c.concluidaEn : (c.fechaHora || '');
+}
+
+export function formatAppointmentWhen(c: { fechaHora?: string; concluidaEn?: string; estado?: string }): string {
+  return formatColombia(visitClock(c));
+}
+
 /** Cupo de agenda: "Lunes 9 de noviembre de 2026 · 14:00" in Colombia wall time. */
 export function formatSlotColombia(iso?: string): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(iso || '');
