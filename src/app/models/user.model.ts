@@ -1,3 +1,4 @@
+/** User JSON the admin list already reads. */
 export interface User {
   id: number;
   usuarioId?: number;
