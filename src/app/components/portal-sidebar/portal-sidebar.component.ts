@@ -48,5 +48,7 @@ export class PortalSidebarComponent {
       return;
     }
     if (item.tab) this.navigate.emit(item);
+
+/** Shared left menu for admin, doctor, and patient portals. */
   }
 }
