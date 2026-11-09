@@ -240,7 +240,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     this.svc.viewPatient(citaId).subscribe({
       next: p => {
         this.pacienteSeleccionado.set(p);
-        /* Auto-llenar SOAP con datos del paciente y triage */
+        /* Prefill SOAP from the patient file and triage. */
         const cita = this.citaEnRevision();
         this.soapReq.nombrePaciente = p.nombre;
         this.soapReq.motivoInicial = cita?.motivo || cita?.triageSintomas || '';
