@@ -1,3 +1,4 @@
+/** Idle timeouts before the session closes. */
 /** Tiempos de inactividad antes de cerrar sesión (IA + máxima seguridad) */
 export const INACTIVITY_TIMEOUT_MS = {
   MEDICO: 5 * 60 * 1000,
