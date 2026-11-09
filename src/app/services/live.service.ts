@@ -68,6 +68,8 @@ export class LiveService {
       return (JSON.parse(raw) as { token?: string }).token ?? null;
     } catch {
       return null;
+
+/** Keeps one live socket open for the bell. */
     }
   }
 }
