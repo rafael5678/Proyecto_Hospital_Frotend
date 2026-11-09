@@ -162,5 +162,7 @@ export class LandingComponent implements OnInit {
       if (typeof message === 'string' && message.trim()) return message;
     }
     return null;
+
+/** Public landing page with the login form. */
   }
 }
