@@ -120,6 +120,8 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   cuidadosEnvio = '';
   resumenEnvio = '';
   consultaLoading = signal(false);
+  private geminiWarm = false;
+  private geminiWarming = false;
   avisoEnviando = signal(false);
   avisoOk = signal('');
   visitClosed = signal(false);
@@ -133,6 +135,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     this.loadAppointments();
     this.loadSchedules();
     this.svc.profile().subscribe({ next: p => this.profile.set(p) });
+    this.warmupConsult();
   }
 
   ngOnDestroy() {
@@ -143,6 +146,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     if (!item.tab) return;
     this.tab.set(item.tab as MedicoTab);
     this.sub.set((item.sub ?? '') as MedicoSub);
+    if (item.tab === 'soap') this.warmupConsult();
     if (item.tab === 'citas') this.applyFilterFromSub(item.sub);
     const group = this.baseMenu.find(m => m.children?.some(c => c.id === item.id));
     if (group && !this.expandedMenus().includes(group.id)) {
@@ -413,6 +417,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     if (this.visitAlreadyDone()) return;
     this.tab.set('soap');
     this.sub.set('');
+    this.warmupConsult();
   }
 
   visitAlreadyDone(): boolean {
@@ -450,6 +455,19 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     this.avisoOk.set('');
     this.visitClosed.set(false);
     this.error.set('');
+    this.warmupConsult();
+  }
+
+  private warmupConsult() {
+    if (this.geminiWarm || this.geminiWarming) return;
+    this.geminiWarming = true;
+    this.ai.warmupConsult().subscribe({
+      next: r => {
+        this.geminiWarm = !!r?.ok;
+        this.geminiWarming = false;
+      },
+      error: () => { this.geminiWarming = false; }
+    });
   }
 
   askSimulation(pregunta: string) {

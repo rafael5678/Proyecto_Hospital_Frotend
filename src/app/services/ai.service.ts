@@ -57,6 +57,12 @@ export class AiService {
     );
   }
 
+  warmupConsult() {
+    return this.http.post<{ ok: boolean }>(`${BASE}/warmup`, {}).pipe(
+      catchError(() => of({ ok: false }))
+    );
+  }
+
   transcribe(audio: Blob) {
     const form = new FormData();
     form.append('audio', audio, 'consulta.webm');
