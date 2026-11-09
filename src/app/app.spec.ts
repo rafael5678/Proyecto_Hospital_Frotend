@@ -1,7 +1,7 @@
-/** Smoke test for the root shell. */
 import { TestBed } from '@angular/core/testing';
 import { App } from './app';
 
+/** Smoke test for the root shell. */
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({

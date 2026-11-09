@@ -1,10 +1,11 @@
 import { Injectable, Injector, inject } from '@angular/core';
 import { AuthService } from './auth.service';
 
+/** Closes admin and doctor sessions after idle time. */
 export type InactivityRol = 'ADMIN' | 'MEDICO';
 
 /**
- * Control de inactividad. Usa Injector para evitar dependencia circular con AuthService.
+ * Idle control. Uses Injector to avoid a circular dependency with AuthService.
  */
 @Injectable({ providedIn: 'root' })
 export class InactivityService {
@@ -73,7 +74,6 @@ export class InactivityService {
       this.stop();
       this.injector.get(AuthService).logoutForInactivity(rol);
 
-/** Closes admin and doctor sessions after idle time. */
     }
   }
 }

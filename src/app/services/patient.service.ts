@@ -6,6 +6,7 @@ import { CupoDisponible, Schedule } from '../models/schedule.model';
 import { User } from '../models/user.model';
 import { PatientDashboard, PatientProfile } from '../models/patient-profile.model';
 
+/** HTTP calls for the patient portal. */
 @Injectable({ providedIn: 'root' })
 export class PatientService {
   private readonly api = `${environment.apiUrl}/patient`;
@@ -54,6 +55,5 @@ export class PatientService {
   cancelAppointment(id: number) {
     return this.http.patch<Appointment>(`${this.api}/appointments/${id}/cancel`, {});
 
-/** HTTP calls for the patient portal. */
   }
 }

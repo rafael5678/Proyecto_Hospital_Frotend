@@ -7,6 +7,7 @@ import { AuthResponse, LoginRequest, SessionUser } from '../models/auth.model';
 import { RegisterRequest } from '../models/patient-profile.model';
 import { InactivityService } from './inactivity.service';
 
+/** Login, register, and the session kept in the browser. */
 const SESSION_KEY = 'hospy_session';
 
 @Injectable({ providedIn: 'root' })
@@ -98,7 +99,6 @@ export class AuthService {
     } catch {
       return null;
 
-/** Login, register, and the session kept in the browser. */
     }
   }
 }

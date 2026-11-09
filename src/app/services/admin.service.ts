@@ -6,6 +6,7 @@ import { Report } from '../models/report.model';
 import { User, UserRequest } from '../models/user.model';
 import { AiMetrics } from '../models/ai.model';
 
+/** HTTP calls for the administrator portal. */
 @Injectable({ providedIn: 'root' })
 export class AdminService {
   private readonly api = `${environment.apiUrl}/admin`;
@@ -75,6 +76,5 @@ export class AdminService {
   aiMetrics() {
     return this.http.get<AiMetrics>(`${this.api}/ai-metrics`);
 
-/** HTTP calls for the administrator portal. */
   }
 }

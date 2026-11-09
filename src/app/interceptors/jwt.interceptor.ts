@@ -2,6 +2,7 @@ import { HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
 import { AuthService } from '../services/auth.service';
 
+/** Adds the Bearer token to API calls after login. */
 export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
   const auth = inject(AuthService);
   const token = auth.token;
@@ -13,4 +14,3 @@ export const jwtInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req);
 };
 
-/** Adds the Bearer token to API calls after login. */

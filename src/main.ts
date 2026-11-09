@@ -1,7 +1,7 @@
-/** Boots the standalone Hospy app. */
 import { bootstrapApplication } from '@angular/platform-browser';
 import { appConfig } from './app/app.config';
 import { App } from './app/app';
 
+/** Boots the standalone Hospy app. */
 bootstrapApplication(App, appConfig)
   .catch((err) => console.error(err));

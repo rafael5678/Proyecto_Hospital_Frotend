@@ -14,6 +14,7 @@ import {
   AiAdminOperationRequest, AiAdminOperationResponse
 } from '../models/ai.model';
 
+/** HTTP calls for triage, consult, pharmacy, and SOAP. */
 const BASE = environment.apiUrl + '/ai';
 const DEMO = 'Modo local: el servidor de IA no respondió. Resultado orientativo para continuar; no es diagnóstico.';
 
@@ -310,6 +311,5 @@ export class AiService {
       { nombre: 'Olímpica', lugar: `Zona comercial de ${sitio}` }
     ];
 
-/** HTTP calls for triage, consult, pharmacy, and SOAP. */
   }
 }

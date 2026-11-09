@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { environment } from '../../environments/environment';
 import { Notification } from '../models/notification.model';
 
+/** HTTP calls for the in-app bell. */
 @Injectable({ providedIn: 'root' })
 export class NotificationService {
   private http = inject(HttpClient);
@@ -23,6 +24,5 @@ export class NotificationService {
   markAllRead() {
     return this.http.patch<void>(`${this.api}/read-all`, {});
 
-/** HTTP calls for the in-app bell. */
   }
 }

@@ -2,6 +2,7 @@ import { inject } from '@angular/core';
 import { CanActivateFn, Router } from '@angular/router';
 import { AuthService } from '../services/auth.service';
 
+/** Keeps a signed-in user on the portal that matches their role. */
 export const roleGuard = (rol: string): CanActivateFn => () => {
   const auth = inject(AuthService);
   const router = inject(Router);
@@ -10,4 +11,3 @@ export const roleGuard = (rol: string): CanActivateFn => () => {
   return false;
 };
 
-/** Keeps a signed-in user on the portal that matches their role. */

@@ -8,6 +8,7 @@ import { PatientPortalComponent } from './components/patient-portal/patient-port
 import { DoctorPortalComponent } from './components/doctor-portal/doctor-portal.component';
 import { AdminPortalComponent } from './components/admin-portal/admin-portal.component';
 
+/** Portal routes. Guards keep each role on its own screen. */
 export const routes: Routes = [
   { path: '', component: LandingComponent },
   { path: 'login', component: LandingComponent },
@@ -34,4 +35,3 @@ export const routes: Routes = [
   { path: '**', redirectTo: '' }
 ];
 
-/** Portal routes. Guards keep each role on its own screen. */

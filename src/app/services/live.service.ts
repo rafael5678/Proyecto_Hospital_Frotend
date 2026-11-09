@@ -1,6 +1,7 @@
 import { Injectable, signal } from '@angular/core';
 import { environment } from '../../environments/environment';
 
+/** Keeps one live socket open for the bell. */
 const SESSION_KEY = 'hospy_session';
 
 /** Keeps one socket open. If it drops, the bell still refreshes on its own timer. */
@@ -69,7 +70,6 @@ export class LiveService {
     } catch {
       return null;
 
-/** Keeps one live socket open for the bell. */
     }
   }
 }

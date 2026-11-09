@@ -5,6 +5,7 @@ import { Appointment } from '../models/appointment.model';
 import { Schedule, ScheduleRequest } from '../models/schedule.model';
 import { PatientProfile } from '../models/patient-profile.model';
 
+/** HTTP calls for the doctor portal. */
 export interface DoctorDashboard {
   totalCitas: number;
   citasPendientes: number;
@@ -74,6 +75,5 @@ export class DoctorService {
   deleteSchedule(id: number) {
     return this.http.delete(`${this.api}/schedules/${id}`);
 
-/** HTTP calls for the doctor portal. */
   }
 }
