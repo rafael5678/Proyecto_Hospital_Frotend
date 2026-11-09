@@ -238,7 +238,7 @@ th { background: #f8fafc; font-weight: 600; font-size: 0.85rem; }
   margin-top: 0.75rem;
 }
 
-/* Severidad / chips */
+/* Severity chips. */
 .severity-row {
   display: flex;
   flex-wrap: wrap;
