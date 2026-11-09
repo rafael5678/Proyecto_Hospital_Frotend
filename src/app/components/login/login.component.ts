@@ -21,5 +21,7 @@ export class LoginComponent implements OnInit {
       delete queryParams['registrado'];
     }
     this.router.navigate(['/'], { queryParams, replaceUrl: true });
+
+/** Legacy role login routes that reuse the landing form. */
   }
 }
