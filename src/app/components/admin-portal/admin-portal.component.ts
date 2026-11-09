@@ -151,6 +151,7 @@ export class AdminPortalComponent implements OnInit {
   asistenteRsp = signal<AiAdminOperationResponse | null>(null);
   asistenteBorrador = '';
   private asistenteHistorial: string[] = [];
+  private esperandoEspecialidad = false;
   asistenteChat = signal<{ rol: 'admin' | 'ia'; texto: string }[]>([]);
   asistenteEscuchando = signal(false);
   asistenteTranscribiendo = signal(false);
@@ -515,6 +516,20 @@ export class AdminPortalComponent implements OnInit {
     this.okAdmin.set('');
     this.asistenteChat.update(c => [...c, { rol: 'admin', texto }]);
     this.asistenteTexto = '';
+    if (this.esperandoEspecialidad) {
+      this.saveSpecialtyFromChat(texto);
+      return;
+    }
+    if (this.isSpecialtyAsk(texto)) {
+      const nombre = this.nameInSpecialtyAsk(texto);
+      if (nombre) {
+        this.saveSpecialtyFromChat(nombre);
+        return;
+      }
+      this.esperandoEspecialidad = true;
+      this.replyToAssistant('¿Cómo se llama la especialización?');
+      return;
+    }
     this.asistenteLoading.set(true);
     const historial = this.asistenteBorrador ? [...this.asistenteHistorial] : [];
     this.ai.runAdminOperation({ instruccion: texto, borrador: this.asistenteBorrador || undefined, historial }).subscribe({
@@ -541,6 +556,45 @@ export class AdminPortalComponent implements OnInit {
       error: e => {
         this.asistenteLoading.set(false);
         this.error.set(e.error?.error ?? 'No se pudo interpretar la instrucción.');
+      }
+    });
+  }
+
+  private isSpecialtyAsk(texto: string): boolean {
+    const t = this.withoutAccent(texto);
+    const pide = t.includes('especializ') || t.includes('especialidad');
+    if (!pide) return false;
+    const persona = (t.includes('paciente') || /\bmedic/.test(t) || t.includes('doctor'))
+      && (t.includes('crea') || t.includes('registr'));
+    return !persona;
+  }
+
+  private nameInSpecialtyAsk(texto: string): string {
+    const match = texto.match(/(?:especializaci[oó]n|especialidad)\s+(?:se\s+llama\s+|llamada\s+|es\s+|de\s+|:\s*)?([\p{L}][\p{L} .'-]{2,60})/iu);
+    if (!match) return '';
+    return match[1].replace(/\s+(para|del|de)\s+(los\s+|las\s+)?m[eé]dicos.*$/i, '').trim();
+  }
+
+  private withoutAccent(texto: string): string {
+    return texto.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase();
+  }
+
+  private saveSpecialtyFromChat(nombre: string) {
+    this.asistenteLoading.set(true);
+    this.adminService.createSpecialty(nombre).subscribe({
+      next: r => {
+        this.esperandoEspecialidad = false;
+        this.asistenteLoading.set(false);
+        this.rememberSpecialty(r.nombre);
+        this.loadSpecialties();
+        this.replyToAssistant(r.yaExistia
+          ? `${r.nombre} ya estaba creada. Ya aparece al registrar o editar un médico.`
+          : `Listo, creé la especialización ${r.nombre}. Ya aparece al registrar o editar un médico.`);
+      },
+      error: e => {
+        this.asistenteLoading.set(false);
+        this.esperandoEspecialidad = true;
+        this.replyToAssistant(e.error?.error ?? 'No se pudo crear. Publica el backend en Render y vuelve a intentarlo. ¿Cómo se llama la especialización?');
       }
     });
   }
