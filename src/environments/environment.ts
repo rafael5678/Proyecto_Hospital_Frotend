@@ -1,3 +1,4 @@
+/** Development API. Keep localhost here. */
 export const environment = {
   production: false,
   // Local first. Switch to Render only when the local API is down:
