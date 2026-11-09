@@ -1,4 +1,5 @@
 /** Work window JSON the doctor portal already reads. */
+
 export interface Schedule {
   id: number;
   medicoId: number;

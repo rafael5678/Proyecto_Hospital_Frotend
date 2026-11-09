@@ -1,4 +1,5 @@
 /** JSON shapes the assistant endpoints already return. */
+
 /* ======= Hospy AI =======
  * Modelos para: Triage NLP, Dermatología CNN, Escriba SOAP,
  * Interacciones Fármaco-Alimento (GNN), Triangulación Precios (IF+Prophet)

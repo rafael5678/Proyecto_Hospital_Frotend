@@ -1,4 +1,5 @@
 /** Colombian ID and phone helpers used by forms. */
+
 export const GENDERS = ['Masculino', 'Femenino', 'Otro'] as const;
 export const BLOOD_TYPES = ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'] as const;
 export const PASSWORD_MIN = 6;

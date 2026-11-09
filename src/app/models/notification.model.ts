@@ -1,4 +1,5 @@
 /** Bell notice JSON. */
+
 export interface Notification {
   id: number;
   titulo: string;

@@ -1,4 +1,5 @@
 /** Visit JSON and Colombia clock helpers. */
+
 export interface Appointment {
   id: number;
   pacienteId: number;
@@ -47,7 +48,7 @@ export function formatAppointmentWhen(c: { fechaHora?: string; concluidaEn?: str
   return formatColombia(visitClock(c));
 }
 
-/** Cupo de agenda: "Lunes 9 de noviembre de 2026 · 14:00" in Colombia wall time. */
+/** Open slot label: weekday, calendar day, and HH:mm in Colombia wall time. */
 export function formatSlotColombia(iso?: string): string {
   const match = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(iso || '');
   if (!match) return '';
