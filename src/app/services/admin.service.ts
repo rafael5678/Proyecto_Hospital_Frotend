@@ -40,6 +40,14 @@ export class AdminService {
     return this.http.post<{ operativo: string; modelo: string; detalle: string }>(`${this.api}/ai-ping`, {});
   }
 
+  listSpecialties() {
+    return this.http.get<{ id: number; nombre: string }[]>(`${this.api}/specialties`);
+  }
+
+  createSpecialty(nombre: string) {
+    return this.http.post<{ id: number; nombre: string; yaExistia: boolean }>(`${this.api}/specialties`, { nombre });
+  }
+
   listDoctors() {
     return this.http.get<User[]>(`${this.api}/doctors`);
   }
