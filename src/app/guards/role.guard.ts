@@ -9,3 +9,5 @@ export const roleGuard = (rol: string): CanActivateFn => () => {
   router.navigate(['/']);
   return false;
 };
+
+/** Keeps a signed-in user on the portal that matches their role. */
