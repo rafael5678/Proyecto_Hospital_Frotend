@@ -101,5 +101,7 @@ export class RegisterComponent implements OnInit {
         this.error.set(e.error?.error ?? 'Error al registrarse');
       }
     });
+
+/** Public patient sign-up form. */
   }
 }
