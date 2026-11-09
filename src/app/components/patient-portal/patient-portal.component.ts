@@ -126,7 +126,7 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
   triageRsp = signal<AiTriageResponse | null>(null);
   triageLoading = signal(false);
 
-  /* ======= IA: Dermatologia CNN ======= */
+  /* Assistant: skin image review */
   dermReq: AiDermatologyRequest = { descripcion: '', tiempoEvolucion: '', sintomasAsociados: '' };
   dermRsp = signal<AiDermatologyResponse | null>(null);
   dermLoading = signal(false);
