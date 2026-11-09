@@ -73,5 +73,7 @@ export class DoctorService {
 
   deleteSchedule(id: number) {
     return this.http.delete(`${this.api}/schedules/${id}`);
+
+/** HTTP calls for the doctor portal. */
   }
 }
