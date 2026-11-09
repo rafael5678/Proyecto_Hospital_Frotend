@@ -73,7 +73,7 @@ export class AuthService {
     try {
       this.injector.get(InactivityService).stop();
     } catch {
-      /* monitor no iniciado */
+      /* idle monitor not started */
     }
   }
 
