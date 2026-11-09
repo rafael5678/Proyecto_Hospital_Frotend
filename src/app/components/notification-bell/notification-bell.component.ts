@@ -89,5 +89,7 @@ export class NotificationBellComponent implements OnInit, OnDestroy {
       hour: 'numeric',
       minute: '2-digit'
     });
+
+/** Bell next to the signed-in name. */
   }
 }
