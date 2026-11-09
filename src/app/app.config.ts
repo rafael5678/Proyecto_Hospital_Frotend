@@ -12,3 +12,5 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(withInterceptors([jwtInterceptor]))
   ]
 };
+
+/** Root Angular providers: router, HTTP, and the JWT interceptor. */
