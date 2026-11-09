@@ -33,3 +33,5 @@ export const routes: Routes = [
   },
   { path: '**', redirectTo: '' }
 ];
+
+/** Portal routes. Guards keep each role on its own screen. */
