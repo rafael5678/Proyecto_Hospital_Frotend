@@ -1,3 +1,4 @@
+/** Smoke test for the root shell. */
 import { TestBed } from '@angular/core/testing';
 import { App } from './app';
 
