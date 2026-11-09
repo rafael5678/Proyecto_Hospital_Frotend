@@ -22,5 +22,7 @@ export class NotificationService {
 
   markAllRead() {
     return this.http.patch<void>(`${this.api}/read-all`, {});
+
+/** HTTP calls for the in-app bell. */
   }
 }
