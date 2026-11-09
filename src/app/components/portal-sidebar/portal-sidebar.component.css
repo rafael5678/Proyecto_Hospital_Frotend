@@ -2,13 +2,16 @@
   display: block;
   flex-shrink: 0;
   z-index: 10;
+  height: 100%;
 }
 
 .sidebar {
   width: 268px;
   min-width: 268px;
   height: 100%;
-  min-height: 100vh;
+  min-height: 100%;
+  max-height: 100vh;
+  overflow: hidden;
   padding: 1.15rem 0.85rem 1.4rem;
   color: #eef2ff;
   display: flex;
@@ -157,5 +160,7 @@
     width: 100%;
     min-width: unset;
     min-height: auto;
+    max-height: none;
+    overflow: visible;
   }
 }
