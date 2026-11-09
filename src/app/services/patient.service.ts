@@ -53,5 +53,7 @@ export class PatientService {
 
   cancelAppointment(id: number) {
     return this.http.patch<Appointment>(`${this.api}/appointments/${id}/cancel`, {});
+
+/** HTTP calls for the patient portal. */
   }
 }
