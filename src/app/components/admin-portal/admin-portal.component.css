@@ -93,7 +93,7 @@
   font-weight: 600;
 }
 
-.dash-stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.dash-stats { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 
 .dash-stats .stat {
   text-align: left;
