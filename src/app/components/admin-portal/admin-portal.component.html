@@ -43,14 +43,19 @@
             <small>{{ r.totalCitas }} citas registradas</small>
           </div>
           <div class="stat">
+            <span>Total citas</span>
+            <strong>{{ r.totalCitas }}</strong>
+            <small>{{ r.citasPendientes }} pendientes</small>
+          </div>
+          <div class="stat">
             <span>Citas hoy</span>
             <strong>{{ appointmentsTodayCount() }}</strong>
-            <small>{{ r.citasPendientes }} pendientes</small>
+            <small>{{ todayPendingCount() }} pendientes de hoy</small>
           </div>
           <div class="stat">
             <span>Médicos</span>
             <strong>{{ r.totalMedicos }}</strong>
-            <small>{{ r.citasAceptadas }} citas aceptadas</small>
+            <small>{{ acceptedVisitCount() }} citas aceptadas</small>
           </div>
           <div class="stat">
             <span>Alertas activas</span>
@@ -505,7 +510,7 @@
       @if (tab() === 'asistente') {
         <div class="card section asistente-card">
           <h2>Registro Hospy</h2>
-          <p class="hint">Aquí se crean cuentas nuevas de pacientes y médicos, escribiendo o hablando. No lista usuarios ni cambia claves: eso está en Usuarios. Ejemplo: «Registra a la paciente Ana Gómez». Hospy pregunta lo que falte y, cuando está completo, crea la cuenta. La clave queda cifrada y se muestra una sola vez en este chat para que se la entregues.</p>
+            <p class="hint">Aquí se crean cuentas nuevas de pacientes y médicos, escribiendo o hablando. También puedes decir «quiero una especialización» y Hospy pregunta el nombre. No lista usuarios ni cambia claves: eso está en Usuarios. Ejemplo: «Registra a la paciente Ana Gómez». Hospy pregunta lo que falte y, cuando está completo, crea la cuenta. La clave queda cifrada y se muestra una sola vez en este chat para que se la entregues.</p>
           @if (error()) { <p class="error-msg">{{ error() }}</p> }
           <div class="asistente-chat">
             @for (m of asistenteChat(); track $index) {
@@ -544,12 +549,8 @@
               <span class="severity-chip" [class]="m.apiKeyActiva ? 'bg-green' : 'bg-orange'">
                 {{ m.apiKeyActiva ? 'Asistente activo' : 'Asistente en espera' }}
               </span>
-              <button type="button" class="btn btn-purple" (click)="pingAssistant()" [disabled]="iaProbando()">
-                {{ iaProbando() ? 'Probando…' : 'Probar' }}
-              </button>
             </div>
-            @if (iaPrueba()) { <p class="hint">{{ iaPrueba() }}</p> }
-            <p class="hint">Los números salen de las citas guardadas. Hay {{ m.totalCitas }} citas. Un cero significa que ninguna tiene ese análisis todavía.</p>
+            <p class="hint">Los números salen de las citas guardadas. Hay {{ m.totalCitas }} citas. Dermatología cuenta evaluaciones de piel, no las citas del dermatólogo. Un cero significa que ninguna tiene ese análisis todavía.</p>
 
             <div class="ia-buscar">
               <label for="buscar-persona">Buscar paciente o médico</label>
