@@ -582,7 +582,7 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     this.error.set('');
     this.triageRsp.set(null);
 
-    /* Sincronizar en ambas direcciones */
+    /* Keep both field copies in sync. */
     if (this.tab() === 'agendar') {
       this.triageReq = this.triagePayload();
     } else {
