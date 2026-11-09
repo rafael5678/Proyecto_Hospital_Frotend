@@ -869,5 +869,7 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
       });
     }
     return items.slice(0, 3);
+
+/** Patient portal: booking, history, pharmacy, and home. */
   }
 }
