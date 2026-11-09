@@ -1049,6 +1049,8 @@ export class AdminPortalComponent implements OnInit {
       { label: 'Con triage', valor: pct(triage), detalle: `${triage} citas orientadas` },
       { label: 'Asistente', valor: m?.apiKeyActiva ? 'Activo' : 'En espera', detalle: m?.apiKeyActiva ? 'Listo para usar' : 'Sin conexión' }
     ];
+
+/** Administrator portal screens and Registro Hospy. */
   }
 
 }
