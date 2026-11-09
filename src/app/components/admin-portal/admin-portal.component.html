@@ -412,7 +412,7 @@
                 <td>{{ c.medicoNombre }}<small>{{ c.medicoEspecialidad }}</small></td>
                 <td>@if (c.triageSeveridad) { {{ c.triageSeveridad }} · ESI {{ c.triageNivelEsi ?? '—' }} · {{ c.triagePrioridad ?? '—' }}/10 } @else { Sin triage }</td>
                 <td>{{ c.triageEspecialidadSugerida || '—' }}</td>
-                <td>{{ formatColombia(c.fechaHora) }}</td>
+                <td>{{ formatAppointmentWhen(c) }}</td>
                 <td><span [class]="badgeClass(c.estado)">{{ statusLabel(c) }}</span></td>
                 <td>@if (c.estado === 'PENDIENTE' || c.estado === 'ACEPTADA') { <button type="button" class="btn-sm info" (click)="openReschedule(c)">Reprogramar</button> }</td>
               </tr>

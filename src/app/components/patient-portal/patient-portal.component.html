@@ -250,7 +250,7 @@
                 <tr>
                   <td>{{ c.medicoNombre }}</td>
                   <td>{{ c.medicoEspecialidad }}</td>
-                  <td>{{ formatColombia(c.fechaHora) }}</td>
+                  <td>{{ formatAppointmentWhen(c) }}</td>
                   <td><span [class]="badgeClass(c.estado)">{{ statusLabel(c) }}</span></td>
                   <td>
                     @if ((c.estado === 'PENDIENTE' || c.estado === 'ACEPTADA') && !visitClosed(c)) {
@@ -275,7 +275,7 @@
               @for (c of visibleUpcoming(); track c.id) {
                 <tr>
                   <td>{{ c.medicoNombre }}</td>
-                  <td>{{ formatColombia(c.fechaHora) }}</td>
+                  <td>{{ formatAppointmentWhen(c) }}</td>
                   <td><span [class]="badgeClass(c.estado)">{{ statusLabel(c) }}</span></td>
                   <td>
                     @if ((c.estado === 'PENDIENTE' || c.estado === 'ACEPTADA') && !visitClosed(c)) {

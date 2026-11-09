@@ -126,7 +126,7 @@
           @for (c of filteredAppointments(); track c.id) {
           <tr>
             <td>{{ c.pacienteNombre }}</td>
-            <td>{{ formatColombia(c.fechaHora) }}</td>
+            <td>{{ formatAppointmentWhen(c) }}</td>
             <td>{{ c.motivo || '—' }}
               @if (c.triageResumen) { <small>{{ c.triageSeveridad }} · Prioridad {{ c.triagePrioridad }}/10: {{
                 c.triageResumen }}</small> }
@@ -219,7 +219,7 @@
           <tbody>
             @for (anterior of visitsForThisDoctor(); track anterior.id) {
             <tr>
-              <td>{{ formatColombia(anterior.fechaHora) }}</td>
+              <td>{{ formatAppointmentWhen(anterior) }}</td>
               <td>{{ anterior.medicoNombre }} · {{ anterior.medicoEspecialidad }}</td>
               <td>{{ anterior.motivo || '—' }} @if (anterior.triageResumen) { <small>{{ anterior.triageResumen
                   }}</small> }</td>

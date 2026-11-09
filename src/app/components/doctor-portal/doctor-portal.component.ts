@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { DoctorService, DoctorDashboard, DoctorProfile } from '../../services/doctor.service';
-import { Appointment, etiquetaCita, formatColombia } from '../../models/appointment.model';
+import { Appointment, etiquetaCita, formatColombia, formatAppointmentWhen, visitClock } from '../../models/appointment.model';
 import { Schedule } from '../../models/schedule.model';
 import { PatientProfile } from '../../models/patient-profile.model';
 import { PortalSidebarComponent, SidebarItem } from '../portal-sidebar/portal-sidebar.component';
@@ -599,6 +599,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   }
 
   readonly formatColombia = formatColombia;
+  readonly formatAppointmentWhen = formatAppointmentWhen;
 
   shortTime(iso: string): string {
     const match = /^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})/.exec(iso || '');
@@ -635,7 +636,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
         nombre: c.pacienteNombre,
         initials: this.initials(c.pacienteNombre),
         estado: this.statusLabel(c),
-        hora: this.shortTime(c.fechaHora)
+        hora: this.shortTime(visitClock(c))
       }));
   }
 

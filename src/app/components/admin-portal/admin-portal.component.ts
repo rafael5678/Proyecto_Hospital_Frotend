@@ -4,7 +4,7 @@ import { DecimalPipe } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 import { AdminService } from '../../services/admin.service';
 import { User, UserRequest } from '../../models/user.model';
-import { Appointment, etiquetaCita, formatColombia } from '../../models/appointment.model';
+import { Appointment, etiquetaCita, formatColombia, formatAppointmentWhen } from '../../models/appointment.model';
 import { Report } from '../../models/report.model';
 import { PortalSidebarComponent, SidebarItem } from '../portal-sidebar/portal-sidebar.component';
 import { SessionTimeoutComponent } from '../session-timeout/session-timeout.component';
@@ -45,6 +45,7 @@ export class AdminPortalComponent implements OnInit {
   private adminService = inject(AdminService);
   private ai = inject(AiService);
   readonly formatColombia = formatColombia;
+  readonly formatAppointmentWhen = formatAppointmentWhen;
 
   tab = signal<AdminTab>('inicio');
   sub = signal<AdminSub>('');

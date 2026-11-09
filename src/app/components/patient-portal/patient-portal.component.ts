@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { AuthService } from '../../services/auth.service';
 import { PatientService } from '../../services/patient.service';
 import { AiService } from '../../services/ai.service';
-import { Appointment, etiquetaCita, formatColombia, formatSlotColombia, isFutureSlot } from '../../models/appointment.model';
+import { Appointment, etiquetaCita, formatColombia, formatSlotColombia, formatAppointmentWhen, isFutureSlot } from '../../models/appointment.model';
 import { Notification } from '../../models/notification.model';
 import { User } from '../../models/user.model';
 import { CupoDisponible, Schedule } from '../../models/schedule.model';
@@ -403,6 +403,7 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
   }
 
   readonly formatColombia = formatColombia;
+  readonly formatAppointmentWhen = formatAppointmentWhen;
 
   toDatetimeLocal(iso: string): string {
     const match = /^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2})/.exec(iso || '');
