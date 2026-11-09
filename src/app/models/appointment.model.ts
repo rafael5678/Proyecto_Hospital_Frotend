@@ -1,3 +1,4 @@
+/** Visit JSON and Colombia clock helpers. */
 export interface Appointment {
   id: number;
   pacienteId: number;
