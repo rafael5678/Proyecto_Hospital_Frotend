@@ -370,6 +370,11 @@ export class AdminPortalComponent implements OnInit {
     return !!d && isColombianPhone(d);
   }
 
+  unlockPassword(event: Event) {
+    const campo = event.target as HTMLInputElement | null;
+    campo?.removeAttribute('readonly');
+  }
+
   passwordTooShort() {
     const n = (this.form.password || '').length;
     return n > 0 && n < PASSWORD_MIN;
@@ -418,7 +423,7 @@ export class AdminPortalComponent implements OnInit {
     const datos: UserRequest = { ...this.form, password: clave || undefined };
     this.adminService.updateUser(id, datos).subscribe({
       next: (guardado) => {
-        this.okAdmin.set('Datos guardados. Si vuelves a editar, vas a ver esta misma ficha.');
+        this.okAdmin.set('Datos actualizados. Es la misma ficha: el correo y la clave de esa persona, no una cuenta nueva.');
         this.claveVisible = guardado.clave || clave || this.claveVisible;
         this.usuarios.update(lista => lista.map(u => this.userId(u) === id ? { ...u, ...guardado, clave: guardado.clave || clave || u.clave } : u));
         this.resetForm();

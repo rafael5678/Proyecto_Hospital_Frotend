@@ -212,10 +212,10 @@
       }
 
       @if (tab() === 'usuarios' && sub() === 'editar') {
-        <form class="edit-usuario" autocomplete="on" (ngSubmit)="saveEdit()">
+        <form class="edit-usuario" autocomplete="off" (ngSubmit)="saveEdit()">
           <header class="edit-head">
             <h2>Editar {{ form.rol === 'MEDICO' ? 'médico' : 'paciente' }}</h2>
-            <p class="hint">Se guardan el correo y la clave con los que esa persona entra. Si dejas la clave nueva vacía, la anterior no cambia. Al volver a abrir esta ficha, se ve lo último que quedó guardado.</p>
+            <p class="hint">Se actualiza la misma ficha: el mismo correo y la misma clave de esa persona. No se crea otra cuenta. Si dejas la clave nueva vacía, la anterior no cambia.</p>
           </header>
 
           <div class="edit-secciones">
@@ -223,18 +223,18 @@
               <h3>Acceso</h3>
               <div class="edit-campos cuatro">
                 <label>Nombre
-                  <input class="input" name="nombre" autocomplete="name" [(ngModel)]="form.nombre" />
+                  <input class="input" name="nombre" autocomplete="off" [(ngModel)]="form.nombre" />
                 </label>
                 <label>Teléfono
-                  <input class="input" type="tel" name="telefono" inputmode="numeric" maxlength="10" autocomplete="tel" [ngModel]="form.telefono" (ngModelChange)="form.telefono = digitsOnly($event)" />
+                  <input class="input" type="tel" name="telefono" inputmode="numeric" maxlength="10" autocomplete="off" [ngModel]="form.telefono" (ngModelChange)="form.telefono = digitsOnly($event)" />
                   <small class="campo-ayuda" [class.campo-mal]="!!form.telefono && !phoneValid(form.telefono)">{{ form.telefono?.length || 0 }}/10 · celular empieza por 3, fijo por 60</small>
                 </label>
                 <label>Correo
                   <input class="input" type="email" name="username" autocomplete="username" [ngModel]="form.email" (ngModelChange)="form.email = withoutSpaces($event)" (beforeinput)="blockSpace($event)" />
-                  <small class="campo-ayuda">Con este correo entra. No uses el teléfono.</small>
+                  <small class="campo-ayuda">Con este correo entra. Si lo cambias, se actualiza el mismo acceso, no se crea otro.</small>
                 </label>
                 <label>Nueva clave
-                  <input class="input" type="password" autocomplete="new-password" name="new-password" maxlength="11" [ngModel]="form.password" (ngModelChange)="form.password = withoutSpaces($event)" (beforeinput)="blockSpace($event)" placeholder="Vacía = conservar la actual" />
+                  <input class="input" type="password" autocomplete="current-password" name="password" maxlength="11" readonly (focus)="unlockPassword($event)" [ngModel]="form.password" (ngModelChange)="form.password = withoutSpaces($event)" (beforeinput)="blockSpace($event)" placeholder="Vacía = conservar la actual" />
                   <small class="campo-ayuda" [class.campo-mal]="passwordTooShort()">{{ passwordText() }}</small>
                 </label>
                 <p class="clave-actual span-2">Clave actual: <strong>{{ claveVisible || 'Aún no registrada. Escríbela arriba.' }}</strong></p>
@@ -348,7 +348,7 @@
 
           @if (error()) { <p class="error-msg">{{ error() }}</p> }
           <div class="edit-acciones">
-            <button type="submit" class="btn btn-purple">Guardar cambios</button>
+            <button type="submit" class="btn btn-purple">Actualizar</button>
             <button type="button" class="btn-sm" (click)="sub.set('lista')">Volver</button>
           </div>
         </form>
