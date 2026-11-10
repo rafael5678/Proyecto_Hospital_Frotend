@@ -832,7 +832,7 @@ export class AdminPortalComponent implements OnInit {
       this.asistenteTexto = texto;
       this.askAssistant();
     };
-    if (!audio.size) {
+    if (!audio.size || enVivo) {
       enviar(enVivo);
       return;
     }

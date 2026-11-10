@@ -70,7 +70,7 @@ export class AiService {
       catchError(() => of({
         texto: '',
         modoDemo: true,
-        mensaje: 'La transcripción de IA no está disponible. Usa la voz del navegador o escribe el texto.'
+        mensaje: 'No se entendió el audio. Habla en Chrome o Edge, o escribe los datos.'
       }))
     );
   }
