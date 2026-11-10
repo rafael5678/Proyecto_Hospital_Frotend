@@ -516,7 +516,7 @@
       @if (tab() === 'asistente') {
         <div class="card section asistente-card">
           <h2>Registro Hospy</h2>
-            <p class="hint">Aquí se crean cuentas nuevas de pacientes y médicos, escribiendo o hablando. También puedes decir «quiero una especialización» y Hospy pregunta el nombre. No lista usuarios ni cambia claves: eso está en Usuarios. Ejemplo: «Registra a la paciente Ana Gómez». Hospy pregunta lo que falte y, cuando está completo, crea la cuenta. La clave queda cifrada y se muestra una sola vez en este chat para que se la entregues.</p>
+            <p class="hint">Aquí se crean cuentas nuevas de pacientes y médicos, escribiendo o hablando. Pulsa Hablar: tiene que salir «Te estoy escuchando». Ejemplo: «Registra al médico Ana Gómez». Hospy pregunta lo que falte y, cuando está completo, crea la cuenta. La clave se muestra una sola vez.</p>
           @if (error()) { <p class="error-msg">{{ error() }}</p> }
           <div class="asistente-chat">
             @for (m of asistenteChat(); track $index) {
@@ -526,7 +526,7 @@
             }
           </div>
           @if (asistenteEscuchando()) {
-            <p class="asistente-linea asistente-vivo" aria-live="polite">🎙 {{ asistenteVozEnVivo() || 'Te escucho…' }}</p>
+            <p class="asistente-linea asistente-vivo" aria-live="polite">🎙 {{ asistenteVozEnVivo() || 'Te estoy escuchando…' }}</p>
           }
           @if (asistenteTranscribiendo()) { <p class="hint">Entendiendo lo que dijiste…</p> }
           <textarea class="input" rows="3" [(ngModel)]="asistenteTexto" placeholder="Escribe el médico o el paciente, o responde lo que falte"></textarea>

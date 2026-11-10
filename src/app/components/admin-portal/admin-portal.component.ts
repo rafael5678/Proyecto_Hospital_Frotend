@@ -757,7 +757,7 @@ export class AdminPortalComponent implements OnInit {
     speechSynthesis.speak(voz);
   }
 
-  async alternarMicrofonoAsistente() {
+  alternarMicrofonoAsistente() {
     if (this.asistenteEscuchando()) {
       this.stopAssistantMicrophone();
       return;
@@ -765,11 +765,11 @@ export class AdminPortalComponent implements OnInit {
     this.error.set('');
     if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
     const Factory = this.speechFactory();
-    if (Factory) {
-      await this.startBrowserListen(Factory);
+    if (!Factory) {
+      this.error.set('Para hablar abre Hospy en Google Chrome o Microsoft Edge. Mientras, escribe el médico o el paciente.');
       return;
     }
-    await this.startRecorderFallback();
+    this.iniciarReconocimiento(Factory);
   }
 
   private speechFactory(): SpeechRecognitionFactory | null {
@@ -780,22 +780,14 @@ export class AdminPortalComponent implements OnInit {
     return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
   }
 
-  private async startBrowserListen(Factory: SpeechRecognitionFactory) {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach(track => track.stop());
-    } catch {
-      this.error.set('Permite el micrófono en el navegador y vuelve a pulsar Hablar.');
-      return;
-    }
-    this.asistenteVozEnVivo.set('');
+  private iniciarReconocimiento(Factory: SpeechRecognitionFactory) {
     const rec = new Factory();
-    rec.lang = 'es-CO';
+    rec.lang = 'es-ES';
     rec.continuous = true;
     rec.interimResults = true;
     rec.onresult = event => {
       const texto = Array.from(event.results).map(result => result[0].transcript).join(' ').trim();
-      this.asistenteVozEnVivo.set(texto);
+      this.asistenteVozEnVivo.set(texto || 'Te estoy escuchando…');
       if (texto) this.asistenteTexto = texto;
     };
     rec.onerror = event => {
@@ -803,10 +795,13 @@ export class AdminPortalComponent implements OnInit {
       if (err === 'no-speech' || err === 'aborted') return;
       if (err === 'not-allowed' || err === 'service-not-allowed') {
         this.asistenteEscuchando.set(false);
-        this.error.set('Permite el micrófono para que Hospy te escuche.');
+        this.error.set('Permite el micrófono en Chrome y vuelve a pulsar Hablar.');
         return;
       }
-      if (err === 'language-not-supported') rec.lang = 'es-ES';
+      if (err === 'language-not-supported') {
+        rec.lang = 'es';
+        return;
+      }
     };
     rec.onend = () => {
       if (!this.asistenteEscuchando() || this.asistenteReconocimiento !== rec) return;
@@ -816,37 +811,14 @@ export class AdminPortalComponent implements OnInit {
       }, 180);
     };
     this.asistenteReconocimiento = rec;
+    this.asistenteVozEnVivo.set('Te estoy escuchando…');
+    this.asistenteEscuchando.set(true);
     try {
       rec.start();
-      this.asistenteEscuchando.set(true);
     } catch {
+      this.asistenteEscuchando.set(false);
       this.asistenteReconocimiento = null;
-      this.error.set('No se pudo iniciar la voz. Pulsa Hablar otra vez.');
-    }
-  }
-
-  private async startRecorderFallback() {
-    if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
-      this.error.set('Este navegador no permite el micrófono. Usa Chrome o Edge, o escribe los datos.');
-      return;
-    }
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      this.asistenteAudio = [];
-      this.asistenteVozEnVivo.set('');
-      this.asistenteGrabadora = new MediaRecorder(stream);
-      this.asistenteGrabadora.ondataavailable = event => {
-        if (event.data.size) this.asistenteAudio.push(event.data);
-      };
-      this.asistenteGrabadora.onstop = () => {
-        stream.getTracks().forEach(track => track.stop());
-        const audio = new Blob(this.asistenteAudio, { type: this.asistenteGrabadora?.mimeType || 'audio/webm' });
-        this.sendAssistantAudio(audio);
-      };
-      this.asistenteGrabadora.start();
-      this.asistenteEscuchando.set(true);
-    } catch {
-      this.error.set('No se pudo acceder al micrófono. Revisa los permisos del navegador.');
+      this.error.set('No se pudo iniciar la voz. Pulsa Hablar otra vez o escribe el médico.');
     }
   }
 
