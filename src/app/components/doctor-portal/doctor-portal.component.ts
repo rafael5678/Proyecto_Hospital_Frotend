@@ -586,22 +586,36 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   }
 
   specialtyToday(): string {
-    const hoy = this.appointmentsToday();
-    const primera = hoy[0]?.medicoEspecialidad || this.profile()?.especialidad;
-    if (!primera) return 'Sin especialidad registrada';
-    return hoy.length ? `${hoy.length} en ${primera}` : primera;
+    if (!this.appointmentsToday().length) return 'Nadie por atender hoy';
+    return this.profile()?.especialidad || this.appointmentsToday()[0]?.medicoEspecialidad || 'Consulta';
   }
 
   appointmentsToday(): Appointment[] {
-    const hoy = new Date().toDateString();
-    return this.activeAppointments().filter(c => new Date(c.fechaHora).toDateString() === hoy);
+    const hoy = this.calendarDay();
+    return this.activeAppointments().filter(c => this.visitDay(c.fechaHora) === hoy);
   }
 
   priorityTriage(): Appointment[] {
-    return this.activeAppointments()
-      .filter(c => c.triageSeveridad || c.triagePrioridad)
-      .sort((a, b) => (b.triagePrioridad ?? 0) - (a.triagePrioridad ?? 0))
-      .slice(0, 4);
+    const hoy = this.calendarDay();
+    const porAtender = this.activeAppointments().filter(c =>
+      c.triageSeveridad || c.triagePrioridad || c.triageResumen || c.triageSintomas || c.motivo
+    );
+    const deHoy = porAtender.filter(c => this.visitDay(c.fechaHora) === hoy);
+    const resto = porAtender.filter(c => this.visitDay(c.fechaHora) !== hoy);
+    const porPrioridad = (a: Appointment, b: Appointment) => (b.triagePrioridad ?? 0) - (a.triagePrioridad ?? 0);
+    return [...deHoy.sort(porPrioridad), ...resto.sort(porPrioridad)].slice(0, 4);
+  }
+
+  private calendarDay(when = new Date()): string {
+    const y = when.getFullYear();
+    const m = String(when.getMonth() + 1).padStart(2, '0');
+    const d = String(when.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
+  }
+
+  private visitDay(iso?: string): string {
+    const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || '');
+    return match ? `${match[1]}-${match[2]}-${match[3]}` : '';
   }
 
   priorityLabel(c: Appointment): string {

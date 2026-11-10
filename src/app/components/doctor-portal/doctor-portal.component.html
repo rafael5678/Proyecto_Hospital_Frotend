@@ -39,7 +39,7 @@
       <div class="stats">
         <div class="stat-card">
           <span>Pacientes hoy</span>
-          <strong>{{ d.citasHoy }}</strong>
+          <strong>{{ appointmentsToday().length }}</strong>
           <small>{{ specialtyToday() }}</small>
         </div>
         <div class="stat-card warn">
@@ -70,7 +70,7 @@
             <em>{{ shortTime(c.fechaHora) }} · {{ c.medicoEspecialidad || 'Consulta' }}</em>
           </article>
           } @empty {
-          <p class="empty">No hay triages registrados en tus citas activas.</p>
+          <p class="empty">No hay pacientes en cola ahora.</p>
           }
         </section>
 
