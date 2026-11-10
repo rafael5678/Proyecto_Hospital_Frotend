@@ -644,12 +644,22 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
 
   private dermatologyPayload(): AiDermatologyRequest {
     const sintomas = this.sintomas.trim();
+    const alergias = this.antecedentesSintomas.trim();
+    const asociados = [this.dermReq.sintomasAsociados?.trim() || sintomas, alergias ? `Alergias: ${alergias}` : '']
+      .filter(Boolean).join(' · ');
     return {
       ...this.dermReq,
       descripcion: this.dermReq.descripcion?.trim() || sintomas,
-      sintomasAsociados: this.dermReq.sintomasAsociados?.trim() || sintomas,
+      sintomasAsociados: asociados,
       tiempoEvolucion: this.dermReq.tiempoEvolucion || this.duracionSintomas
     };
+  }
+
+  skinFindings(derm: AiDermatologyResponse): string[] {
+    return (derm.caracteristicasObservadas || []).filter(h => {
+      const t = (h || '').toLowerCase();
+      return t && !t.includes('confianza') && !t.includes('especialidad sugerida') && !t.includes('dataset');
+    });
   }
 
   changeTriage() {

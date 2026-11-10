@@ -193,11 +193,14 @@
           }
           @if (tieneLesionPiel && dermRsp(); as derm) {
             <div class="triage-result" role="status">
+              <p class="triage-kicker">Foto y relato, juntos</p>
               <strong>Severidad de piel: {{ derm.nivelRiesgo }}</strong>
-              <p>{{ derm.explicacion || 'Revisión orientativa de la lesión. Si empeora, consulta de forma presencial.' }}</p>
-              @if (derm.recomendaciones) { <p>{{ derm.recomendaciones }}</p> }
-              @if (derm.caracteristicasObservadas?.length) {
-                <p>Lo que se observa: {{ derm.caracteristicasObservadas.join(', ') }}</p>
+              <p class="triage-resumen">{{ derm.explicacion || 'Revisión orientativa de la lesión. Si empeora, consulta de forma presencial.' }}</p>
+              @if (derm.recomendaciones) {
+                <p class="triage-cuidados"><strong>Hasta la cita.</strong> {{ derm.recomendaciones }}</p>
+              }
+              @if (skinFindings(derm).length) {
+                <p>Lo que se observa: {{ skinFindings(derm).join('; ') }}</p>
               }
             </div>
           }
