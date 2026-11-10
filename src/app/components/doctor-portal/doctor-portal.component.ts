@@ -445,11 +445,10 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
       this.error.set('El cuadro está vacío. Escribe el relato o abre al paciente desde su cita, y luego inicia la consulta.');
       return;
     }
-    const motivo = this.soapReq.motivoInicial?.trim() || 'lo que te conté';
     const dias = (this.soapReq.transcripcion || '').match(/(\d+)\s*d[ií]as/);
     this.dialogo = [{
       quien: 'paciente',
-      texto: `Doctor, buenos días. Vengo porque ${motivo}.${dias ? ` Llevo así como ${dias[1]} días.` : ''}`
+      texto: `Doctor, buenos días. Vine a que me revise.${dias ? ` Llevo así como ${dias[1]} días.` : ''}`
     }];
     this.preguntaSim = '';
     this.avisoOk.set('');
