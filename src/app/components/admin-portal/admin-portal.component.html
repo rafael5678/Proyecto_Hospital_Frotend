@@ -76,7 +76,7 @@
                     <line [attr.x1]="monthlyPoints()[activo].x" y1="16" [attr.x2]="monthlyPoints()[activo].x" y2="148" stroke="#ddd6fe" stroke-width="2" />
                   }
                   @for (p of monthlyPoints(); track p.label; let i = $index) {
-                    <circle class="punto-visible" [attr.cx]="p.x" [attr.cy]="p.y" [attr.r]="visibleMonth() === i ? 7 : 4" fill="#7c3aed" />
+                    <circle class="punto-visible" [attr.cx]="p.x" [attr.cy]="p.y" r="5" fill="#7c3aed" />
                     <circle class="punto-hit" [attr.cx]="p.x" [attr.cy]="p.y" r="14" (mouseenter)="mesSobre.set(i)" (click)="selectMonth(i)" />
                   }
                 </svg>
@@ -87,9 +87,9 @@
                   </div>
                 }
               </div>
-              <div class="chart-labels">
+              <div class="chart-labels" (mouseleave)="mesSobre.set(null)">
                 @for (p of monthlyPoints(); track p.label; let i = $index) {
-                  <button type="button" [class.activa]="visibleMonth() === i" (mouseenter)="mesSobre.set(i)" (mouseleave)="mesSobre.set(null)" (click)="selectMonth(i)">{{ p.label }}</button>
+                  <button type="button" [class.activa]="visibleMonth() === i" (mouseenter)="mesSobre.set(i)" (click)="selectMonth(i)">{{ p.label }}</button>
                 }
               </div>
             } @else {
@@ -135,8 +135,8 @@
                     fill="none"
                     transform="rotate(-90 60 60)"
                     [attr.stroke]="s.color"
-                    [attr.stroke-width]="visibleDonut() === s.label ? 18 : 14"
-                    [attr.opacity]="!visibleDonut() || visibleDonut() === s.label ? 1 : 0.28"
+                    stroke-width="14"
+                    [attr.opacity]="!visibleDonut() || visibleDonut() === s.label ? 1 : 0.35"
                     [attr.stroke-dasharray]="s.dash + ' ' + s.gap"
                     [attr.stroke-dashoffset]="s.offset"
                   />
@@ -445,10 +445,10 @@
           <h2 class="section-title">Resumen general</h2>
           <p class="hint">Cifras de la base de datos. Un cero es un conteo real: ese grupo no tiene registros.</p>
           <div class="stats-grid">
-            <div class="stat"><span>Total citas</span><strong>{{ r.totalCitas }}</strong></div>
-            <div class="stat"><span>Pendientes</span><strong>{{ r.citasPendientes }}</strong></div>
-            <div class="stat"><span>Aceptadas</span><strong>{{ r.citasAceptadas }}</strong></div>
-            <div class="stat"><span>Canceladas</span><strong>{{ r.citasCanceladas }}</strong></div>
+            <div class="stat"><span>Total citas</span><strong>{{ reportTotalAppointments() }}</strong></div>
+            <div class="stat"><span>Pendientes</span><strong>{{ reportPendingCount() }}</strong></div>
+            <div class="stat"><span>Aceptadas</span><strong>{{ reportAcceptedCount() }}</strong></div>
+            <div class="stat"><span>Canceladas</span><strong>{{ reportCancelledCount() }}</strong></div>
             <div class="stat"><span>Pacientes</span><strong>{{ r.totalPacientes }}</strong></div>
             <div class="stat"><span>Médicos</span><strong>{{ r.totalMedicos }}</strong></div>
           </div>
@@ -481,18 +481,22 @@
             </article>
             <article class="reporte-card ancho">
               <h3>Citas por mes</h3>
-              <div class="mes-barras">
+              <div class="mes-barras" (mouseleave)="mesBarraSobre.set(null)">
                 @for (m of monthBars(); track m.nombre) {
-                  <button type="button" class="mes-col" [class.activa]="mesBarraSobre() === m.nombre" (mouseenter)="mesBarraSobre.set(m.nombre)" (mouseleave)="mesBarraSobre.set(null)" (click)="mesBarraSobre.set(mesBarraSobre() === m.nombre ? null : m.nombre)">
+                  <button type="button" class="mes-col" [class.activa]="mesBarraSobre() === m.nombre" (mouseenter)="mesBarraSobre.set(m.nombre)" (click)="mesBarraSobre.set(mesBarraSobre() === m.nombre ? null : m.nombre)">
                     <span>{{ m.total }}</span>
                     <div class="mes-bar" [style.height.px]="m.alto"></div>
                     <small>{{ m.nombre }}</small>
                   </button>
                 }
-              @if (monthBars().find(m => m.nombre === mesBarraSobre()); as m) {
-                <p class="chart-detalle">{{ m.nombre }}: {{ m.total }} {{ m.total === 1 ? 'cita' : 'citas' }}.</p>
-              }
               </div>
+              <p class="chart-detalle">
+                @if (monthBars().find(m => m.nombre === mesBarraSobre()); as m) {
+                  {{ m.nombre }}: {{ m.total }} {{ m.total === 1 ? 'cita' : 'citas' }}.
+                } @else {
+                  Pasa el mouse sobre un mes para ver el detalle.
+                }
+              </p>
             </article>
           </div>
         }

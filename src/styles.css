@@ -548,9 +548,18 @@ th { background: #f8fafc; font-weight: 600; font-size: 0.85rem; }
   display: flex;
   align-items: flex-end;
   gap: 0.45rem;
+  min-height: 168px;
+  overflow: hidden;
+}
+.mes-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
   min-height: 160px;
 }
-.mes-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 0.35rem; }
 .mes-col span, .mes-col small { color: #64748b; font-size: 0.72rem; }
 .mes-bar {
   width: 100%;
@@ -604,10 +613,12 @@ th { background: #f8fafc; font-weight: 600; font-size: 0.85rem; }
 }
 .chart-detalle {
   margin: 0.7rem 0 0;
+  min-height: 1.35rem;
   color: #5b21b6;
   font-size: 0.88rem;
+  pointer-events: none;
 }
-.mes-col.activa .mes-bar { filter: brightness(1.08); outline: 2px solid #ddd6fe; }
+.mes-col.activa .mes-bar { filter: brightness(1.08); box-shadow: 0 0 0 2px #ddd6fe; }
 @media (max-width: 800px) {
   .reporte-grid { grid-template-columns: 1fr; }
   .reporte-card.ancho { grid-column: auto; }

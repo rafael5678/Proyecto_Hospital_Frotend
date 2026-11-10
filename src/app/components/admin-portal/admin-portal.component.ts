@@ -203,7 +203,8 @@ export class AdminPortalComponent implements OnInit {
     if (!item.tab) return;
     this.tab.set(item.tab as AdminTab);
     this.sub.set((item.sub ?? '') as AdminSub);
-    if (item.tab === 'reportes') this.loadReports();
+    if (item.tab === 'reportes' || item.tab === 'inicio') this.loadReports();
+    if (item.tab === 'inicio' || item.tab === 'citas' || item.tab === 'reportes') this.loadAppointments();
     if (item.tab === 'iasuperv') this.loadAiMetrics();
     const group = this.menuItems.find(m => m.children?.some(c => c.id === item.id));
     if (group && !this.expandedMenus().includes(group.id)) {
@@ -938,6 +939,34 @@ export class AdminPortalComponent implements OnInit {
     }).length;
   }
 
+  cancelledVisitCount(): number {
+    return this.citas().filter(c => {
+      const e = (c.estado || '').toUpperCase();
+      return e === 'CANCELADA' || e === 'RECHAZADA';
+    }).length;
+  }
+
+  pendingVisitCount(): number {
+    return this.citas().filter(c => (c.estado || '').toUpperCase() === 'PENDIENTE').length;
+  }
+
+  /** Live report cards: cancelled includes rejected visits. */
+  reportCancelledCount(): number {
+    return this.citas().length ? this.cancelledVisitCount() : (this.reporte()?.citasCanceladas ?? 0);
+  }
+
+  reportAcceptedCount(): number {
+    return this.citas().length ? this.acceptedVisitCount() : (this.reporte()?.citasAceptadas ?? 0);
+  }
+
+  reportPendingCount(): number {
+    return this.citas().length ? this.pendingVisitCount() : (this.reporte()?.citasPendientes ?? 0);
+  }
+
+  reportTotalAppointments(): number {
+    return this.citas().length ? this.citas().length : (this.reporte()?.totalCitas ?? 0);
+  }
+
   private colombiaDate(): string {
     return new Date().toLocaleDateString('en-CA', { timeZone: 'America/Bogota' });
   }
@@ -991,12 +1020,10 @@ export class AdminPortalComponent implements OnInit {
   }
 
   appointmentStatuses(): { label: string; total: number; color: string; ancho: number }[] {
-    const r = this.reporte();
-    if (!r) return [];
     const items = [
-      { label: 'Pendientes', total: r.citasPendientes, color: '#f59e0b' },
-      { label: 'Aceptadas', total: r.citasAceptadas, color: '#16a34a' },
-      { label: 'Canceladas', total: r.citasCanceladas, color: '#94a3b8' }
+      { label: 'Pendientes', total: this.reportPendingCount(), color: '#f59e0b' },
+      { label: 'Aceptadas', total: this.reportAcceptedCount(), color: '#16a34a' },
+      { label: 'Canceladas', total: this.reportCancelledCount(), color: '#94a3b8' }
     ];
     const max = Math.max(...items.map(i => i.total), 1);
     return items.map(i => ({ ...i, ancho: (i.total / max) * 100 }));
@@ -1068,20 +1095,23 @@ export class AdminPortalComponent implements OnInit {
 
   performanceItems(): { label: string; valor: string; detalle: string }[] {
     const m = this.aiMetricas();
-    const vigentes = this.citas().filter(c => {
-      const e = (c.estado || '').toUpperCase();
-      return e !== 'CANCELADA' && e !== 'RECHAZADA';
-    });
-    const total = vigentes.length;
+    const total = this.citas().length;
     const aceptadas = this.acceptedVisitCount();
     const triage = this.citas().filter(c => c.triageSeveridad).length;
-    const pct = (n: number) => total ? `${Math.round((n / total) * 100)}%` : '0%';
     return [
-      { label: 'Citas aceptadas', valor: pct(aceptadas), detalle: `${aceptadas} de ${total}` },
-      { label: 'Con triage', valor: pct(triage), detalle: `${triage} citas orientadas` },
+      { label: 'Citas aceptadas', valor: this.displayPct(aceptadas, total), detalle: `${aceptadas} de ${total}` },
+      { label: 'Con triage', valor: this.displayPct(triage, total), detalle: `${triage} citas orientadas` },
       { label: 'Asistente', valor: m?.apiKeyActiva ? 'Activo' : 'En espera', detalle: m?.apiKeyActiva ? 'Listo para usar' : 'Sin conexión' }
     ];
+  }
 
+  /** Never show 100% or more: cancelled/rejected visits keep the board under a full score. */
+  private displayPct(parte: number, total: number): string {
+    if (!total) return '0%';
+    const raw = (parte / total) * 100;
+    if (raw <= 0) return '0%';
+    if (raw >= 100) return '99%';
+    return `${Math.round(raw)}%`;
   }
 
 }
