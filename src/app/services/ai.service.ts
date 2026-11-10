@@ -70,7 +70,7 @@ export class AiService {
       catchError(() => of({
         texto: '',
         modoDemo: true,
-        mensaje: 'No se entendió el audio. Habla en Chrome o Edge, o escribe los datos.'
+        mensaje: 'No se escuchó nada. Pulsa Hablar, espera a ver el texto y luego Terminar y enviar.'
       }))
     );
   }
