@@ -133,7 +133,7 @@
             class="input"
             [type]="showPassword ? 'text' : 'password'"
             name="password"
-            maxlength="11"
+            maxlength="64"
             [ngModel]="password"
             (ngModelChange)="password = withoutSpaces($event)"
             (beforeinput)="blockSpace($event)"
