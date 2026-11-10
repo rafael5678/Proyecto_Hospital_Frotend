@@ -27,7 +27,8 @@ interface SpeechRecognitionLike {
   continuous: boolean;
   interimResults: boolean;
   onresult: ((event: { results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => void) | null;
-  onerror: (() => void) | null;
+  onerror: ((event?: { error?: string }) => void) | null;
+  onend: (() => void) | null;
   start(): void;
   stop(): void;
 }
@@ -763,8 +764,70 @@ export class AdminPortalComponent implements OnInit {
     }
     this.error.set('');
     if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
+    const Factory = this.speechFactory();
+    if (Factory) {
+      await this.startBrowserListen(Factory);
+      return;
+    }
+    await this.startRecorderFallback();
+  }
+
+  private speechFactory(): SpeechRecognitionFactory | null {
+    const w = window as Window & {
+      SpeechRecognition?: SpeechRecognitionFactory;
+      webkitSpeechRecognition?: SpeechRecognitionFactory;
+    };
+    return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
+  }
+
+  private async startBrowserListen(Factory: SpeechRecognitionFactory) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach(track => track.stop());
+    } catch {
+      this.error.set('Permite el micrófono en el navegador y vuelve a pulsar Hablar.');
+      return;
+    }
+    this.asistenteVozEnVivo.set('');
+    const rec = new Factory();
+    rec.lang = 'es-CO';
+    rec.continuous = true;
+    rec.interimResults = true;
+    rec.onresult = event => {
+      const texto = Array.from(event.results).map(result => result[0].transcript).join(' ').trim();
+      this.asistenteVozEnVivo.set(texto);
+      if (texto) this.asistenteTexto = texto;
+    };
+    rec.onerror = event => {
+      const err = event?.error || '';
+      if (err === 'no-speech' || err === 'aborted') return;
+      if (err === 'not-allowed' || err === 'service-not-allowed') {
+        this.asistenteEscuchando.set(false);
+        this.error.set('Permite el micrófono para que Hospy te escuche.');
+        return;
+      }
+      if (err === 'language-not-supported') rec.lang = 'es-ES';
+    };
+    rec.onend = () => {
+      if (!this.asistenteEscuchando() || this.asistenteReconocimiento !== rec) return;
+      setTimeout(() => {
+        if (!this.asistenteEscuchando() || this.asistenteReconocimiento !== rec) return;
+        try { rec.start(); } catch { /* already running */ }
+      }, 180);
+    };
+    this.asistenteReconocimiento = rec;
+    try {
+      rec.start();
+      this.asistenteEscuchando.set(true);
+    } catch {
+      this.asistenteReconocimiento = null;
+      this.error.set('No se pudo iniciar la voz. Pulsa Hablar otra vez.');
+    }
+  }
+
+  private async startRecorderFallback() {
     if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
-      this.error.set('Este navegador no permite grabar audio. Escribe los datos.');
+      this.error.set('Este navegador no permite el micrófono. Usa Chrome o Edge, o escribe los datos.');
       return;
     }
     try {
@@ -782,38 +845,26 @@ export class AdminPortalComponent implements OnInit {
       };
       this.asistenteGrabadora.start();
       this.asistenteEscuchando.set(true);
-      this.listenLiveAssistant();
     } catch {
       this.error.set('No se pudo acceder al micrófono. Revisa los permisos del navegador.');
     }
   }
 
   private stopAssistantMicrophone() {
-    this.asistenteReconocimiento?.stop();
-    this.asistenteReconocimiento = null;
     this.asistenteEscuchando.set(false);
-    if (this.asistenteGrabadora?.state === 'recording') this.asistenteGrabadora.stop();
-  }
-
-  private listenLiveAssistant() {
-    const speechWindow = window as Window & {
-      SpeechRecognition?: SpeechRecognitionFactory;
-      webkitSpeechRecognition?: SpeechRecognitionFactory;
-    };
-    const Factory = speechWindow.SpeechRecognition ?? speechWindow.webkitSpeechRecognition;
-    if (!Factory) return;
-    this.asistenteReconocimiento = new Factory();
-    this.asistenteReconocimiento.lang = 'es-CO';
-    this.asistenteReconocimiento.continuous = true;
-    this.asistenteReconocimiento.interimResults = true;
-    this.asistenteReconocimiento.onresult = event => {
-      this.asistenteVozEnVivo.set(Array.from(event.results).map(result => result[0].transcript).join(' '));
-    };
-    this.asistenteReconocimiento.onerror = () => undefined;
-    try {
-      this.asistenteReconocimiento.start();
-    } catch {
-      this.asistenteReconocimiento = null;
+    try { this.asistenteReconocimiento?.stop(); } catch { /* already stopped */ }
+    this.asistenteReconocimiento = null;
+    if (this.asistenteGrabadora?.state === 'recording') {
+      this.asistenteGrabadora.stop();
+      return;
+    }
+    const texto = (this.asistenteVozEnVivo() || this.asistenteTexto || '').trim();
+    this.asistenteVozEnVivo.set('');
+    if (texto) {
+      this.asistenteTexto = texto;
+      this.askAssistant();
+    } else {
+      this.error.set('No se escuchó nada. Pulsa Hablar, habla hasta ver el texto y luego Terminar y enviar.');
     }
   }
 
@@ -823,10 +874,7 @@ export class AdminPortalComponent implements OnInit {
       this.asistenteTranscribiendo.set(false);
       this.asistenteVozEnVivo.set('');
       if (!texto) {
-        const navegador = this.browserHasNoSpeech()
-          ? ' Este navegador no reconoce la voz por sí mismo; en Chrome o Edge funciona.'
-          : '';
-        this.error.set((motivo || 'No se entendió el audio. Habla de nuevo o escribe los datos.') + navegador);
+        this.error.set(motivo || 'No se escuchó nada. Pulsa Hablar, habla hasta ver el texto y luego Terminar y enviar.');
         return;
       }
       this.asistenteTexto = texto;
@@ -841,12 +889,6 @@ export class AdminPortalComponent implements OnInit {
       next: result => enviar(result.texto.trim() || enVivo, result.mensaje),
       error: () => enviar(enVivo)
     });
-  }
-
-  private browserHasNoSpeech(): boolean {
-    const w = window as Window & { SpeechRecognition?: unknown; webkitSpeechRecognition?: unknown };
-    const nav = navigator as Navigator & { brave?: unknown };
-    return !(w.SpeechRecognition || w.webkitSpeechRecognition) || !!nav.brave;
   }
 
   resetForm() {
