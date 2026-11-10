@@ -516,7 +516,7 @@
       @if (tab() === 'asistente') {
         <div class="card section asistente-card">
           <h2>Registro Hospy</h2>
-            <p class="hint">Aquí se crean cuentas nuevas de pacientes y médicos escribiendo. Ejemplo: «Registra al médico Ana Gómez». Hospy pregunta lo que falte y, cuando está completo, crea la cuenta. La clave se muestra una sola vez.</p>
+            <p class="hint">Aquí se crean cuentas nuevas de pacientes y médicos escribiendo. Ejemplo: «Registra al médico Ana Gómez». Si pides una especialización, Hospy pregunta el nombre (Dermatología, Urología…) y no guarda la frase. La clave se muestra una sola vez.</p>
           @if (error()) { <p class="error-msg">{{ error() }}</p> }
           <div class="asistente-chat">
             @for (m of asistenteChat(); track $index) {

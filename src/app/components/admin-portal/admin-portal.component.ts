@@ -522,7 +522,7 @@ export class AdminPortalComponent implements OnInit {
     if (this.esperandoEspecialidad) {
       const nombre = this.extractSpecialtyName(texto);
       if (!nombre) {
-        this.replyToAssistant('¿Cómo se llama la especialización? Escribe solo el nombre, por ejemplo Dermatología.');
+        this.askSpecialtyName();
         return;
       }
       this.saveSpecialtyFromChat(nombre);
@@ -534,8 +534,7 @@ export class AdminPortalComponent implements OnInit {
         this.saveSpecialtyFromChat(nombre);
         return;
       }
-      this.esperandoEspecialidad = true;
-      this.replyToAssistant('¿Cómo se llama la especialización?');
+      this.askSpecialtyName();
       return;
     }
     this.asistenteLoading.set(true);
@@ -557,6 +556,11 @@ export class AdminPortalComponent implements OnInit {
           return;
         }
         this.asistenteLoading.set(false);
+        if ((r.especialidad?.trim() && this.isJunkSpecialtyName(r.especialidad))
+            || this.isJunkSpecialtyReply(r.mensaje)) {
+          this.askSpecialtyName();
+          return;
+        }
         if (r.especialidad) this.rememberSpecialty(r.especialidad);
         this.loadSpecialties();
         this.replyToAssistant(r.mensaje);
@@ -591,25 +595,39 @@ export class AdminPortalComponent implements OnInit {
   }
 
   private extractSpecialtyName(texto: string): string {
-    if (this.isBareSpecialtyRequest(texto)) return '';
+    if (this.isJunkSpecialtyName(texto)) return '';
     const match = texto.match(/(?:especializaci[oó]n|especialidad)\s*[:\-–]?\s*(?:se\s+llama\s+|llamada\s+|es\s+|de\s+)?([\p{L}][\p{L} .'-]{2,80})/iu);
     let hallado = match?.[1]?.replace(/\s+(para|del|de)\s+(los\s+|las\s+)?m[eé]dicos.*$/i, '').trim() || '';
-    if (hallado && !this.isBareSpecialtyRequest(hallado)) return hallado;
+    if (hallado && !this.isJunkSpecialtyName(hallado)) return hallado;
     const limpio = texto.trim()
       .replace(/^(este es el nombre de (la |el )?)?(la )?(especializaci[oó]n|especialidad)\s*[:\-–]?\s*/i, '')
       .replace(/^(se llama|llamada|es)\s+/i, '')
       .replace(/[.。]+$/, '')
       .trim();
-    if (this.isBareSpecialtyRequest(limpio)) return '';
-    return /^[\p{L}][\p{L} .'-]{2,80}$/u.test(limpio) ? limpio : '';
+    if (this.isJunkSpecialtyName(limpio)) return '';
+    if (!/^[\p{L}][\p{L} .'-]{2,80}$/u.test(limpio)) return '';
+    const plano = this.withoutAccent(limpio);
+    if (plano.includes('especializ') || plano.includes('especialidad')) return '';
+    return limpio;
   }
 
-  private isBareSpecialtyRequest(texto: string): boolean {
-    const t = this.withoutAccent(texto).replace(/\s+/g, ' ').trim();
+  private isJunkSpecialtyName(texto: string | null | undefined): boolean {
+    const t = this.withoutAccent(texto || '').replace(/\s+/g, ' ').trim();
     if (!t) return true;
     if (/\b(quiero|necesito|deseo|vamos a|voy a)\b/.test(t)) return true;
     if (/\b(crear|crea|agregar|agrega|registr|anade|ponme)\b/.test(t) && /especializ|especialidad/.test(t)) return true;
+    if (/una especializ|una especialidad|la especializ|la especialidad/.test(t)) return true;
     return /^(una |la )?(nueva )?(especializacion|especialidad)$/.test(t);
+  }
+
+  private isJunkSpecialtyReply(texto: string | null | undefined): boolean {
+    const t = this.withoutAccent(texto || '');
+    return /quiero .{0,80}especializ/.test(t) || /quiero .{0,80}especialidad/.test(t);
+  }
+
+  private askSpecialtyName() {
+    this.esperandoEspecialidad = true;
+    this.replyToAssistant('¿Cómo se llama la especialización? Escribe solo el nombre, por ejemplo Dermatología.');
   }
 
   private withoutAccent(texto: string): string {
@@ -617,11 +635,19 @@ export class AdminPortalComponent implements OnInit {
   }
 
   private saveSpecialtyFromChat(nombre: string) {
+    if (this.isJunkSpecialtyName(nombre)) {
+      this.askSpecialtyName();
+      return;
+    }
     this.asistenteLoading.set(true);
     this.adminService.createSpecialty(nombre).subscribe({
       next: r => {
-        this.esperandoEspecialidad = false;
         this.asistenteLoading.set(false);
+        if (this.isJunkSpecialtyName(r.nombre)) {
+          this.askSpecialtyName();
+          return;
+        }
+        this.esperandoEspecialidad = false;
         this.rememberSpecialty(r.nombre);
         this.loadSpecialties();
         this.replyToAssistant(r.yaExistia
