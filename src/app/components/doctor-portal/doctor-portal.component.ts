@@ -330,12 +330,9 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     const nota = r ?? this.soapRsp();
     if (!nota || typeof speechSynthesis === 'undefined') return;
     const texto = [
-      `Resumen de ${this.soapReq.nombrePaciente || 'la consulta'}.`,
       nota.resumenParaMedico || '',
-      nota.enfoqueEnConsulta ? `Qué revisar ahora: ${nota.enfoqueEnConsulta}` : '',
       nota.preguntasSugeridas ? `Pregúntale: ${nota.preguntasSugeridas}` : '',
-      nota.medicamentosSugeridos ? `Medicamentos a considerar: ${nota.medicamentosSugeridos}` : '',
-      nota.cuidados ? `Cuidados: ${nota.cuidados}` : ''
+      nota.medicamentosSugeridos ? `Medicamentos a considerar: ${nota.medicamentosSugeridos}` : ''
     ].filter(Boolean).join('. ');
     speechSynthesis.cancel();
     const voz = new SpeechSynthesisUtterance(texto.slice(0, 1400));
