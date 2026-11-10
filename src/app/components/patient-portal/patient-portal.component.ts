@@ -603,11 +603,12 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     this.ai.triage({ ...this.triageReq }).subscribe({
       next: (r) => {
         this.triageRsp.set(r);
-        this.triageLoading.set(false);
         this.filtroEspecialidad = r.especialidadRecomendada || '';
         this.assignDoctorFromAnalysis();
         if (this.tieneLesionPiel && this.canAnalyzeSkin()) this.runDermatology();
-      }
+      },
+      error: () => this.error.set('No se pudo analizar. Inténtalo de nuevo.'),
+      complete: () => this.triageLoading.set(false)
     });
   }
 
