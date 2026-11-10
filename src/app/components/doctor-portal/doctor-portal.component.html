@@ -312,6 +312,10 @@
           <h4>Cuidados y ejercicio</h4>
           <p>{{ r.cuidados }}</p>
           }
+          @if (r.procedimientosSugeridos && r.procedimientosSugeridos.trim() && r.procedimientosSugeridos.trim().toLowerCase() !== 'no informado') {
+          <h4>Procedimientos a valorar</h4>
+          <p>{{ r.procedimientosSugeridos }}</p>
+          }
         </div>
 
         <div class="form-grid" style="margin-top: 1rem;">

@@ -331,8 +331,12 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     if (!nota || typeof speechSynthesis === 'undefined') return;
     const texto = [
       nota.resumenParaMedico || '',
+      nota.enfoqueEnConsulta ? `Qué revisar ahora: ${nota.enfoqueEnConsulta}` : '',
       nota.preguntasSugeridas ? `Pregúntale: ${nota.preguntasSugeridas}` : '',
-      nota.medicamentosSugeridos ? `Medicamentos a considerar: ${nota.medicamentosSugeridos}` : ''
+      nota.medicamentosSugeridos ? `Medicamentos a considerar: ${nota.medicamentosSugeridos}` : '',
+      nota.cuidados ? `Cuidados: ${nota.cuidados}` : '',
+      nota.procedimientosSugeridos && nota.procedimientosSugeridos.toLowerCase() !== 'no informado'
+        ? `Procedimientos: ${nota.procedimientosSugeridos}` : ''
     ].filter(Boolean).join('. ');
     speechSynthesis.cancel();
     const voz = new SpeechSynthesisUtterance(texto.slice(0, 1400));
