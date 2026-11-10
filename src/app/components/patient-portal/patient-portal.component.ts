@@ -153,6 +153,7 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
     this.loadHistory();
     this.loadProfileAndBackground();
     this.stopLive = this.live.watch(() => this.loadPrescription());
+    this.ai.warmupConsult().subscribe({ next: () => {}, error: () => {} });
   }
 
   ngOnDestroy() {

@@ -173,6 +173,7 @@ export class AdminPortalComponent implements OnInit {
     this.loadAiStatus();
     this.loadAiMetrics();
     this.loadSpecialties();
+    this.ai.warmupConsult().subscribe({ next: () => {}, error: () => {} });
   }
 
   loadSpecialties() {
