@@ -145,6 +145,7 @@ export class AdminPortalComponent implements OnInit {
   private asistenteHistorial: string[] = [];
   private esperandoEspecialidad = false;
   asistenteChat = signal<{ rol: 'admin' | 'ia'; texto: string }[]>([]);
+  asistenteResponderVoz = true;
 
   ngOnInit() {
     this.loadUsers();
@@ -705,6 +706,7 @@ export class AdminPortalComponent implements OnInit {
           rol: 'ia',
           texto: `${tipo} creado: ${r.nombre}. ${detalle} Para iniciar sesión: correo ${r.email} y contraseña ${clave}. Entrégaselos; la contraseña no se vuelve a mostrar.`
         }]);
+        this.speakAssistant(`${tipo} ${r.nombre} registrado. Los datos de acceso están en pantalla.`);
         this.asistenteBorrador = '';
         this.asistenteHistorial = [];
         this.asistenteRsp.set(null);
@@ -722,6 +724,18 @@ export class AdminPortalComponent implements OnInit {
 
   private replyToAssistant(texto: string) {
     this.asistenteChat.update(c => [...c, { rol: 'ia', texto }]);
+    this.speakAssistant(texto);
+  }
+
+  private speakAssistant(texto: string) {
+    if (!this.asistenteResponderVoz || typeof speechSynthesis === 'undefined') return;
+    speechSynthesis.cancel();
+    const voz = new SpeechSynthesisUtterance(texto.slice(0, 600));
+    voz.lang = 'es-CO';
+    voz.rate = 1;
+    const es = speechSynthesis.getVoices().find(v => v.lang.toLowerCase().startsWith('es'));
+    if (es) voz.voice = es;
+    speechSynthesis.speak(voz);
   }
 
   resetForm() {

@@ -530,6 +530,7 @@
             <button type="button" class="btn btn-purple" (click)="askAssistant()" [disabled]="asistenteLoading()">
               {{ asistenteLoading() ? 'Registrando...' : 'Registrar' }}
             </button>
+            <label class="asistente-voz"><input type="checkbox" [(ngModel)]="asistenteResponderVoz" /> Responder con voz</label>
           </div>
         </div>
       }
