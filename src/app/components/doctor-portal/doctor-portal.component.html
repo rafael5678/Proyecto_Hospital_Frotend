@@ -291,6 +291,11 @@
             <button type="button" class="btn btn-blue" (click)="speakSoapSummary(r)">Escuchar</button>
             <button type="button" class="btn logout" (click)="stopSoapSpeech()">Detener</button>
           </div>
+          @if (r.subjetivo && r.subjetivo.trim().toLowerCase() !== 'no informado') {
+          <h4>Lo que le pasa</h4>
+          <p>{{ r.subjetivo }}</p>
+          }
+          <h4>Qué planteas y qué recomiendas</h4>
           <p>{{ r.resumenParaMedico }}</p>
           @if (r.enfoqueEnConsulta) {
           <h4>Qué revisar ahora</h4>

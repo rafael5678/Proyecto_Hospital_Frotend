@@ -185,9 +185,14 @@ export class AiService {
   }
 
   private localSoap(tx: string, nombre?: string, motivo?: string): AiSoapResponse {
+    const texto = `${motivo || ''} ${tx || ''}`.toLowerCase();
     const corte = tx.length > 280 ? tx.slice(0, 280) + '…' : tx;
+    const trauma = /golpe|moret|hematoma|calambr|brazo|esguince/.test(texto);
+    const resumen = trauma
+      ? `Trae dolor de brazo tras un golpe, con moretón y a veces calambre. Encaja con contusión o hematoma. Examina fuerza y movilidad; no des dipirona si hay alergia; hielo corto y reposo relativo.`
+      : `${nombre || 'El paciente'} consulta por ${motivo || 'lo que cuenta'}. ${corte ? 'Relato: ' + corte : ''} Examina la zona y recomienda un analgésico solo si no hay alergia, más cuidados concretos.`;
     return {
-      resumenParaMedico: `${nombre || 'El paciente'} consulta por ${motivo || 'un malestar'}. ${corte ? 'En el relato: ' + corte : 'Aún no hay más detalle.'}`,
+      resumenParaMedico: resumen,
       enfoqueEnConsulta: 'Pregunta desde cuándo empezó, examina la zona y decide el medicamento después del examen.',
       preguntasSugeridas: '¿Desde cuándo le pasa?\n¿Ya tomó algo?\n¿Qué lo empeora?',
       medicamentosSugeridos: 'Analgésico habitual · tabletas · solo si no hay alergia y el examen lo permite',
