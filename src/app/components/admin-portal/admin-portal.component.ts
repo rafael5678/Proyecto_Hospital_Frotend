@@ -830,37 +830,20 @@ export class AdminPortalComponent implements OnInit {
       this.asistenteGrabadora.stop();
       return;
     }
-    const texto = (this.asistenteVozEnVivo() || this.asistenteTexto || '').trim();
+    const texto = this.textoDicho();
     this.asistenteVozEnVivo.set('');
     if (texto) {
       this.asistenteTexto = texto;
       this.askAssistant();
     } else {
-      this.error.set('No se escuchó nada. Pulsa Hablar, habla hasta ver el texto y luego Terminar y enviar.');
+      this.error.set('No se escuchó nada. Habla hasta ver tus palabras en pantalla y luego Terminar y enviar. Si no aparece texto, escribe el médico.');
     }
   }
 
-  private sendAssistantAudio(audio: Blob) {
-    const enVivo = this.asistenteVozEnVivo().trim();
-    const enviar = (texto: string, motivo?: string) => {
-      this.asistenteTranscribiendo.set(false);
-      this.asistenteVozEnVivo.set('');
-      if (!texto) {
-        this.error.set(motivo || 'No se escuchó nada. Pulsa Hablar, habla hasta ver el texto y luego Terminar y enviar.');
-        return;
-      }
-      this.asistenteTexto = texto;
-      this.askAssistant();
-    };
-    if (!audio.size || enVivo) {
-      enviar(enVivo);
-      return;
-    }
-    this.asistenteTranscribiendo.set(true);
-    this.ai.transcribe(audio).subscribe({
-      next: result => enviar(result.texto.trim() || enVivo, result.mensaje),
-      error: () => enviar(enVivo)
-    });
+  private textoDicho(): string {
+    const vivo = this.asistenteVozEnVivo().trim();
+    if (vivo && !vivo.toLowerCase().startsWith('te estoy escuchando')) return vivo;
+    return (this.asistenteTexto || '').trim();
   }
 
   resetForm() {

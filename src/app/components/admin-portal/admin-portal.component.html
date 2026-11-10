@@ -522,7 +522,7 @@
             @for (m of asistenteChat(); track $index) {
               <p class="asistente-linea" [class.asistente-ia]="m.rol === 'ia'">{{ m.texto }}</p>
             } @empty {
-              <p class="hint">Puedes empezar solo con el nombre. Hospy pregunta el resto y entiende la respuesta aunque la escribas en otra frase.</p>
+              <p class="hint">Puedes empezar solo con el nombre, escrito o hablado. Si pulsas Hablar tiene que salir «Te estoy escuchando».</p>
             }
           </div>
           @if (asistenteEscuchando()) {

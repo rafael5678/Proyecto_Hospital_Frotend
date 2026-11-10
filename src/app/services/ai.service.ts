@@ -70,7 +70,7 @@ export class AiService {
       catchError(() => of({
         texto: '',
         modoDemo: true,
-        mensaje: 'No se escuchó nada. Pulsa Hablar, espera a ver el texto y luego Terminar y enviar.'
+        mensaje: 'Habla en Chrome o Edge hasta ver el texto, o escribe el médico.'
       }))
     );
   }
