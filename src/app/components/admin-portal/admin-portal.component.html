@@ -235,7 +235,7 @@
                   <small class="campo-ayuda">Con este correo entra. Si lo cambias, se actualiza el mismo acceso, no se crea otro.</small>
                 </label>
                 <label>Nueva clave
-                  <input class="input" type="password" autocomplete="current-password" name="password" maxlength="64" readonly (focus)="unlockPassword($event)" [ngModel]="form.password" (ngModelChange)="form.password = withoutSpaces($event)" (beforeinput)="blockSpace($event)" placeholder="Vacía = conservar la actual" />
+                  <input class="input" type="password" autocomplete="current-password" name="password" maxlength="12" readonly (focus)="unlockPassword($event)" [ngModel]="form.password" (ngModelChange)="form.password = withoutSpaces($event)" (beforeinput)="blockSpace($event)" placeholder="Vacía = conservar la actual" />
                   <small class="campo-ayuda" [class.campo-mal]="passwordTooShort()">{{ passwordText() }}</small>
                 </label>
                 <p class="clave-actual span-2">Clave actual: <strong>{{ claveVisible || 'Aún no registrada. Escríbela arriba.' }}</strong></p>

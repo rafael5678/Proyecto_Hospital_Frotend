@@ -3,7 +3,7 @@
 export const GENDERS = ['Masculino', 'Femenino', 'Otro'] as const;
 export const BLOOD_TYPES = ['O+', 'O-', 'A+', 'A-', 'B+', 'B-', 'AB+', 'AB-'] as const;
 export const PASSWORD_MIN = 6;
-export const PASSWORD_MAX = 64;
+export const PASSWORD_MAX = 12;
 export const PHONE_DIGITS = 10;
 /** Registraduría NUIP: 10 digits. Older IDs may be shorter. */
 export const ID_MAX = 10;

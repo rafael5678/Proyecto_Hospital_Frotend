@@ -11,8 +11,8 @@
       <div class="section-title">Datos de acceso</div>
       <div><label>Nombre completo *</label><input class="input" [(ngModel)]="nombre" name="nombre" required /></div>
       <div><label>Email *</label><input class="input" type="email" name="username" autocomplete="username" required [ngModel]="email" (ngModelChange)="email = withoutSpaces($event)" (beforeinput)="blockSpace($event)" /></div>
-      <div><label>Contraseña *</label><input class="input" type="password" name="new-password" autocomplete="new-password" minlength="6" maxlength="64" required [ngModel]="password" (ngModelChange)="password = withoutSpaces($event)" (beforeinput)="blockSpace($event)" /><small class="campo-ayuda">Entre 6 y 64 caracteres, sin espacios.</small></div>
-      <div><label>Confirmar contraseña *</label><input class="input" type="password" name="confirm-password" autocomplete="new-password" minlength="6" maxlength="64" required [ngModel]="confirmPassword" (ngModelChange)="confirmPassword = withoutSpaces($event)" (beforeinput)="blockSpace($event)" /></div>
+      <div><label>Contraseña *</label><input class="input" type="password" name="new-password" autocomplete="new-password" minlength="6" maxlength="12" required [ngModel]="password" (ngModelChange)="password = withoutSpaces($event)" (beforeinput)="blockSpace($event)" /><small class="campo-ayuda">Entre 6 y 12 caracteres, sin espacios.</small></div>
+      <div><label>Confirmar contraseña *</label><input class="input" type="password" name="confirm-password" autocomplete="new-password" minlength="6" maxlength="12" required [ngModel]="confirmPassword" (ngModelChange)="confirmPassword = withoutSpaces($event)" (beforeinput)="blockSpace($event)" /></div>
       <div><label>Teléfono</label><input class="input" inputmode="numeric" maxlength="10" autocomplete="off" placeholder="3001234567" name="telefono" [ngModel]="telefono" (ngModelChange)="telefono = digitsOnly($event)" /><small class="campo-ayuda">10 dígitos. Celular empieza por 3, fijo por 60.</small></div>
 
       <div class="section-title">Identificación</div>
