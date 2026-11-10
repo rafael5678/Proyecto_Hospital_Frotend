@@ -22,19 +22,6 @@ import {
 type AdminTab = 'inicio' | 'usuarios' | 'medicos' | 'citas' | 'reportes' | 'iasuperv' | 'preciosauditoria' | 'asistente';
 type AdminSub = '' | 'lista' | 'crear' | 'editar' | 'claves' | 'supervision' | 'resumen' | 'mensual';
 
-interface SpeechRecognitionLike {
-  lang: string;
-  continuous: boolean;
-  interimResults: boolean;
-  onresult: ((event: { results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => void) | null;
-  onerror: ((event?: { error?: string }) => void) | null;
-  onend: (() => void) | null;
-  start(): void;
-  stop(): void;
-}
-
-type SpeechRecognitionFactory = new () => SpeechRecognitionLike;
-
 @Component({
   selector: 'app-admin-portal',
   standalone: true,
@@ -158,13 +145,6 @@ export class AdminPortalComponent implements OnInit {
   private asistenteHistorial: string[] = [];
   private esperandoEspecialidad = false;
   asistenteChat = signal<{ rol: 'admin' | 'ia'; texto: string }[]>([]);
-  asistenteEscuchando = signal(false);
-  asistenteTranscribiendo = signal(false);
-  asistenteVozEnVivo = signal('');
-  asistenteResponderVoz = true;
-  private asistenteGrabadora: MediaRecorder | null = null;
-  private asistenteAudio: Blob[] = [];
-  private asistenteReconocimiento: SpeechRecognitionLike | null = null;
 
   ngOnInit() {
     this.loadUsers();
@@ -725,7 +705,6 @@ export class AdminPortalComponent implements OnInit {
           rol: 'ia',
           texto: `${tipo} creado: ${r.nombre}. ${detalle} Para iniciar sesión: correo ${r.email} y contraseña ${clave}. Entrégaselos; la contraseña no se vuelve a mostrar.`
         }]);
-        this.speakAssistant(`${tipo} ${r.nombre} registrado. Los datos de acceso están en pantalla.`);
         this.asistenteBorrador = '';
         this.asistenteHistorial = [];
         this.asistenteRsp.set(null);
@@ -743,107 +722,6 @@ export class AdminPortalComponent implements OnInit {
 
   private replyToAssistant(texto: string) {
     this.asistenteChat.update(c => [...c, { rol: 'ia', texto }]);
-    this.speakAssistant(texto);
-  }
-
-  private speakAssistant(texto: string) {
-    if (!this.asistenteResponderVoz || typeof speechSynthesis === 'undefined') return;
-    speechSynthesis.cancel();
-    const voz = new SpeechSynthesisUtterance(texto.slice(0, 600));
-    voz.lang = 'es-CO';
-    voz.rate = 1;
-    const es = speechSynthesis.getVoices().find(v => v.lang.toLowerCase().startsWith('es'));
-    if (es) voz.voice = es;
-    speechSynthesis.speak(voz);
-  }
-
-  alternarMicrofonoAsistente() {
-    if (this.asistenteEscuchando()) {
-      this.stopAssistantMicrophone();
-      return;
-    }
-    this.error.set('');
-    if (typeof speechSynthesis !== 'undefined') speechSynthesis.cancel();
-    const Factory = this.speechFactory();
-    if (!Factory) {
-      this.error.set('Para hablar abre Hospy en Google Chrome o Microsoft Edge. Mientras, escribe el médico o el paciente.');
-      return;
-    }
-    this.iniciarReconocimiento(Factory);
-  }
-
-  private speechFactory(): SpeechRecognitionFactory | null {
-    const w = window as Window & {
-      SpeechRecognition?: SpeechRecognitionFactory;
-      webkitSpeechRecognition?: SpeechRecognitionFactory;
-    };
-    return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
-  }
-
-  private iniciarReconocimiento(Factory: SpeechRecognitionFactory) {
-    const rec = new Factory();
-    rec.lang = 'es-ES';
-    rec.continuous = true;
-    rec.interimResults = true;
-    rec.onresult = event => {
-      const texto = Array.from(event.results).map(result => result[0].transcript).join(' ').trim();
-      this.asistenteVozEnVivo.set(texto || 'Te estoy escuchando…');
-      if (texto) this.asistenteTexto = texto;
-    };
-    rec.onerror = event => {
-      const err = event?.error || '';
-      if (err === 'no-speech' || err === 'aborted') return;
-      if (err === 'not-allowed' || err === 'service-not-allowed') {
-        this.asistenteEscuchando.set(false);
-        this.error.set('Permite el micrófono en Chrome y vuelve a pulsar Hablar.');
-        return;
-      }
-      if (err === 'language-not-supported') {
-        rec.lang = 'es';
-        return;
-      }
-    };
-    rec.onend = () => {
-      if (!this.asistenteEscuchando() || this.asistenteReconocimiento !== rec) return;
-      setTimeout(() => {
-        if (!this.asistenteEscuchando() || this.asistenteReconocimiento !== rec) return;
-        try { rec.start(); } catch { /* already running */ }
-      }, 180);
-    };
-    this.asistenteReconocimiento = rec;
-    this.asistenteVozEnVivo.set('Te estoy escuchando…');
-    this.asistenteEscuchando.set(true);
-    try {
-      rec.start();
-    } catch {
-      this.asistenteEscuchando.set(false);
-      this.asistenteReconocimiento = null;
-      this.error.set('No se pudo iniciar la voz. Pulsa Hablar otra vez o escribe el médico.');
-    }
-  }
-
-  private stopAssistantMicrophone() {
-    this.asistenteEscuchando.set(false);
-    try { this.asistenteReconocimiento?.stop(); } catch { /* already stopped */ }
-    this.asistenteReconocimiento = null;
-    if (this.asistenteGrabadora?.state === 'recording') {
-      this.asistenteGrabadora.stop();
-      return;
-    }
-    const texto = this.textoDicho();
-    this.asistenteVozEnVivo.set('');
-    if (texto) {
-      this.asistenteTexto = texto;
-      this.askAssistant();
-    } else {
-      this.error.set('No se escuchó nada. Habla hasta ver tus palabras en pantalla y luego Terminar y enviar. Si no aparece texto, escribe el médico.');
-    }
-  }
-
-  private textoDicho(): string {
-    const vivo = this.asistenteVozEnVivo().trim();
-    if (vivo && !vivo.toLowerCase().startsWith('te estoy escuchando')) return vivo;
-    return (this.asistenteTexto || '').trim();
   }
 
   resetForm() {
