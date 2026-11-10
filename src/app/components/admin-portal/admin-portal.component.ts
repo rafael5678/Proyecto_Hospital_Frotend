@@ -206,7 +206,10 @@ export class AdminPortalComponent implements OnInit {
     this.sub.set((item.sub ?? '') as AdminSub);
     if (item.tab === 'reportes' || item.tab === 'inicio') this.loadReports();
     if (item.tab === 'inicio' || item.tab === 'citas' || item.tab === 'reportes') this.loadAppointments();
-    if (item.tab === 'iasuperv') this.loadAiMetrics();
+    if (item.tab === 'inicio' || item.tab === 'iasuperv') {
+      this.loadAiMetrics();
+      this.loadAiStatus();
+    }
     const group = this.menuItems.find(m => m.children?.some(c => c.id === item.id));
     if (group && !this.expandedMenus().includes(group.id)) {
       this.expandedMenus.set([...this.expandedMenus(), group.id]);
@@ -1102,7 +1105,13 @@ export class AdminPortalComponent implements OnInit {
     return [
       { label: 'Citas aceptadas', valor: this.displayPct(aceptadas, total), detalle: `${aceptadas} de ${total}` },
       { label: 'Con triage', valor: this.displayPct(triage, total), detalle: `${triage} citas orientadas` },
-      { label: 'Asistente', valor: m?.apiKeyActiva ? 'Activo' : 'En espera', detalle: m?.apiKeyActiva ? 'Listo para usar' : 'Sin conexión' }
+      {
+        label: 'Asistente Haiku',
+        valor: this.aiStatus()?.haikuUsd ? `~${this.aiStatus()?.haikuUsd} USD` : (m?.apiKeyActiva ? 'Activo' : 'En espera'),
+        detalle: this.aiStatus()?.haikuLlamadas
+          ? `${this.aiStatus()?.haikuLlamadas} respuestas esta sesión`
+          : (m?.apiKeyActiva ? 'Claude Haiku listo' : 'Sin conexión')
+      }
     ];
   }
 

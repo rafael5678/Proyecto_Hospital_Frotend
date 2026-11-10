@@ -147,6 +147,8 @@ export interface AiPricesResponse {
 export interface AiStatusResponse {
   apiKeyActiva: boolean;
   version: string;
+  haikuLlamadas?: string;
+  haikuUsd?: string;
 }
 
 export interface AiTranscriptionResponse {
