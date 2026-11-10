@@ -1,9 +1,6 @@
 /** JSON shapes the assistant endpoints already return. */
 
-/* ======= Hospy AI =======
- * Modelos para: Triage NLP, Dermatología CNN, Escriba SOAP,
- * Interacciones Fármaco-Alimento (GNN), Triangulación Precios (IF+Prophet)
- */
+/* Hospy assistant JSON: triage, skin review, SOAP, pharmacy, and prices. */
 
 export interface AiTriageRequest {
   sintomas: string;
@@ -14,8 +11,8 @@ export interface AiTriageRequest {
 }
 
 export interface AiTriageResponse {
-  severidad: string;         /* Rojo | Naranja | Amarillo | Verde | Azul */
-  escala: string;            /* ESI/MTS 5 niveles */
+  severidad: string;         /* Rojo | Naranja | Amarillo | Verde | Azul — Spanish values on screen */
+  escala: string;            /* Clinical scale label shown to the patient */
   nivelEsi: number;          /* 1..5 */
   especialidadRecomendada: string;
   prioridad: number;         /* 1..10 */
@@ -33,7 +30,7 @@ export interface AiDermatologyRequest {
 }
 
 export interface AiDermatologyResponse {
-  nivelRiesgo: string;       /* BAJO | MEDIO | ALTO | CRITICO */
+  nivelRiesgo: string;       /* BAJO | MEDIO | ALTO | CRITICO — Spanish risk labels */
   scoreRiesgo: number;       /* 0.0 .. 1.0 */
   explicacion?: string;
   diagnosticosDiferenciales: string[];
@@ -51,10 +48,10 @@ export interface AiSoapRequest {
 }
 
 export interface AiSoapResponse {
-  subjetivo: string;          /* S */
-  objetivo: string;           /* O */
-  apreciacion: string;        /* A */
-  plan: string;               /* P */
+  subjetivo: string;
+  objetivo: string;
+  apreciacion: string;
+  plan: string;
   diagnosticoPresuntivo: string;
   procedimientosSugeridos: string;
   resumenParaMedico?: string;
