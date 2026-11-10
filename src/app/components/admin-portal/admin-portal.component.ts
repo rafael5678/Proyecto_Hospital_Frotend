@@ -521,7 +521,11 @@ export class AdminPortalComponent implements OnInit {
     }
     if (this.esperandoEspecialidad) {
       const nombre = this.extractSpecialtyName(texto);
-      this.saveSpecialtyFromChat(nombre || texto);
+      if (!nombre) {
+        this.replyToAssistant('¿Cómo se llama la especialización? Escribe solo el nombre, por ejemplo Dermatología.');
+        return;
+      }
+      this.saveSpecialtyFromChat(nombre);
       return;
     }
     if (this.isSpecialtyAsk(texto)) {
@@ -587,15 +591,25 @@ export class AdminPortalComponent implements OnInit {
   }
 
   private extractSpecialtyName(texto: string): string {
+    if (this.isBareSpecialtyRequest(texto)) return '';
     const match = texto.match(/(?:especializaci[oó]n|especialidad)\s*[:\-–]?\s*(?:se\s+llama\s+|llamada\s+|es\s+|de\s+)?([\p{L}][\p{L} .'-]{2,80})/iu);
     let hallado = match?.[1]?.replace(/\s+(para|del|de)\s+(los\s+|las\s+)?m[eé]dicos.*$/i, '').trim() || '';
-    if (hallado) return hallado;
+    if (hallado && !this.isBareSpecialtyRequest(hallado)) return hallado;
     const limpio = texto.trim()
       .replace(/^(este es el nombre de (la |el )?)?(la )?(especializaci[oó]n|especialidad)\s*[:\-–]?\s*/i, '')
       .replace(/^(se llama|llamada|es)\s+/i, '')
       .replace(/[.。]+$/, '')
       .trim();
+    if (this.isBareSpecialtyRequest(limpio)) return '';
     return /^[\p{L}][\p{L} .'-]{2,80}$/u.test(limpio) ? limpio : '';
+  }
+
+  private isBareSpecialtyRequest(texto: string): boolean {
+    const t = this.withoutAccent(texto).replace(/\s+/g, ' ').trim();
+    if (!t) return true;
+    if (/\b(quiero|necesito|deseo|vamos a|voy a)\b/.test(t)) return true;
+    if (/\b(crear|crea|agregar|agrega|registr|anade|ponme)\b/.test(t) && /especializ|especialidad/.test(t)) return true;
+    return /^(una |la )?(nueva )?(especializacion|especialidad)$/.test(t);
   }
 
   private withoutAccent(texto: string): string {
