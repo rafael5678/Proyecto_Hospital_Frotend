@@ -106,12 +106,42 @@
 }
 
 .triage-result {
-  padding: 1rem 1.1rem;
+  padding: 1rem 1.15rem 1.1rem;
   border: 1px solid #cce9dc;
   border-left: 4px solid #078765;
-  border-radius: 8px;
+  border-radius: 10px;
   background: #f6fcf8;
-  line-height: 1.55;
+  line-height: 1.6;
+}
+
+.triage-result.sev-rojo { border-left-color: #dc2626; background: #fef2f2; }
+.triage-result.sev-naranja { border-left-color: #ea580c; background: #fff7ed; }
+.triage-result.sev-amarillo { border-left-color: #ca8a04; background: #fefce8; }
+.triage-result.sev-verde { border-left-color: #078765; background: #f6fcf8; }
+.triage-result.sev-azul { border-left-color: #2563eb; background: #eff6ff; }
+
+.triage-kicker {
+  margin: 0 0 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #047857;
+}
+
+.triage-resumen {
+  margin-top: 0.55rem;
+  color: #1e293b;
+}
+
+.triage-meta {
+  margin-top: 0.55rem;
+  color: #334155;
+}
+
+.triage-cuidados {
+  margin-top: 0.55rem;
+  color: #1e293b;
 }
 
 .triage-result p {

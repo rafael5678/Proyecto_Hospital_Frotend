@@ -166,17 +166,26 @@
             {{ triageLoading() ? 'Analizando...' : 'Analizar síntomas' }}
           </button>
           @if (triageRsp(); as triage) {
-            <div class="triage-result" role="status">
+            <div class="triage-result"
+              [class.sev-rojo]="triage.severidad === 'Rojo'"
+              [class.sev-naranja]="triage.severidad === 'Naranja'"
+              [class.sev-amarillo]="triage.severidad === 'Amarillo'"
+              [class.sev-verde]="triage.severidad === 'Verde'"
+              [class.sev-azul]="triage.severidad === 'Azul'"
+              role="status">
+              <p class="triage-kicker">Qué puede estar pasando</p>
               <strong>Orientación: {{ triage.severidad }} · Nivel {{ triage.nivelEsi }}/5</strong>
-              <p>{{ triage.resumen }}</p>
-              <p>Especialidad sugerida: {{ triage.especialidadRecomendada }} · Prioridad orientativa: {{ triage.prioridad }}/10</p>
-              @if (triage.recomendaciones) { <p>{{ triage.recomendaciones }}</p> }
+              <p class="triage-resumen">{{ triage.resumen }}</p>
+              <p class="triage-meta">Especialidad sugerida: <strong>{{ triage.especialidadRecomendada }}</strong> · Prioridad {{ triage.prioridad }}/10</p>
+              @if (triage.recomendaciones) {
+                <p class="triage-cuidados"><strong>Hasta la cita.</strong> {{ triage.recomendaciones }}</p>
+              }
               @if (triage.hallazgos?.length) {
                 <ul class="horario-lista">
                   @for (h of triage.hallazgos; track h) { <li>{{ h }}</li> }
                 </ul>
               }
-              @if (triage.modoDemo) { <p class="hint">Orientación provisional. Si los síntomas empeoran, consulta de forma presencial.</p> }
+              @if (triage.modoDemo) { <p class="hint">Orientación para agendar. No sustituye al médico; si empeora, consulta de forma presencial.</p> }
               @if (triage.severidad === 'Rojo') {
                 <p class="hint">Este nivel es urgente: contacta urgencias ahora y no esperes solo a la cita.</p>
               }

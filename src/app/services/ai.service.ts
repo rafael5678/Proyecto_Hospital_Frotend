@@ -94,28 +94,50 @@ export class AiService {
 
   private localTriage(req: AiTriageRequest): AiTriageResponse {
     const s = (req.sintomas || '').toLowerCase();
+    const ant = (req.antecedentes || '').trim();
+    const dur = (req.duracion || '').trim();
     let severidad = 'Verde', nivelEsi = 4, prioridad = 4, especialidadRecomendada = 'Medicina General';
-    const hallazgos = ['Orientación local por palabras clave'];
+    const hallazgos: string[] = [];
+    const digestivo = /barriga|abdomen|estómago|estomago|panza|gastr|vómit|vomit|diarrea|náuse|nause|acidez|cólico|colico|empacho/.test(s);
     if (/pecho|infarto|desmayo|inconsciente/.test(s)) {
       severidad = 'Rojo'; nivelEsi = 1; prioridad = 10; especialidadRecomendada = 'Cardiología';
       hallazgos.push('Posible urgencia cardiovascular');
     } else if (/respirar|disnea|fiebre alta/.test(s)) {
       severidad = 'Naranja'; nivelEsi = 2; prioridad = 8; especialidadRecomendada = 'Neumología';
+    } else if (digestivo) {
+      severidad = 'Amarillo'; nivelEsi = 3; prioridad = 5; especialidadRecomendada = 'Gastroenterología';
+      hallazgos.push('Molestia digestiva');
     } else if (/cabeza|cefalea|mareo/.test(s)) {
       severidad = 'Amarillo'; nivelEsi = 3; prioridad = 6; especialidadRecomendada = 'Neurología';
     } else if (/mano|hinchad|edema|inflamad|esguince|muñeca|muneca|golpe|fractura/.test(s)) {
       severidad = 'Amarillo'; nivelEsi = 3; prioridad = 5; especialidadRecomendada = 'Traumatología';
       hallazgos.push('Inflamación o trauma de extremidad');
-    } else if (/piel|mancha|lesi[oó]n|acn[eé]/.test(s)) {
+    } else if (/piel|mancha|roncha|acn[eé]|sarpullido/.test(s)) {
       especialidadRecomendada = 'Dermatología';
     } else if (/gripe|resfriado|tos/.test(s)) {
       severidad = 'Azul'; nivelEsi = 5; prioridad = 2;
     }
+    if (req.sintomas) hallazgos.push('Lo que sientes: ' + req.sintomas.trim());
+    if (dur) hallazgos.push('Desde hace: ' + dur);
+    if (ant) hallazgos.push('Alergias y antecedentes a cuidar: ' + ant);
+    const cuando = dur ? ` que llevas ${dur}` : '';
+    const resumen = digestivo
+      ? `Ese dolor de barriga${cuando} puede ser una indigestión, gastritis o algo que comiste y no te sentó.`
+        + (/muscul/.test(s) ? ' Los dolores musculares a veces acompañan un cuadro viral o inflamatorio.' : '')
+        + (ant ? ` Ten mucho cuidado con tus alergias (${ant}): no te automediques.` : '')
+        + ` La orientación es ${severidad}. Agenda ${especialidadRecomendada} ahora.`
+      : `Por lo que cuentas${cuando || ''}, la orientación es ${severidad}. Agenda ${especialidadRecomendada}.`
+        + (ant ? ` Cuidado con tus alergias (${ant}).` : '');
+    const recomendaciones = digestivo
+      ? `Reserva ${especialidadRecomendada}. Come liviano, toma agua de a sorbos y evita frituras y alcohol.`
+        + (ant ? ` Por tus alergias (${ant}) no tomes dipirona/metamizol ni nada que te dé reacción.` : ' No te automediques.')
+        + ' Si el dolor se clava, hay fiebre o vómito con sangre, ve a urgencias.'
+      : `Reserva ${especialidadRecomendada}. Descansa, hidrátate y no te automediques.`
+        + (ant ? ` Respeta tus alergias (${ant}).` : '')
+        + ' Si empeora o hay fiebre alta, ve a urgencias.';
     return {
-      severidad, escala: 'ESI/MTS orientativo', nivelEsi, especialidadRecomendada, prioridad, hallazgos,
-      recomendaciones: 'Si hay dolor de pecho o ahogo intenso, acude a urgencias.',
-      resumen: `Severidad ${severidad} hacia ${especialidadRecomendada}.`,
-      modoDemo: false
+      severidad, escala: 'Orientación clínica', nivelEsi, especialidadRecomendada, prioridad, hallazgos,
+      recomendaciones, resumen, modoDemo: true
     };
   }
 
