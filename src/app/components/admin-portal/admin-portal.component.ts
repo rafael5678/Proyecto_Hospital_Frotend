@@ -113,9 +113,6 @@ export class AdminPortalComponent implements OnInit {
   okAdmin = signal('');
   editandoId = signal<number | null>(null);
   claveVisible = '';
-  nuevaClave = '';
-  claveAdmin = '';
-  claveEntregada = signal<{ nombre: string; email: string; password: string } | null>(null);
   especialidades: string[] = [...HOSPITAL_SPECIALTIES];
 
   aiStatus = signal<{ apiKeyActiva: boolean; version: string } | null>(null);
@@ -431,38 +428,6 @@ export class AdminPortalComponent implements OnInit {
     });
   }
 
-  generatePassword() {
-    const alfabeto = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
-    const bytes = new Uint32Array(8);
-    crypto.getRandomValues(bytes);
-    this.nuevaClave = Array.from(bytes, n => alfabeto[n % alfabeto.length]).join('');
-    this.error.set('');
-  }
-
-  resetPassword(u: User) {
-    const clave = this.nuevaClave.trim();
-    const confirmacion = this.claveAdmin;
-    if (clave.length < 6) {
-      this.error.set('La nueva clave debe tener al menos 6 caracteres.');
-      return;
-    }
-    if (!confirmacion.trim()) {
-      this.error.set('Escribe tu contraseña de administrador para confirmar.');
-      return;
-    }
-    this.error.set('');
-    this.adminService.resetPassword(this.userId(u), clave, confirmacion).subscribe({
-      next: () => {
-        this.claveEntregada.set({ nombre: u.nombre, email: u.email, password: clave });
-        this.okAdmin.set('');
-        this.nuevaClave = '';
-        this.claveAdmin = '';
-        this.loadUsers();
-      },
-      error: (e) => this.error.set(e.error?.error ?? 'No se pudo restablecer')
-    });
-  }
-
   visibleText(texto?: string) {
     return (texto || '')
       .replace(/Gemini\/LLM/gi, 'el asistente')
@@ -471,6 +436,8 @@ export class AdminPortalComponent implements OnInit {
       .replace(/Gemini revisa interacciones/gi, 'revisión de medicamentos')
       .replace(/estimación Gemini/gi, 'estimación de precios')
       .replace(/Gemini Audio/gi, 'voz')
+      .replace(/Claude Haiku/gi, 'el asistente')
+      .replace(/Whisper/gi, 'voz')
       .replace(/gemini[\w.\-]*/gi, '')
       .replace(/\s{2,}/g, ' ')
       .replace(/\(\s*\)/g, '')
@@ -1035,11 +1002,11 @@ export class AdminPortalComponent implements OnInit {
       { label: 'Citas aceptadas', valor: this.displayPct(aceptadas, total), detalle: `${aceptadas} de ${total}` },
       { label: 'Con triage', valor: this.displayPct(triage, total), detalle: `${triage} citas orientadas` },
       {
-        label: 'Asistente Haiku',
+        label: 'Asistente de IA',
         valor: this.aiStatus()?.haikuUsd ? `~${this.aiStatus()?.haikuUsd} USD` : (m?.apiKeyActiva ? 'Activo' : 'En espera'),
         detalle: this.aiStatus()?.haikuLlamadas
           ? `${this.aiStatus()?.haikuLlamadas} respuestas esta sesión`
-          : (m?.apiKeyActiva ? 'Claude Haiku listo' : 'Sin conexión')
+          : (m?.apiKeyActiva ? 'Asistente listo' : 'Sin conexión')
       }
     ];
   }

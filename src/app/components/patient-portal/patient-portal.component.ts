@@ -124,7 +124,7 @@ export class PatientPortalComponent implements OnInit, OnDestroy {
   loading = signal(false);
   guardandoPerfil = signal(false);
 
-  /* Assistant: triage NLP */
+  /* Assistant: symptom triage */
   triageReq: AiTriageRequest = { sintomas: '', duracion: '', antecedentes: '' };
   triageRsp = signal<AiTriageResponse | null>(null);
   triageLoading = signal(false);

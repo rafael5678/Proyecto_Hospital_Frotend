@@ -33,10 +33,6 @@ export class AdminService {
     return this.http.patch<User>(`${this.api}/users/${id}/estado`, {}, { params: { activo } });
   }
 
-  resetPassword(id: number, nuevaClave: string, claveAdmin: string) {
-    return this.http.patch<{ mensaje: string }>(`${this.api}/users/${id}/password`, { nuevaClave, claveAdmin });
-  }
-
   pingAssistant() {
     return this.http.post<{ operativo: string; modelo: string; detalle: string }>(`${this.api}/ai-ping`, {});
   }

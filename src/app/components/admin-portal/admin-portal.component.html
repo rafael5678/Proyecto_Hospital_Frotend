@@ -360,7 +360,7 @@
         <h2 class="section-title">Médicos registrados</h2>
         <table>
           <thead>
-            <tr><th>Nombre</th><th>Email</th><th>Especialidad</th><th>Estado</th><th></th></tr>
+            <tr><th>Nombre</th><th>Correo</th><th>Especialidad</th><th>Estado</th><th></th></tr>
           </thead>
           <tbody>
             @for (u of medicos(); track u.id) {
@@ -642,7 +642,7 @@
               </div>
 
               <div class="card inner ai-superv-card soap">
-                <h4>Escriba médico SOAP</h4>
+                <h4>Escriba médico</h4>
                 <p>{{ visibleText(m.estadoSoap) }}</p>
                 <p class="status-row">Voz: <strong>{{ visibleText(m.estadoWhisper) }}</strong></p>
               </div>
@@ -701,7 +701,7 @@
             <button type="button" class="btn btn-purple" [disabled]="preciosLoading()" (click)="estimatePrices()">
               {{ preciosLoading() ? 'Analizando mercado…' : '🔍 Auditar y triangular precio' }}
             </button>
-            @if (preciosRsp()?.modoDemo) { <span class="severity-chip bg-orange">MODO DEMO</span> }
+            @if (preciosRsp()?.modoDemo) { <span class="severity-chip bg-orange">Modo demostración</span> }
             @if (error()) { <span class="warn-big">{{ error() }}</span> }
           </div>
 

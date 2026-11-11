@@ -10,7 +10,6 @@ import {
   AiConsultaSimRequest, AiConsultaSimResponse,
   AiStatusResponse,
   AiTriageRequest, AiTriageResponse,
-  AiTranscriptionResponse,
   AiAdminOperationRequest, AiAdminOperationResponse
 } from '../models/ai.model';
 
@@ -60,18 +59,6 @@ export class AiService {
   warmupConsult() {
     return this.http.post<{ ok: boolean }>(`${BASE}/warmup`, {}).pipe(
       catchError(() => of({ ok: false }))
-    );
-  }
-
-  transcribe(audio: Blob) {
-    const form = new FormData();
-    form.append('audio', audio, 'consulta.webm');
-    return this.http.post<AiTranscriptionResponse>(`${BASE}/transcribe`, form).pipe(
-      catchError(() => of({
-        texto: '',
-        modoDemo: true,
-        mensaje: 'Habla en Chrome o Edge hasta ver el texto, o escribe el médico.'
-      }))
     );
   }
 

@@ -148,12 +148,6 @@ export interface AiStatusResponse {
   haikuUsd?: string;
 }
 
-export interface AiTranscriptionResponse {
-  texto: string;
-  modoDemo: boolean;
-  mensaje: string;
-}
-
 export interface AiAdminOperationRequest {
   instruccion: string;
   borrador?: string;

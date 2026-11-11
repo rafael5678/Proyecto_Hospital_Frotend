@@ -120,8 +120,8 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   cuidadosEnvio = '';
   resumenEnvio = '';
   consultaLoading = signal(false);
-  private geminiWarm = false;
-  private geminiWarming = false;
+  private aiWarm = false;
+  private aiWarming = false;
   avisoEnviando = signal(false);
   avisoOk = signal('');
   visitClosed = signal(false);
@@ -460,14 +460,14 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
   }
 
   private warmupConsult() {
-    if (this.geminiWarm || this.geminiWarming) return;
-    this.geminiWarming = true;
+    if (this.aiWarm || this.aiWarming) return;
+    this.aiWarming = true;
     this.ai.warmupConsult().subscribe({
       next: r => {
-        this.geminiWarm = !!r?.ok;
-        this.geminiWarming = false;
+        this.aiWarm = !!r?.ok;
+        this.aiWarming = false;
       },
-      error: () => { this.geminiWarming = false; }
+      error: () => { this.aiWarming = false; }
     });
   }
 
@@ -650,7 +650,7 @@ export class DoctorPortalComponent implements OnInit, OnDestroy {
     return [
       { label: 'Análisis de imágenes', detalle: piel ? `${piel} evaluación(es) de piel en tus citas` : 'Aún no hay evaluaciones de piel' },
       { label: 'Triage recibido', detalle: triage ? `${triage} cita(s) con orientación previa` : 'Sin triage registrado' },
-      { label: 'Nota SOAP', detalle: soapListo ? 'Hay un borrador SOAP generado en esta sesión' : 'Sin nota SOAP generada todavía' }
+      { label: 'Nota clínica', detalle: soapListo ? 'Hay un borrador generado en esta sesión' : 'Sin nota clínica generada todavía' }
     ];
   }
 

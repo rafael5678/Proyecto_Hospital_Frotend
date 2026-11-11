@@ -1,6 +1,6 @@
 /**
- * Genera environment.prod.ts desde la variable API_URL (Vercel / CI).
- * Ejemplo en Vercel: API_URL=https://farmacia-hospital-api.onrender.com/api
+ * Writes environment.prod.ts from API_URL (Vercel / CI).
+ * Example: API_URL=https://proyecto-hospital-backend.onrender.com/api
  */
 import { writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -14,14 +14,14 @@ const fallback = 'https://proyecto-hospital-backend.onrender.com/api';
 
 if (!apiUrl && process.env.VERCEL === '1') {
   console.warn(
-    '[set-api-url] API_URL no está definida en Vercel. Usando fallback:',
+    '[set-api-url] API_URL is not set on Vercel. Using fallback:',
     fallback
   );
 }
 
 const url = apiUrl || fallback;
 
-const content = `/** Generado por scripts/set-api-url.mjs — no editar a mano en CI */
+const content = `/** Written by scripts/set-api-url.mjs. Do not edit by hand in CI. */
 export const environment = {
   production: true,
   apiUrl: '${url}'
